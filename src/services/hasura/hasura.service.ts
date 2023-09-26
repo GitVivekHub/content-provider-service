@@ -17,7 +17,49 @@ export class HasuraService {
  
   constructor(private readonly logger : LoggerService){}
 
+  async isUserApproved(email: string) {
+    const query = `
+      query IsUserApproved($email: String!) {
+        User(where: { email: { _eq: $email }, approved: { _eq: true } }) {
+          id
+        }
+      }
+    `;
+    try {
+      const userResponse = await this.queryDb(query, {email});
+      // this.logger.log("User Created")
+      console.log("UserResponse",userResponse)
+      return userResponse;
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating User",error);
+      throw new HttpException('Unable to Create User', HttpStatus.BAD_REQUEST);
+    }
+  
+    
+  }
 
+  async createUser1(user){
+    console.log(user)
+    const userMutation = `
+      mutation ($name: String!, $password: String!, $role: String!,$email: String!,$approved:Boolean) {
+        insert_User(objects: { password: $password, role: $role, email: $email,name:$name,${user.approved !== undefined ? 'approved: $approved,' : ''}}) {
+          returning {
+            id,role
+          }
+        }
+      }
+    `;
+
+    try {
+      const userResponse = await this.queryDb(userMutation, user);
+      console.log(userResponse);
+      this.logger.log("User Created")
+      return userResponse.data.insert_User.returning[0];
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating User",error);
+      throw new HttpException('Unable to Create User', HttpStatus.BAD_REQUEST);
+    }
+  }
   async createUser(user: User): Promise<any> {
 
     const hashedPassword = await bcrypt.hash(user.password, 10);
