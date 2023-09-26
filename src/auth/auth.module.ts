@@ -7,6 +7,9 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import {JwtStrategy} from './jwt.strategy';
 import {LocalStrategy} from './local.strategy'
+import { EmailService } from 'src/services/email/email.service';
+import { HasuraService } from 'src/services/hasura/hasura.service';
+import { UtilService } from 'src/services/email/utility';
 
 @Module({
   imports: [
@@ -22,7 +25,7 @@ import {LocalStrategy} from './local.strategy'
     )
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, LoggerService],
+  providers: [AuthService, LocalStrategy, JwtStrategy, LoggerService,EmailService,HasuraService,UtilService],
   exports: [AuthService]
 })
 export class AuthModule {}

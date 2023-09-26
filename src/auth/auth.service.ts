@@ -4,6 +4,9 @@ import { error } from 'console';
 import { User } from 'src/entity/user.entity';
 import { LoggerService } from 'src/services/logger/logger.service';
 import { UsersService } from 'src/users/users.service';
+import {CreateuserDto} from '../dto/createUser.dto'
+import {HasuraService} from '../services/hasura/hasura.service'
+import {EmailService} from '../services/email/email.service'
 const crypto = require("crypto");
 const axios = require('axios');
 
@@ -18,8 +21,30 @@ export class AuthService {
 
     public smsKey = '13893kjefbekbkb'
 
-    constructor(private readonly jwtService: JwtService, private readonly usersService: UsersService,private readonly logger:LoggerService) { }
-
+    constructor(private readonly jwtService: JwtService, private readonly usersService: UsersService,private readonly logger:LoggerService,private readonly hasuraService:HasuraService,private readonly emailService:EmailService) { }
+    async validateUser(request){
+        let result = await this.hasuraService.isUserApproved(request.email);
+        console.log(result,"result");
+        return result;
+    }
+    async create (createUserDto){
+        const user = new CreateuserDto();
+        user.email=createUserDto.email
+        user.password=createUserDto.password
+        user.name=createUserDto.name
+        user.role=createUserDto.role
+        
+        // await this.hasuraService.CheckUserExistence(user.email)
+        if(user.role === 'admin'){
+            user.approved=true;
+            const createUser = await this.hasuraService.createUser1(user);
+            return createUser
+        }else{
+            const createUser = await this.hasuraService.createUser1(user);
+            // await this.emailService.sendRequestedUserEmail(createUser);
+            return createUser;
+        }
+    }
     generateToken(payload: User): string {
         const plainObject = JSON.parse(JSON.stringify(payload))
 
