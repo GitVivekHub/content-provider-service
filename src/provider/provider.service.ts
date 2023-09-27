@@ -1,4 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class ProviderService {}
+export class ProviderService {
+
+    async findOne(username){
+        
+    }
+}

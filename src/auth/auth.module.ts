@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { LoggerService } from 'src/services/logger/logger.service';
-import { UsersModule } from 'src/users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import {JwtStrategy} from './jwt.strategy';
@@ -13,8 +12,7 @@ import { UtilService } from 'src/services/email/utility';
 
 @Module({
   imports: [
-    PassportModule, 
-    UsersModule, 
+    PassportModule,  
     JwtModule.register(
       {
         global: true,
