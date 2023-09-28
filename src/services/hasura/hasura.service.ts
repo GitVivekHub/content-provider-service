@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import axios from 'axios';
+import { response } from 'express';
 import { LoggerService } from 'src/services/logger/logger.service';
-import * as bcrypt from 'bcrypt';
 
 
 @Injectable()
@@ -11,7 +11,7 @@ export class HasuraService {
  
   constructor(private readonly logger : LoggerService){}
 
-async getProviderList(){
+async getProviderList():Promise<Object>{
   const query = `query GetUser {
     User(where: {role: {_eq: "provider"}}) {
       approved
@@ -73,6 +73,27 @@ async getProviderList(){
       throw new HttpException('Unabe to creatre Provider user', HttpStatus.BAD_REQUEST);
     }
   }
+
+  async createSeekerUser(seeker){
+    const query = `mutation InsertSeeker($user_id: Int,$organization:String,$source_code:String) {
+      insert_Seeker(objects: {user_id: $user_id, organization: $organization, source_code:$source_code}) {
+        affected_rows
+        returning {
+          id
+          user_id
+          organization
+          source_code
+        }
+      }
+    }`
+    try {
+      const response = await this.queryDb(query,seeker)
+      return response;
+    } catch (error) {
+      throw new HttpException('Unabe to creatre Seeker user', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async updateapprovalStatus(id,user){
     const query = `mutation updateApprovalStatus($id: Int!, $approved: Boolean, $reason: String) {
       update_User_by_pk(pk_columns: { id: $id }, _set: { approved: $approved, reason: $reason }) {
@@ -159,6 +180,25 @@ async getProviderList(){
     }
   }
 
+  async createContent(id,createContentdto){
+    const query = `mutation InsertFlnContent($user_id:Int,$description: String,$code:Int,$competency:String,$contentType:String,$domain:String,$goal:String,$image:String,$language:String,$link:String,$sourceOrganisation:String,$themes:String,$title:String) {
+      insert_fln_content(objects: {user_id:$user_id,description: $description,code: $code, competency:$competency, contentType:$contentType, domain:$domain, goal:$goal, image:$image, language:$language, link: $link, sourceOrganisation: $sourceOrganisation, themes: $themes, title: $title}) {
+        returning {
+          user_id
+        }
+      }
+    }
+    `
+    try {
+      console.log("Response ",createContentdto);
+      const response = await this.queryDb(query,{user_id:id,...createContentdto});
+      console.log("response",response);
+      return response
+    } catch (error) {
+      throw new HttpException('Failed to create Content', HttpStatus.NOT_FOUND);
+    }
+    
+  }
 
   async queryDb(query: string, variables?: Record<string, any>): Promise<any> {
     try {

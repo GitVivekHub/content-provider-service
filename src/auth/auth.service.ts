@@ -6,6 +6,7 @@ import {CreateUserDto} from '../dto/createUser.dto'
 import {HasuraService} from '../services/hasura/hasura.service'
 import {EmailService} from '../services/email/email.service'
 import * as bcrypt from 'bcrypt'
+import { CreateSeekerDto } from 'src/dto/createSeeker.dto';
 
 
 @Injectable()
@@ -29,13 +30,20 @@ export class AuthService {
         
         const createUser = await this.hasuraService.createUser(user);
 
-        if(createUser){
+        if(createUser.role ==='provider'){
             let providerUser = new CreateProviderDto();
             providerUser.organization = createUserDto.organization
             providerUser.source_code = createUserDto.source_code;
             providerUser.user_id = createUser.id
 
             const response = await this.hasuraService.createProviderUser(providerUser);
+            return response;
+        }else if (createUser.role==='seeker'){
+            let seeker = new CreateSeekerDto()
+            seeker.organization = createUserDto.organization
+            seeker.source_code = createUserDto.source_code
+            seeker.user_id = createUser.id
+            const response = await this.hasuraService.createSeekerUser(seeker);
             return response;
         }
     }

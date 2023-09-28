@@ -19,6 +19,7 @@ export class AuthController {
         this.logger.log('POST /register',`User Email Id : ${createUserDto.email}`);
         return this.authService.createUser(createUserDto);
     }
+    
     @Post('/login')
     @UseGuards(AuthGuard("local"))
     login(@Request() request, @Res() response: Response) {
