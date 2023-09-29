@@ -4,6 +4,7 @@ import { RoleGuard } from 'src/role.guard';
 import {ProviderService} from './provider.service'
 import {LoggerService} from '../services/logger/logger.service'
 import {CreateContentDto} from '../dto/createContent.dto'
+import { ResetPasswordDto } from 'src/dto/resetPassword.dto';
 
 @Controller('provider')
 export class ProviderController {
@@ -33,5 +34,12 @@ export class ProviderController {
     async editContent(@Request() request,@Param('id') id, @Body() createContentdto?:CreateContentDto){
         console.log("createContentdto", createContentdto);
         return this.providerService.editContent(id,createContentdto)
+    }
+
+    @Patch('/resetPassword')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async resetPassword(@Request() request, @Body() resetPasswordDto: ResetPasswordDto){
+        this.logggerService.log('Patch /resetPassword',request.user.id);
+        return this.providerService.resetPassword(request.user.email, resetPasswordDto)
     }
 }
