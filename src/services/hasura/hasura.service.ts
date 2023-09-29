@@ -211,6 +211,27 @@ export class HasuraService {
     }
   }
 
+  async updatePassword(id, password) {
+    console.log("id", id)
+    console.log("password", password)
+    const query = `mutation updateApprovalStatus($id: Int!, $password: String) {
+      update_User_by_pk(pk_columns: { id: $id }, _set: { password: $password}) {
+        id
+        name
+        approved
+        reason
+        enable
+      }
+    }`;
+    try {
+      
+      const response = await this.queryDb(query, { id: id, password: password })
+      return response
+    } catch (error) {
+      throw new HttpException('Unable to update password!', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async isUserApproved(email: string) {
     const query = `
       query IsUserApproved($email: String!) {

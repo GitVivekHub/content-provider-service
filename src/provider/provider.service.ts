@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {HasuraService} from '../services/hasura/hasura.service'
 import { CreateContentDto } from 'src/dto/createContent.dto';
+import * as bcrypt from "bcrypt"
 
 @Injectable()
 export class ProviderService {
@@ -29,5 +30,22 @@ export class ProviderService {
 
     async editContent(id,createContentdto){
         return this.hasuraService.editContent(id,createContentdto)
+    }
+
+    async resetPassword(email, resetPasswordDto) {
+        console.log("email", email)
+        console.log("resetPasswordDto", resetPasswordDto)
+        const user = await this.hasuraService.findOne(email)
+        if(user) {
+            const passwordMatches = await bcrypt.compare(resetPasswordDto.currentPassword, user.password);
+            if(passwordMatches) {
+                const newPassword = await bcrypt.hash(resetPasswordDto.newPassword,10) 
+                return this.hasuraService.updatePassword(user.id, newPassword)
+                
+            } else {
+                throw new HttpException('Password is incorrect!', HttpStatus.UNAUTHORIZED);
+            }
+            
+        }
     }
 }
