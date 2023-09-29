@@ -21,12 +21,29 @@ export class AdminService {
         const response = await this.hasuraService.getProviderList();
         return response;
     }
+
+    async getProviderInfoById(id) {
+        const response = await this.hasuraService.getProviderInfoById(id);
+        return response;
+    }
+
+    async getSeekerList() {
+        const response = await this.hasuraService.getSeekerList();
+        return response;
+    }
+
+    async getSeekerInfoById(id) {
+        const response = await this.hasuraService.getSeekerInfoById(id);
+        return response;
+    }
+
     async updateapprovalStatus(id, createUserDto) {
-        const user = new CreateUserDto();
-        user.approved = createUserDto.approved
-        user.reason = createUserDto.reason;
-        console.log("User", user)
-        const updateStatus = await this.hasuraService.updateapprovalStatus(id, user);
+        const updateStatus = await this.hasuraService.updateapprovalStatus(id, createUserDto);
+        return updateStatus
+    }
+
+    async updateEnableStatus(id, createUserDto) {
+        const updateStatus = await this.hasuraService.updateEnableStatus(id, createUserDto);
         return updateStatus
     }
 

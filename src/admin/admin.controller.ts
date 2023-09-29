@@ -24,10 +24,37 @@ export class AdminController {
         return this.adminService.getProviderList();
     }
 
+    @Get('/getProviderInfo/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("admin"))
+    async getProviderInfoById(@Param('id') id) {
+        return this.adminService.getProviderInfoById(id);
+    }
+
+    @Get('/getSeekerList')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("admin"))
+    async getSeekerList() {
+        return this.adminService.getSeekerList();
+    }
+
+    @Get('/getSeekerInfo/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("admin"))
+    async getSeekerInfoById(@Param('id') id) {
+        return this.adminService.getSeekerInfoById(id);
+    }
+
     @Patch('/approval/:id')
     @UseGuards(AuthGuard("jwt"), new RoleGuard("admin"))
     async updateapprovalStatus(@Param('id') id, @Body() createUserDto?: CreateUserDto) {
+        console.log("createUserDto", createUserDto)
         const response = await this.adminService.updateapprovalStatus(id, createUserDto)
+        return response;
+    }
+
+    @Patch('/enable/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("admin"))
+    async updateEnableStatus(@Param('id') id, @Body() createUserDto?: CreateUserDto) {
+        console.log("createUserDto", createUserDto)
+        const response = await this.adminService.updateEnableStatus(id, createUserDto)
         return response;
     }
 

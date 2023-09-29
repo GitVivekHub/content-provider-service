@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Request, Get, UsePipes, ValidationPipe, Res, Body, Param } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Get, UsePipes, ValidationPipe, Res, Body, Param, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { OtpSendDTO } from './dto/otp-send.dto';
@@ -13,6 +13,7 @@ import { promisify } from 'util';
 export class AuthController {
 
     constructor(private readonly authService: AuthService, private readonly logger: LoggerService) { }
+
     @Post('/registerUser')
     @UsePipes(ValidationPipe)
     async create(@Body() createUserDto: CreateUserDto) {
@@ -23,6 +24,16 @@ export class AuthController {
     @UseGuards(AuthGuard("local"))
     login(@Request() request, @Res() response: Response) {
         this.logger.log('POST /login');
+        console.log("user", request.user)
+        if(request.body.role !== request.user.role) {
+            throw new UnauthorizedException
+        }
+        if(!request.user.approved) {
+            throw new HttpException('User is not approved!', HttpStatus.UNAUTHORIZED);
+        }
+        if(!request.user.enable) {
+            throw new HttpException('User is disabled!', HttpStatus.UNAUTHORIZED);
+        }
         let token = this.authService.generateToken(request.user)
         this.logger.log('POST /login','logged In successfully')
         delete request.user.password

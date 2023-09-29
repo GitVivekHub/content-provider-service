@@ -16,11 +16,18 @@ export class CreateUserDto {
     @IsString()
     password:string
 
+    @IsString()
     organization:string
 
+    @IsString()
     approved:boolean
 
+    @IsString()
     reason:string
 
+    @IsString()
     source_code:string
+
+    @IsString()
+    enable: string
 }
