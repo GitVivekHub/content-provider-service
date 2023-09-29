@@ -19,15 +19,10 @@ export class CreateUserDto {
     @IsString()
     organization:string
 
-    @IsString()
-    approved:boolean
-
-    @IsString()
-    reason:string
 
     @IsString()
     source_code:string
 
-    @IsString()
+    approved:boolean
     enable: string
 }
