@@ -30,7 +30,7 @@ export class ProviderController {
     }
 
     @Patch('/content/:id')
-    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    // @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
     async editContent(@Request() request,@Param('id') id, @Body() createContentdto?:CreateContentDto){
         console.log("createContentdto", createContentdto);
         return this.providerService.editContent(id,createContentdto)

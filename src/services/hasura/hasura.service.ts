@@ -353,10 +353,21 @@ export class HasuraService {
   }
 
   async editContent(id, createContentdto) {
-    console.log("id", id)
-    console.log("createContentdto", createContentdto)
-    const query = `mutation UpdateMyData($id: Int!, $themes: String!) {
-      update_fln_content(where: {id: {_eq: 3}}, _set: {themes: "audio"}) {
+    // console.log("createContentdto", createContentdto)
+    const query = `mutation UpdateMyData($user_id: Int!, $themes: String, $code: Int, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String) {
+      update_fln_content(where: { user_id: { _eq: $user_id } }, _set: {
+        themes: $themes
+        code: $code
+        competency: $competency
+        contentType: $contentType
+        description: $description
+        domain: $domain
+        goal: $goal
+        language: $language
+        link: $link
+        sourceOrganisation: $sourceOrganisation
+        title: $title
+      }) {
         affected_rows
         returning {
           code
@@ -375,9 +386,23 @@ export class HasuraService {
           user_id
         }
       }
-    }`;
+    }
+    `
     try {
-      const response = await this.queryDb(query, createContentdto);
+      const response = await this.queryDb(query, {user_id:id,
+    
+        themes:createContentdto.themes,
+        code:createContentdto.code,
+        competency:createContentdto.competency,
+        contentType:createContentdto.contentType,
+        description:createContentdto.description,
+        domain:createContentdto.domain,
+        goal:createContentdto.goal,
+        language:createContentdto.language,
+        link:createContentdto.link,
+        sourceOrganisation:createContentdto.sourceOrganisation,
+        title:createContentdto.title
+      });
       console.log(response)
       return response;
     } catch (error) {
