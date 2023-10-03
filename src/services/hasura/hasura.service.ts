@@ -411,6 +411,41 @@ export class HasuraService {
 
   }
 
+  async findContent(getContentdto) {
+    let result = 'where: {'
+    Object.entries(getContentdto).forEach(([key, value]) => {
+      console.log(`${key}: ${value}`);
+      result += `${key}: {_eq: "${value}"}, `;
+    });
+    result += '}'
+    console.log("result", result)
+    const query = `query MyQuery {
+      fln_content(${result}) {
+        id
+        code
+        competency
+        contentType
+        description
+        domain
+        goal
+        image
+        language
+        link
+        sourceOrganisation
+        themes
+        title
+        user_id
+      }
+      }`;
+    try {
+      const response = await this.queryDb(query);
+      return response;
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating Admin", error);
+      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async queryDb(query: string, variables?: Record<string, any>): Promise<any> {
     try {
       const response = await axios.post(

@@ -8,6 +8,7 @@ import { HttpModule } from '@nestjs/axios';
 import { LoggerService } from './services/logger/logger.service';
 import { ProviderModule } from './provider/provider.module';
 import { SeekerModule } from './seeker/seeker.module';
+import { HasuraService } from './services/hasura/hasura.service';
 
 
 @Module({
@@ -21,6 +22,6 @@ import { SeekerModule } from './seeker/seeker.module';
     AdminModule, ProviderModule, SeekerModule,
   ],
   controllers: [AppController],
-  providers: [AppService, LoggerService],
+  providers: [AppService, LoggerService, HasuraService],
 })
 export class AppModule {}

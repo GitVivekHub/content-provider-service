@@ -1,5 +1,6 @@
-import { Body, Controller, Patch, UseGuards, Request } from '@nestjs/common';
+import { Body, Controller, Patch, UseGuards, Request, Post } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { CreateContentDto } from 'src/dto/createContent.dto';
 import { ResetPasswordDto } from 'src/dto/resetPassword.dto';
 import { RoleGuard } from 'src/role.guard';
 import { LoggerService } from 'src/services/logger/logger.service';
@@ -16,4 +17,12 @@ export class SeekerController {
         this.logggerService.log('Patch /resetPassword',request.user.id);
         return this.seekerService.resetPassword(request.user.email, resetPasswordDto)
     }
+
+    @Post('/getContent')
+    async getContent(@Request() request,@Body() getContentdto?:CreateContentDto){
+        console.log("getContentdto", getContentdto);
+        this.logggerService.log('POST /getContent');
+        return this.seekerService.getContent(getContentdto)
+    }
+    
 }

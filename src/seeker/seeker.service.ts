@@ -23,4 +23,8 @@ export class SeekerService {
             
         }
     }
+
+    async getContent(getContentdto) {
+        return this.hasuraService.findContent(getContentdto);
+    }
 }
