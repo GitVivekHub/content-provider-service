@@ -106,7 +106,7 @@ export const flnCatalogGeneratorV3 = (
   return catalog;
 };
 
-export const flnCatalogGeneratorV4 = (
+export const flnCatalogGenerator = (
   apiData: any,
   query: string,
 ) => {
@@ -220,10 +220,11 @@ export const flnCatalogGeneratorV4 = (
   return catalog;
 };
 
-export const flnCatalogGenerator = (
+export const flnCatalogGeneratorV4 = (
   apiData: any,
   query: string,
 ) => {
+  console.log("apidata", apiData)
   const courses: ReadonlyArray<{ node: any }> =
     apiData;
   const providerWise = {};
@@ -258,26 +259,26 @@ export const flnCatalogGenerator = (
           id: `${course.id}`,
           parent_item_id: '',
           descriptor: {
-            name: course.attributes.title,
-            long_desc: course.attributes.description ? course.attributes.description : '',
-            code: course.attributes.code,
-            competency: course.attributes.competency,
-            contentType: course.attributes.contentType,
-            domain: course.attributes.domain,
-            goal: course.attributes.goal,
-            language: course.attributes.language,
-            link: course.attributes.link,
-            sourceOrganisation: course.attributes.sourceOrganisation,
-            themes: course.attributes.themes,
-            title: course.attributes.title,
+            name: course.title,
+            long_desc: course.description ? course.description : '',
+            code: course.code,
+            competency: course.competency,
+            contentType: course.contentType,
+            domain: course.domain,
+            goal: course.goal,
+            language: course.language,
+            link: course.link,
+            sourceOrganisation: course.sourceOrganisation,
+            themes: course.themes,
+            title: course.title,
             images: [
               {
                 url:
-                  course.attributes.image == null
+                  course.image == null
                     ? encodeURI(
                       'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg'
                     )
-                    : encodeURI(course.attributes.image),
+                    : encodeURI(course.image),
               },
             ],
           },
@@ -302,7 +303,7 @@ export const flnCatalogGenerator = (
               list: [
                 {
                   name: 'credits',
-                  value: course.attributes.credits || '',
+                  value: course.credits || '',
                 },
                 {
                   name: 'instructors',
@@ -310,11 +311,11 @@ export const flnCatalogGenerator = (
                 },
                 {
                   name: 'offeringInstitue',
-                  value: course.attributes.sourceOrganisation || '',
+                  value: course.sourceOrganisation || '',
                 },
                 {
                   name: 'url',
-                  value: encodeURI(course.attributes.link || ''),
+                  value: encodeURI(course.link || ''),
                 },
                 {
                   name: 'enrollmentEndDate',

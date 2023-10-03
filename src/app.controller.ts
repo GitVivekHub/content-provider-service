@@ -14,7 +14,7 @@ export class AppController {
 
   @Post('dsep/search')
   getCoursesFromFln(@Body() body: any) {
-    return this.appService.getCoursesFromFln(body);
+    return this.appService.getCoursesFromFlnV4(body);
   }
 
   @Post('dsep/select')

@@ -3,7 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lastValueFrom, map } from 'rxjs';
 import { components } from 'types/schema';
 import { SwayamApiResponse } from 'types/SwayamApiResponse';
-import { selectItemMapper, flnCatalogGenerator } from 'utils/generator';
+import { selectItemMapper, flnCatalogGenerator, flnCatalogGeneratorV4 } from 'utils/generator';
 
 // getting course data
 import * as fs from 'fs';
@@ -218,8 +218,8 @@ export class AppService {
       
       const resp = await this.hasuraService.findContent(obj)
       console.log("resp", resp.data)
-      const flnResponse: any = resp.data;
-      const catalog = flnCatalogGenerator(flnResponse, query);
+      const flnResponse: any = resp.data.fln_content;
+      const catalog = flnCatalogGeneratorV4(flnResponse, query);
 
       const courseData: any = {
         context: body.context,
