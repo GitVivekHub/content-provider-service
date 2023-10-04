@@ -354,7 +354,7 @@ export class HasuraService {
 
   async editContent(id, createContentdto) {
     // console.log("createContentdto", createContentdto)
-    const query = `mutation UpdateMyData($id: Int!, $themes: String, $code: Int, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String) {
+    const query = `mutation UpdateMyData($id: Int!, $themes: String, $code: String, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String) {
       update_fln_content(where: { id: { _eq: $id } }, _set: {
         themes: $themes
         code: $code

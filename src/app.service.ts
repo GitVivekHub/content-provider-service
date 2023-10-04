@@ -221,6 +221,7 @@ export class AppService {
       const flnResponse: any = resp.data.fln_content;
       const catalog = flnCatalogGeneratorV4(flnResponse, query);
 
+      body.context.action = 'on_search'
       const courseData: any = {
         context: body.context,
         message: {
