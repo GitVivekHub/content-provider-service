@@ -2,13 +2,7 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator'
 
 export class CreateContentDto {
 
-    @IsNotEmpty()
-    @IsNumber()
     code:number
-
-
-    @IsNotEmpty()
-    @IsNumber()
     competency:string
     contentType:string
     description:string
@@ -20,7 +14,5 @@ export class CreateContentDto {
     themes:string
     title:string
     user_id:string
-
-
     image:string
 }

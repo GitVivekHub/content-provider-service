@@ -20,7 +20,6 @@ export class CreateUserDto {
     organization:string
 
 
-    @IsString()
     source_code:string
 
     approved:boolean
