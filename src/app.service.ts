@@ -92,7 +92,7 @@ export class AppService {
     }
   }
 
-  async getCoursesFromFln(body: {
+  async getCoursesFromFlnV4(body: {
     context: components['schemas']['Context'];
     message: { intent: components['schemas']['Intent'] };
   }) {
@@ -147,7 +147,7 @@ export class AppService {
       );
       console.log("resp", resp)
       const flnResponse: any = resp;
-      const catalog = flnCatalogGenerator(flnResponse, query);
+      const catalog = flnCatalogGeneratorV4(flnResponse, query);
 
       const courseData: any = {
         context: body.context,
@@ -164,7 +164,7 @@ export class AppService {
     }
   }
 
-  async getCoursesFromFlnV4(body: {
+  async getCoursesFromFln(body: {
     context: components['schemas']['Context'];
     message: { intent: components['schemas']['Intent'] };
   }) {
@@ -219,7 +219,7 @@ export class AppService {
       const resp = await this.hasuraService.findContent(obj)
       console.log("resp", resp.data)
       const flnResponse: any = resp.data.fln_content;
-      const catalog = flnCatalogGeneratorV4(flnResponse, query);
+      const catalog = flnCatalogGenerator(flnResponse, query);
 
       body.context.action = 'on_search'
       const courseData: any = {

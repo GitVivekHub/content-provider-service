@@ -106,7 +106,7 @@ export const flnCatalogGeneratorV3 = (
   return catalog;
 };
 
-export const flnCatalogGenerator = (
+export const flnCatalogGeneratorV4 = (
   apiData: any,
   query: string,
 ) => {
@@ -220,7 +220,7 @@ export const flnCatalogGenerator = (
   return catalog;
 };
 
-export const flnCatalogGeneratorV4 = (
+export const flnCatalogGenerator = (
   apiData: any,
   query: string,
 ) => {
@@ -299,26 +299,38 @@ export const flnCatalogGeneratorV4 = (
           rating: Math.floor(Math.random() * 6).toString(), // map it to an actual response
           tags: [
             {
-              name: 'courseInfo',
+              descriptor: {
+                name: "courseInfo"
+              },
               list: [
                 {
-                  name: 'credits',
+                  descriptor: {
+                    name: 'credits',
+                  },
                   value: course.credits || '',
                 },
                 {
-                  name: 'instructors',
+                  descriptor: {
+                    name: 'instructors',
+                  },
                   value: '',
                 },
                 {
-                  name: 'offeringInstitue',
+                  descriptor: {
+                    name: 'offeringInstitue',
+                  },
                   value: course.sourceOrganisation || '',
                 },
                 {
-                  name: 'url',
+                  descriptor: {
+                    name: 'url',
+                  },
                   value: encodeURI(course.link || ''),
                 },
                 {
-                  name: 'enrollmentEndDate',
+                  descriptor: {
+                    name: 'enrollmentEndDate',
+                  },
                   value: '2023-07-31T18:29:00.000000Z',
                 },
               ],
