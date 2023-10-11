@@ -15,4 +15,5 @@ export class CreateContentDto {
     title:string
     user_id:string
     image:string
+    seeker_id:string
 }

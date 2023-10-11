@@ -324,6 +324,75 @@ export class HasuraService {
 
   }
 
+  async createContentBookmark(id, createContentdto) {
+    const query = `mutation insert_bookmark_content($seeker_id:Int,$description: String,$code:String,$competency:String,$contentType:String,$domain:String,$goal:String,$image:String,$language:String,$link:String,$sourceOrganisation:String,$themes:String,$title:String) {
+      insert_bookmark_content(objects: {seeker_id:$seeker_id,description: $description,code: $code, competency:$competency, contentType:$contentType, domain:$domain, goal:$goal, image:$image, language:$language, link: $link, sourceOrganisation: $sourceOrganisation, themes: $themes, title: $title}) {
+        returning {
+          id
+          seeker_id
+        }
+      }
+    }
+    `
+    try {
+      console.log("Response ", createContentdto);
+      const response = await this.queryDb(query, { seeker_id: id, ...createContentdto });
+      console.log("response", response);
+      return response
+    } catch (error) {
+      throw new HttpException('Failed to create Content', HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  async removeBookmarkContent(id, seeker_id) {
+    console.log("id", id)
+    console.log("seeker_id", seeker_id)
+    const query = `mutation MyMutation {
+      delete_bookmark_content(where: {id: {_eq: ${id}}, seeker_id: {_eq: ${seeker_id}}}) {
+        returning {
+          id
+        }
+      }
+    }`
+    try {
+      const response = await this.queryDb(query);
+      console.log("response", response);
+      return response
+    } catch (error) {
+      throw new HttpException('Failed to create Content', HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  async getBookmarkContent(seeker_id) {
+    const query = `query GetUser {
+      bookmark_content(where: {seeker_id: {_eq: ${seeker_id}}}) {
+        code
+        competency
+        contentType
+        description
+        domain
+        goal
+        image
+        language
+        link
+        sourceOrganisation
+        themes
+        title
+        id
+        seeker_id
+      }
+  }`;
+    try {
+      const response = await this.queryDb(query);
+      return response;
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating Admin", error);
+      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async getContent(id) {
     const query = `query GetUser {
       fln_content(where: {user_id: {_eq: ${id}}}) {

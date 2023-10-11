@@ -27,4 +27,16 @@ export class SeekerService {
     async getContent(getContentdto) {
         return this.hasuraService.findContent(getContentdto);
     }
+
+    async createContentBookmark(id,createContentdto){
+        return this.hasuraService.createContentBookmark(id,createContentdto)
+    }
+
+    async removeBookmarkContent(id, seeker_id){
+        return this.hasuraService.removeBookmarkContent(id, seeker_id)
+    }
+
+    async getBookmarkContent(seeker_id){
+        return this.hasuraService.getBookmarkContent(seeker_id)
+    }
 }

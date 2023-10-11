@@ -1,4 +1,4 @@
-import { Body, Controller, Patch, UseGuards, Request, Post } from '@nestjs/common';
+import { Body, Controller, Patch, UseGuards, Request, Post, Delete, Param, Get } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateContentDto } from 'src/dto/createContent.dto';
 import { ResetPasswordDto } from 'src/dto/resetPassword.dto';
@@ -23,6 +23,36 @@ export class SeekerController {
         console.log("getContentdto", getContentdto);
         this.logggerService.log('POST /getContent');
         return this.seekerService.getContent(getContentdto)
+    }
+
+    @Post('/bookmarkContent')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async createContentBookmark(@Request() request,@Body() createContentdto?:CreateContentDto){
+        console.log("user", request.user);
+        console.log("createContentdto", createContentdto);
+        this.logggerService.log('POST /createContent',request.user.id);
+        let id = request.user.id
+        console.log("id",id)
+        return this.seekerService.createContentBookmark(id,createContentdto)
+    }
+
+    @Delete('/bookmarkContent/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async removeBookmarkContent(@Request() request, @Param('id') id){
+        console.log("user", request.user);
+        this.logggerService.log('POST /createContent',request.user.id);
+        let seeker_id = request.user.id
+        console.log("id",id)
+        return this.seekerService.removeBookmarkContent(id, seeker_id)
+    }
+
+    @Get('/bookmarkContent')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async getBookmarkContent(@Request() request){
+        console.log("user", request.user);
+        this.logggerService.log('POST /createContent',request.user.id);
+        let seeker_id = request.user.id
+        return this.seekerService.getBookmarkContent(seeker_id)
     }
     
 }
