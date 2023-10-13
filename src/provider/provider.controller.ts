@@ -62,6 +62,15 @@ export class ProviderController {
         return this.providerService.getCollection(provider_id)
     }
 
+    @Get('/collection/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async getCollectionContent(@Request() request, @Param('id') id){
+        this.logggerService.log('POST /createContent',request.user.id);
+        let provider_id = request.user.id
+        console.log("provider_id",provider_id)
+        return this.providerService.getCollectionContent(id)
+    }
+
     @Patch('/collection/:id')
     @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
     async updateCollection(@Request() request, @Param('id') id, @Body() body){
@@ -81,5 +90,25 @@ export class ProviderController {
         console.log("provider_id",provider_id)
         console.log("id",id)
         return this.providerService.deleteCollection(id, provider_id)
+    }
+
+    @Post('/contentCollection')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async createContentCollection(@Request() request,@Body() body){
+        this.logggerService.log('POST /createCollectionContent',request.user.id);
+        let provider_id = request.user.id
+        console.log("provider_id",provider_id)
+        console.log("body", body);
+        return this.providerService.createContentCollection(body)
+    }
+
+    @Delete('/contentCollection/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async deleteContentCollection(@Request() request, @Param('id') id){
+        this.logggerService.log('POST /deleteContentCollection',request.user.id);
+        let provider_id = request.user.id
+        console.log("provider_id",provider_id)
+        console.log("id",id)
+        return this.providerService.deleteContentCollection(id)
     }
 }

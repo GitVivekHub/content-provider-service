@@ -564,6 +564,45 @@ export class HasuraService {
     }
   }
 
+  async getCollectionContent(id) {
+    console.log("id", id)
+    const collectionMutation = `query MyQuery {
+      collection(where: {id: {_eq: ${id}}}) {
+        collectionContentRelation {
+          id
+          content_id
+          collection_id
+          contentFlncontentRelation {
+            code
+            competency
+            contentType
+            description
+            domain
+            goal
+            id
+            image
+            language
+            link
+            sourceOrganisation
+            themes
+            title
+            user_id
+          }
+        }
+      }
+    } 
+    `;
+
+    try {
+      return await this.queryDb(collectionMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in fetching content list", error);
+      throw new HttpException("Something Went wrong in content list", HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async updateCollection(id, provider_id, body) {
     console.log("provider_id", provider_id)
     console.log("id", id)
@@ -597,6 +636,48 @@ export class HasuraService {
     console.log("id", id)
     const collectionMutation = `mutation MyMutation {
       delete_collection(where: {id: {_eq: 1}, provider_id: {_eq: 35}}) {
+        affected_rows
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(collectionMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in deleting collection", error);
+      throw new HttpException("Something Went wrong in deleting collection", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async createContentCollection(body) {
+    console.log("body", body)
+    const collectionContentMutation = `mutation MyMutation {
+      insert_contents(objects: {collection_id: ${body.collection_id}, content_id: ${body.content_id}}) {
+        returning {
+          collection_id
+          content_id
+          id
+        }
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(collectionContentMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in deleting collection", error);
+      throw new HttpException("Something Went wrong in deleting collection", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async deleteContentCollection(id) {
+    console.log("id", id)
+    const collectionMutation = `mutation MyMutation {
+      delete_contents(where: {id: {_eq: ${id}}}) {
         affected_rows
       }
     }

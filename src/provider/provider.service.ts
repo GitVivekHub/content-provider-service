@@ -57,11 +57,23 @@ export class ProviderService {
         return this.hasuraService.getCollection(provider_id)
     }
 
+    async getCollectionContent(id) {
+        return this.hasuraService.getCollectionContent(id)
+    }
+
     async updateCollection(id, provider_id, body) {
         return this.hasuraService.updateCollection(id, provider_id, body)
     }
 
     async deleteCollection(id, provider_id) {
         return this.hasuraService.deleteCollection(id, provider_id)
+    }
+
+    async createContentCollection(body) {
+        return this.hasuraService.createContentCollection(body)
+    }
+
+    async deleteContentCollection(id) {
+        return this.hasuraService.deleteContentCollection(id)
     }
 }
