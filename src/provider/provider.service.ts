@@ -48,4 +48,20 @@ export class ProviderService {
             
         }
     }
+
+    async createCollection(provider_id, body) {
+      return this.hasuraService.createCollection(provider_id, body)
+    }
+
+    async getCollection(provider_id) {
+        return this.hasuraService.getCollection(provider_id)
+    }
+
+    async updateCollection(id, provider_id, body) {
+        return this.hasuraService.updateCollection(id, provider_id, body)
+    }
+
+    async deleteCollection(id, provider_id) {
+        return this.hasuraService.deleteCollection(id, provider_id)
+    }
 }

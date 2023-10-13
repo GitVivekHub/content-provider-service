@@ -224,7 +224,7 @@ export class HasuraService {
       }
     }`;
     try {
-      
+
       const response = await this.queryDb(query, { id: id, password: password })
       return response
     } catch (error) {
@@ -458,19 +458,20 @@ export class HasuraService {
     }
     `
     try {
-      const response = await this.queryDb(query, {id:id,
-    
-        themes:createContentdto.themes,
-        code:createContentdto.code,
-        competency:createContentdto.competency,
-        contentType:createContentdto.contentType,
-        description:createContentdto.description,
-        domain:createContentdto.domain,
-        goal:createContentdto.goal,
-        language:createContentdto.language,
-        link:createContentdto.link,
-        sourceOrganisation:createContentdto.sourceOrganisation,
-        title:createContentdto.title
+      const response = await this.queryDb(query, {
+        id: id,
+
+        themes: createContentdto.themes,
+        code: createContentdto.code,
+        competency: createContentdto.competency,
+        contentType: createContentdto.contentType,
+        description: createContentdto.description,
+        domain: createContentdto.domain,
+        goal: createContentdto.goal,
+        language: createContentdto.language,
+        link: createContentdto.link,
+        sourceOrganisation: createContentdto.sourceOrganisation,
+        title: createContentdto.title
       });
       console.log(response)
       return response;
@@ -515,6 +516,102 @@ export class HasuraService {
     }
   }
 
+  async createCollection(provider_id, body) {
+    console.log("provider_id", provider_id)
+    console.log("body", body)
+    const collectionMutation = `mutation MyMutation {
+        insert_collection(objects: {provider_id: ${provider_id}, title: "${body.title}"}) {
+          returning {
+            createdAt
+            id
+            provider_id
+            title
+            updatedAt
+          }
+        }
+      }`;
+
+    try {
+      return await this.queryDb(collectionMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in creating User", error);
+      throw new HttpException("Something Went wrong in creating User", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async getCollection(provider_id) {
+    console.log("provider_id", provider_id)
+    const collectionMutation = `query MyQuery {
+      collection(where: {provider_id: {_eq: ${provider_id}}}) {
+        id
+        provider_id
+        title
+        updatedAt
+        createdAt
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(collectionMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in creating User", error);
+      throw new HttpException("Something Went wrong in creating User", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async updateCollection(id, provider_id, body) {
+    console.log("provider_id", provider_id)
+    console.log("id", id)
+    console.log("body", body)
+    const collectionMutation = `mutation MyMutation {
+      update_collection(where: {id: {_eq: ${id}}, provider_id: {_eq: ${provider_id}}}, _set: {title: "${body.title}"}) {
+        affected_rows
+        returning {
+          provider_id
+          title
+          id
+          createdAt
+          updatedAt
+        }
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(collectionMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in creating User", error);
+      throw new HttpException("Something Went wrong in creating User", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async deleteCollection(id, provider_id) {
+    console.log("provider_id", provider_id)
+    console.log("id", id)
+    const collectionMutation = `mutation MyMutation {
+      delete_collection(where: {id: {_eq: 1}, provider_id: {_eq: 35}}) {
+        affected_rows
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(collectionMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in deleting collection", error);
+      throw new HttpException("Something Went wrong in deleting collection", HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async queryDb(query: string, variables?: Record<string, any>): Promise<any> {
     try {
       const response = await axios.post(
@@ -536,4 +633,6 @@ export class HasuraService {
 
     }
   }
+
+
 }
