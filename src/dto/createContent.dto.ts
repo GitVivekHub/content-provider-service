@@ -1,7 +1,6 @@
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator'
 
 export class CreateContentDto {
-
     code:number
     competency:string
     contentType:string
@@ -15,5 +14,15 @@ export class CreateContentDto {
     title:string
     user_id:string
     image:string
-    seeker_id:string
+    content_id: string
+    publisher: string
+    collection: boolean
+    urlType: string
+    url: string
+    mimeType: string
+    minAge: string
+    maxAge: string
+    author: string
+    curricularGoals: string
+    learningOutcomes: string
 }
