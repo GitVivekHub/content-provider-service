@@ -520,12 +520,40 @@ export class HasuraService {
     console.log("provider_id", provider_id)
     console.log("body", body)
     const collectionMutation = `mutation MyMutation {
-        insert_collection(objects: {provider_id: ${provider_id}, title: "${body.title}"}) {
+        insert_collection(objects: {
+          provider_id: ${provider_id}, 
+          title: "${body.title}",
+          description: "${body.description}",
+          icon: "${body.icon}",
+          publisher: "${body.publisher}",
+          author: "${body.author}",
+          learningObjectives: "${body.learningObjectives}",
+          language: "${body.language}",
+          category: "${body.category}",
+          themes: "${body.themes}",
+          minAge: "${body.minAge}",
+          maxAge: "${body.maxAge}",
+          domain: "${body.domain}",
+          curricularGoals: "${body.curricularGoals}",
+
+        }) {
           returning {
-            createdAt
             id
             provider_id
             title
+            description
+            icon
+            publisher
+            author
+            learningObjectives
+            category
+            language
+            themes
+            minAge
+            maxAge
+            domain
+            curricularGoals
+            createdAt
             updatedAt
           }
         }
