@@ -63,4 +63,66 @@ export class ProviderService {
     async deleteContentCollection(id) {
         return this.hasuraService.deleteContentCollection(id)
     }
+
+    async createBulkContent1(provider_id, data) {
+        return this.hasuraService.createBulkContent(provider_id, data)
+    }
+
+    async createBulkContent(provider_id, result) {
+        const expectedHeaders = ['content_id', 'Name', 'Description', 'Icon', 'Publisher', 'Collection', 'URL_Type', 'URL', 'Mime_Type', 'Language', 'Content Type', 'Category', 'Themes', 'Min age', 'Max age', 'Author', 'Domain', 'Curricular Goals', 'Competencies', 'Learning Outomes'];
+        const csvheader = Object.keys(result[0])
+        const areHeadersValid = this.arraysHaveSameElements(expectedHeaders,csvheader)
+        // const areHeadersValid = expectedHeaders.every((expectedHeader) => {
+        //     return csvheader.includes(expectedHeader);
+        // })
+        const updates = [];
+
+        if (areHeadersValid) {
+            for (const log of result) {
+                updates.push({
+                    competency: log['Competencies'],
+                    contentType: log['Content Type'],
+                    description: log['Description'],
+                    domain: log['Domain'],
+                    goal: log['Curricular Goals'],
+                    language: log['Language'],
+                    link: log['URL'],
+                    sourceOrganisation: log['Publisher'],
+                    image: log['Icon'],
+                    themes: log['Themes'],
+                    title: log['Name'],
+                    user_id: provider_id,
+                    content_id: log['content_id'],
+                    publisher: log['Publisher'],
+                    collection: log['Collection'],
+                    urlType: log['URL_Type'],
+                    mimeType: log['Mime_Type'],
+                    minAge: parseInt(log['Min age']) ,
+                    maxAge: parseInt(log['Max age']),
+                    author: log['Author'],
+                    learningOutcomes: log['Learning Outomes'],
+                })
+
+            }
+            const promises = []
+            updates.forEach((item) => {
+                promises.push(this.hasuraService.createContent(provider_id, item))
+            })
+
+            return await Promise.all(promises)
+        
+        } else {
+            return {
+                error: "Invalid CSV headers"
+            }
+        }
+    }
+
+    arraysHaveSameElements(arr1, arr2) {
+        if (arr1.length !== arr2.length) {
+          return false; // Arrays have different lengths, so they can't be the same
+        }
+        return arr1.every((element) => arr2.includes(element)) &&
+               arr2.every((element) => arr1.includes(element));
+      }
 }

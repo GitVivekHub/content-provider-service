@@ -1,10 +1,14 @@
-import { Controller,Post,UseGuards,Request, Body, Get, Patch, Param, Delete} from '@nestjs/common';
+import { Controller,Post,UseGuards,Request, Body, Get, Patch, Param, Delete, UseInterceptors, UploadedFile} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RoleGuard } from 'src/role.guard';
 import {ProviderService} from './provider.service'
 import {LoggerService} from '../services/logger/logger.service'
 import {CreateContentDto} from '../dto/createContent.dto'
 import { ResetPasswordDto } from 'src/dto/resetPassword.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { createReadStream } from 'fs';
+import * as csvParser from 'csv-parser';
 
 @Controller('provider')
 export class ProviderController {
@@ -110,5 +114,42 @@ export class ProviderController {
         console.log("provider_id",provider_id)
         console.log("id",id)
         return this.providerService.deleteContentCollection(id)
+    }
+
+    @Post('/createBulkContent1')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async createBulkContent(@Request() request, @Body() body){
+        this.logggerService.log('POST /createBulkContent',request.user.id);
+        let provider_id = request.user.id
+        return this.providerService.createBulkContent(provider_id, body)
+    }
+
+    @Post('/createBulkContent')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    @UseInterceptors(FileInterceptor('file', {
+        storage: diskStorage({
+            destination: './files'
+        })
+    }))
+    async uploadCSV(@UploadedFile() file: Express.Multer.File, @Request() request) {
+        let provider_id = request.user.id
+        const results = [];
+        //this.logger.log('uploadCsv /upload API')
+        return new Promise((resolve, reject) => {
+            createReadStream(file.path)
+                .pipe(csvParser())
+                .on('data', (data) => {
+                    results.push(data)
+                }
+                )
+                .on('end', async () => {
+                    const data = await this.providerService.createBulkContent(provider_id, results)
+                    resolve(data)
+                })
+                .on('error', (error) => {
+                    reject(error);
+                })
+        })
+
     }
 }

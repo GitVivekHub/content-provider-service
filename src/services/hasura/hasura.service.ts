@@ -744,5 +744,34 @@ export class HasuraService {
     }
   }
 
+  async createBulkContent(id, createContentdto) {
+    let flnContentArray = [
+      {author: "suraj k", code: "1234", collection: false, competency: "", contentType: "", content_id: "3211", curricularGoals: "", description: "", domain: "", goal: "", image: "", language: "", learningOutcomes: "xyz", link: "", maxAge: 10, mimeType: "", minAge: 20, publisher: "", sourceOrganisation: "", themes: "", title: "Physics", url: "", urlType: "", user_id: 35},
+      {author: "suraj s", code: "1245", collection: false, competency: "", contentType: "", content_id: "3221", curricularGoals: "", description: "", domain: "", goal: "", image: "", language: "", learningOutcomes: "xyz", link: "", maxAge: 10, mimeType: "", minAge: 20, publisher: "", sourceOrganisation: "", themes: "", title: "Maths", url: "", urlType: "", user_id: 35}
+    ]
+    const query = `mutation MyMutation {
+      insert_fln_content(objects: [
+        {author: "suraj k", code: "123", collection: false, competency: "", contentType: "", content_id: "32146", curricularGoals: "", description: "", domain: "", goal: "", image: "", language: "", learningOutcomes: "xyz", link: "", maxAge: 10, mimeType: "", minAge: 20, publisher: "", sourceOrganisation: "", themes: "", title: "Physics", url: "", urlType: "", user_id: 35},
+        {author: "suraj s", code: "124", collection: false, competency: "", contentType: "", content_id: "32236", curricularGoals: "", description: "", domain: "", goal: "", image: "", language: "", learningOutcomes: "xyz", link: "", maxAge: 10, mimeType: "", minAge: 20, publisher: "", sourceOrganisation: "", themes: "", title: "Maths", url: "", urlType: "", user_id: 35}
+      ]) {
+        affected_rows
+        returning {
+          id
+          user_id
+        }
+      }
+    }
+    `
+    try {
+      
+      const response = await this.queryDb(query);
+      console.log("response", response);
+      return response
+    } catch (error) {
+      throw new HttpException('Failed to create Content', HttpStatus.NOT_FOUND);
+    }
+
+  }
+
 
 }
