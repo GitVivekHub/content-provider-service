@@ -28,6 +28,10 @@ export class SeekerService {
         return this.hasuraService.findContent(getContentdto);
     }
 
+    async getCollection(getCollectiondto) {
+        return this.hasuraService.findCollection(getCollectiondto);
+    }
+
     async createContentBookmark(id,createContentdto){
         return this.hasuraService.createContentBookmark(id,createContentdto)
     }

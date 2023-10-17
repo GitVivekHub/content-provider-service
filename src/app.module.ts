@@ -9,6 +9,7 @@ import { LoggerService } from './services/logger/logger.service';
 import { ProviderModule } from './provider/provider.module';
 import { SeekerModule } from './seeker/seeker.module';
 import { HasuraService } from './services/hasura/hasura.service';
+import { S3Service } from './services/s3/s3.service';
 
 
 @Module({
@@ -22,6 +23,6 @@ import { HasuraService } from './services/hasura/hasura.service';
     AdminModule, ProviderModule, SeekerModule,
   ],
   controllers: [AppController],
-  providers: [AppService, LoggerService, HasuraService],
+  providers: [AppService, LoggerService, HasuraService, S3Service],
 })
 export class AppModule {}

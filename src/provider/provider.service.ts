@@ -1,43 +1,44 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import {HasuraService} from '../services/hasura/hasura.service'
+import { HasuraService } from '../services/hasura/hasura.service'
 import { CreateContentDto } from 'src/dto/createContent.dto';
 import * as bcrypt from "bcrypt"
+import { S3Service } from 'src/services/s3/s3.service';
 
 @Injectable()
 export class ProviderService {
 
-    constructor (private readonly hasuraService:HasuraService){}
-    async createContent(id,createContentdto){
-        return this.hasuraService.createContent(id,createContentdto)
+    constructor(private readonly hasuraService: HasuraService, private readonly s3Service: S3Service) { }
+    async createContent(id, createContentdto) {
+        return this.hasuraService.createContent(id, createContentdto)
     }
 
-    async getContent(id){
+    async getContent(id) {
         return this.hasuraService.getContent(id)
     }
 
-    async editContent(id,createContentdto){
-        return this.hasuraService.editContent(id,createContentdto)
+    async editContent(id, createContentdto) {
+        return this.hasuraService.editContent(id, createContentdto)
     }
 
     async resetPassword(email, resetPasswordDto) {
         console.log("email", email)
         console.log("resetPasswordDto", resetPasswordDto)
         const user = await this.hasuraService.findOne(email)
-        if(user) {
+        if (user) {
             const passwordMatches = await bcrypt.compare(resetPasswordDto.currentPassword, user.password);
-            if(passwordMatches) {
-                const newPassword = await bcrypt.hash(resetPasswordDto.newPassword,10) 
+            if (passwordMatches) {
+                const newPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10)
                 return this.hasuraService.updatePassword(user.id, newPassword)
-                
+
             } else {
                 throw new HttpException('Password is incorrect!', HttpStatus.UNAUTHORIZED);
             }
-            
+
         }
     }
 
     async createCollection(provider_id, body) {
-      return this.hasuraService.createCollection(provider_id, body)
+        return this.hasuraService.createCollection(provider_id, body)
     }
 
     async getCollection(provider_id) {
@@ -71,7 +72,7 @@ export class ProviderService {
     async createBulkContent(provider_id, result) {
         const expectedHeaders = ['content_id', 'Name', 'Description', 'Icon', 'Publisher', 'Collection', 'URL_Type', 'URL', 'Mime_Type', 'Language', 'Content Type', 'Category', 'Themes', 'Min age', 'Max age', 'Author', 'Domain', 'Curricular Goals', 'Competencies', 'Learning Outomes'];
         const csvheader = Object.keys(result[0])
-        const areHeadersValid = this.arraysHaveSameElements(expectedHeaders,csvheader)
+        const areHeadersValid = this.arraysHaveSameElements(expectedHeaders, csvheader)
         // const areHeadersValid = expectedHeaders.every((expectedHeader) => {
         //     return csvheader.includes(expectedHeader);
         // })
@@ -97,7 +98,7 @@ export class ProviderService {
                     collection: log['Collection'],
                     urlType: log['URL_Type'],
                     mimeType: log['Mime_Type'],
-                    minAge: parseInt(log['Min age']) ,
+                    minAge: parseInt(log['Min age']),
                     maxAge: parseInt(log['Max age']),
                     author: log['Author'],
                     learningOutcomes: log['Learning Outomes'],
@@ -110,7 +111,7 @@ export class ProviderService {
             })
 
             return await Promise.all(promises)
-        
+
         } else {
             return {
                 error: "Invalid CSV headers"
@@ -120,9 +121,28 @@ export class ProviderService {
 
     arraysHaveSameElements(arr1, arr2) {
         if (arr1.length !== arr2.length) {
-          return false; // Arrays have different lengths, so they can't be the same
+            return false; // Arrays have different lengths, so they can't be the same
         }
         return arr1.every((element) => arr2.includes(element)) &&
-               arr2.every((element) => arr1.includes(element));
-      }
+            arr2.every((element) => arr1.includes(element));
+    }
+
+    async addFile(file: Express.Multer.File, document_type: string) {
+        
+        const originalName = file.originalname.split(" ").join("").toLowerCase()
+        const [name, fileType] = originalName.split(".")
+        let key = `${name}${Date.now()}.${fileType}`;
+        console.log("key", key)
+        const imageUrl = await this.s3Service.uploadFile(file, key);
+        console.log("imageUrl", imageUrl)
+        return imageUrl
+
+        
+        
+    }
+
+    async getFile(id: string) {
+        const key = id;
+        return await this.s3Service.getFileUrl(key);
+    }
 }

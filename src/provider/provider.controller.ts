@@ -152,4 +152,27 @@ export class ProviderController {
         })
 
     }
+
+    @Post('/uploadImage')
+    @UseInterceptors(FileInterceptor('file'))
+    async addFile(
+        @UploadedFile() file: Express.Multer.File,
+        @Param('id') id: number,
+        @Body('document_type') document_type: string,
+        
+    ) {
+        console.log("upload-file", file)
+        console.log("document_type", document_type)
+        return await this.providerService.addFile(file, document_type)
+    }
+
+    @Get('/:id/getImageUrl')
+    @UseInterceptors(FileInterceptor('file'))
+    async getFileUrl(
+        @Param('id') id: string
+    ) {
+        console.log("get-file id", id)
+        await this.providerService.getFile(id)
+    }
+
 }

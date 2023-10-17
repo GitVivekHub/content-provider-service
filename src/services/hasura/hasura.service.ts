@@ -517,6 +517,42 @@ export class HasuraService {
     }
   }
 
+  async findCollection(getCollectiondto) {
+    let result = 'where: {'
+    Object.entries(getCollectiondto).forEach(([key, value]) => {
+      console.log(`${key}: ${value}`);
+      result += `${key}: {_eq: "${value}"}, `;
+    });
+    result += '}'
+    console.log("result", result)
+    const query = `query MyQuery {
+      collection(${result}) {
+        id
+        icon
+        domain
+        description
+        curricularGoals
+        language
+        learningObjectives
+        maxAge
+        minAge
+        provider_id
+        publisher
+        themes
+        title
+        updatedAt
+        createdAt
+      }
+      }`;
+    try {
+      const response = await this.queryDb(query);
+      return response;
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating Admin", error);
+      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async createCollection(provider_id, body) {
     console.log("provider_id", provider_id)
     console.log("body", body)

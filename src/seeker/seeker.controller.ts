@@ -18,11 +18,18 @@ export class SeekerController {
         return this.seekerService.resetPassword(request.user.email, resetPasswordDto)
     }
 
-    @Post('/search')
+    @Post('/searchContent')
     async getContent(@Request() request,@Body() getContentdto?:CreateContentDto){
         console.log("getContentdto", getContentdto);
         this.logggerService.log('POST /getContent');
         return this.seekerService.getContent(getContentdto)
+    }
+
+    @Post('/searchCollection')
+    async getCollection(@Request() request,@Body() body){
+        console.log("getCollectionDto", body);
+        this.logggerService.log('POST /getCollection');
+        return this.seekerService.getCollection(body)
     }
 
     @Post('/bookmarkContent')
