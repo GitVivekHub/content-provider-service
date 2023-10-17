@@ -506,6 +506,15 @@ export class HasuraService {
         themes
         title
         user_id
+        content_id
+        publisher
+        collection
+        urlType
+        mimeType
+        minAge
+        maxAge
+        author
+        learningOutcomes
       }
       }`;
     try {
