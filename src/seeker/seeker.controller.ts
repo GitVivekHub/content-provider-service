@@ -18,7 +18,7 @@ export class SeekerController {
         return this.seekerService.resetPassword(request.user.email, resetPasswordDto)
     }
 
-    @Post('/getContent')
+    @Post('/search')
     async getContent(@Request() request,@Body() getContentdto?:CreateContentDto){
         console.log("getContentdto", getContentdto);
         this.logggerService.log('POST /getContent');
