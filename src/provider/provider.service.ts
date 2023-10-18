@@ -135,7 +135,7 @@ export class ProviderService {
         console.log("key", key)
         const imageUrl = await this.s3Service.uploadFile(file, key);
         console.log("imageUrl", imageUrl)
-        return imageUrl
+        return {imageUrl: imageUrl, mimetype: fileType}
 
         
         

@@ -157,7 +157,6 @@ export class ProviderController {
     @UseInterceptors(FileInterceptor('file'))
     async addFile(
         @UploadedFile() file: Express.Multer.File,
-        @Param('id') id: number,
         @Body('document_type') document_type: string,
         
     ) {
