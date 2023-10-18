@@ -709,7 +709,7 @@ export class HasuraService {
     console.log("provider_id", provider_id)
     console.log("id", id)
     const collectionMutation = `mutation MyMutation {
-      delete_collection(where: {id: {_eq: 1}, provider_id: {_eq: 35}}) {
+      delete_collection(where: {id: {_eq: ${id}}, provider_id: {_eq: ${provider_id}}}) {
         affected_rows
       }
     }
