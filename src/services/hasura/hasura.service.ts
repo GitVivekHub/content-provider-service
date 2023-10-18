@@ -620,8 +620,18 @@ export class HasuraService {
     const collectionMutation = `query MyQuery {
       collection(where: {provider_id: {_eq: ${provider_id}}}) {
         id
-        provider_id
+        icon
+        domain
+        description
+        curricularGoals
+        language
+        learningObjectives
+        maxAge
+        minAge
+        publisher
+        themes
         title
+        provider_id
         updatedAt
         createdAt
       }
@@ -642,6 +652,21 @@ export class HasuraService {
     console.log("id", id)
     const collectionMutation = `query MyQuery {
       collection(where: {id: {_eq: ${id}}}) {
+        id
+        icon
+        domain
+        description
+        curricularGoals
+        language
+        learningObjectives
+        maxAge
+        minAge
+        publisher
+        themes
+        title
+        provider_id
+        updatedAt
+        createdAt
         collectionContentRelation {
           id
           content_id
