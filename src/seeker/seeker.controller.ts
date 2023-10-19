@@ -26,10 +26,10 @@ export class SeekerController {
     }
 
     @Post('/searchCollection')
-    async getCollection(@Request() request,@Body() body){
+    async searchCollection(@Request() request,@Body() body){
         console.log("getCollectionDto", body);
         this.logggerService.log('POST /getCollection');
-        return this.seekerService.getCollection(body)
+        return this.seekerService.searchCollection(body)
     }
 
     @Post('/bookmarkContent')
@@ -60,6 +60,19 @@ export class SeekerController {
         this.logggerService.log('POST /createContent',request.user.id);
         let seeker_id = request.user.id
         return this.seekerService.getBookmarkContent(seeker_id)
+    }
+
+    @Get('/collection')
+    async getCollection(@Request() request){
+        // this.logggerService.log('POST /createContent',request.user.id);
+        // let provider_id = request.user.id
+        // console.log("provider_id",provider_id)
+        return this.seekerService.getCollection()
+    }
+
+    @Get('/collection/:id')
+    async getCollectionContent(@Request() request, @Param('id') id){
+        return this.seekerService.getCollectionContent(id)
     }
     
 }

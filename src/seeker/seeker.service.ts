@@ -28,7 +28,7 @@ export class SeekerService {
         return this.hasuraService.findContent(getContentdto);
     }
 
-    async getCollection(getCollectiondto) {
+    async searchCollection(getCollectiondto) {
         return this.hasuraService.findCollection(getCollectiondto);
     }
 
@@ -42,5 +42,13 @@ export class SeekerService {
 
     async getBookmarkContent(seeker_id){
         return this.hasuraService.getBookmarkContent(seeker_id)
+    }
+
+    async getCollection() {
+        return this.hasuraService.getAllCollection()
+    }
+
+    async getCollectionContent(id) {
+        return this.hasuraService.getCollectionContent(id)
     }
 }

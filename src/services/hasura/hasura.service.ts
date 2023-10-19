@@ -648,6 +648,39 @@ export class HasuraService {
     }
   }
 
+  async getAllCollection() {
+    
+    const collectionMutation = `query MyQuery {
+      collection(where: {}) {
+        id
+        icon
+        domain
+        description
+        curricularGoals
+        language
+        learningObjectives
+        maxAge
+        minAge
+        publisher
+        themes
+        title
+        provider_id
+        updatedAt
+        createdAt
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(collectionMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in creating User", error);
+      throw new HttpException("Something Went wrong in creating User", HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async getCollectionContent(id) {
     console.log("id", id)
     const collectionMutation = `query MyQuery {
