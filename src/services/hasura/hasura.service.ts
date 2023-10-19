@@ -707,14 +707,26 @@ export class HasuraService {
     console.log("id", id)
     console.log("body", body)
     const collectionMutation = `mutation MyMutation {
-      update_collection(where: {id: {_eq: ${id}}, provider_id: {_eq: ${provider_id}}}, _set: {title: "${body.title}"}) {
+      update_collection(where: {id: {_eq: ${id}}, provider_id: {_eq: ${provider_id}}}, _set: {author: "${body.author}", category: "${body.category}", curricularGoals: "${body.curricularGoals}", description: "${body.description}", domain: "${body.domain}", icon: "${body.image}", language: "${body.language}", learningObjectives: "${body.learningObjectives}", maxAge: ${body.maxAge}, minAge: ${body.minAge}, publisher: "${body.publisher}", themes: "${body.themes}", title: "${body.title}"}) {
         affected_rows
         returning {
+          id
           provider_id
           title
-          id
-          createdAt
+          description
+          domain
+          icon
+          curricularGoals
+          author
+          category
+          themes
+          publisher
+          language
+          learningObjectives
+          maxAge
+          minAge
           updatedAt
+          createdAt
         }
       }
     }
