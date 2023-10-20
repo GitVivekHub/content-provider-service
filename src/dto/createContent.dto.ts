@@ -20,8 +20,8 @@ export class CreateContentDto {
     urlType: string
     url: string
     mimeType: string
-    minAge: string
-    maxAge: string
+    minAge: number
+    maxAge: number
     author: string
     curricularGoals: string
     learningOutcomes: string

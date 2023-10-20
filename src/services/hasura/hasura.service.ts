@@ -474,7 +474,7 @@ export class HasuraService {
 
   async editContent(id, createContentdto) {
     // console.log("createContentdto", createContentdto)
-    const query = `mutation UpdateMyData($id: Int!, $themes: String, $code: String, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String) {
+    const query = `mutation UpdateMyData($id: Int!, $themes: String, $code: String, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String, $publisher: String, $collection: Boolean, $urlType: String, $url: String, $mimeType: String, $minAge: Int, $maxAge: Int, $author: String, $curricularGoals: String, $learningOutcomes: String) {
       update_fln_content(where: { id: { _eq: $id } }, _set: {
         themes: $themes
         code: $code
@@ -487,43 +487,49 @@ export class HasuraService {
         link: $link
         sourceOrganisation: $sourceOrganisation
         title: $title
+        publisher: $publisher, 
+        collection: $collection, 
+        urlType: $urlType, 
+        url: $url, 
+        mimeType: $mimeType, 
+        minAge: $minAge, 
+        maxAge: $maxAge, 
+        author: $author, 
+        curricularGoals: $curricularGoals
+        learningOutcomes: $learningOutcomes
       }) {
         affected_rows
         returning {
+          id
+          user_id
           code
           competency
           contentType
           description
           domain
           goal
-          id
           image
           language
           link
           sourceOrganisation
           themes
           title
-          user_id
+          publisher
+          collection
+          urlType
+          url
+          mimeType
+          minAge
+          maxAge
+          author
+          curricularGoals
+          learningOutcomes
         }
       }
     }
     `
     try {
-      const response = await this.queryDb(query, {
-        id: id,
-
-        themes: createContentdto.themes,
-        code: createContentdto.code,
-        competency: createContentdto.competency,
-        contentType: createContentdto.contentType,
-        description: createContentdto.description,
-        domain: createContentdto.domain,
-        goal: createContentdto.goal,
-        language: createContentdto.language,
-        link: createContentdto.link,
-        sourceOrganisation: createContentdto.sourceOrganisation,
-        title: createContentdto.title
-      });
+      const response = await this.queryDb(query, {id: id, ...createContentdto});
       console.log(response)
       return response;
     } catch (error) {
