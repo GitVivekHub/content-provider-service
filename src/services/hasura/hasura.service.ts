@@ -397,20 +397,31 @@ export class HasuraService {
   async getContent(id) {
     const query = `query GetUser {
       fln_content(where: {user_id: {_eq: ${id}}}) {
-        code
-        competency
-        contentType
-        description
-        domain
-        goal
-        image
-        language
-        link
-        sourceOrganisation
-        themes
-        title
         id
         user_id
+        title
+        themes
+        url
+        urlType
+        sourceOrganisation
+        publisher
+        minAge
+        mimeType
+        maxAge
+        link
+        learningOutcomes
+        language
+        image
+        goal
+        domain
+        description
+        curricularGoals
+        content_id
+        contentType
+        competency
+        collection
+        code
+        author
       }
   }`;
     try {
@@ -425,20 +436,31 @@ export class HasuraService {
   async getContentById(id, provider_id) {
     const query = `query GetUser {
       fln_content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
-        code
-        competency
-        contentType
-        description
-        domain
-        goal
-        image
-        language
-        link
-        sourceOrganisation
-        themes
-        title
         id
         user_id
+        title
+        themes
+        url
+        urlType
+        sourceOrganisation
+        publisher
+        minAge
+        mimeType
+        maxAge
+        link
+        learningOutcomes
+        language
+        image
+        goal
+        domain
+        description
+        curricularGoals
+        content_id
+        contentType
+        competency
+        collection
+        code
+        author
       }
   }`;
     try {
