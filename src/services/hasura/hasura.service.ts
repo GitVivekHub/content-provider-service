@@ -571,6 +571,8 @@ export class HasuraService {
         maxAge
         author
         learningOutcomes
+        createdAt
+        updatedAt
       }
       }`;
     try {
@@ -593,6 +595,7 @@ export class HasuraService {
     const query = `query MyQuery {
       collection(${result}) {
         id
+        title
         icon
         domain
         description
@@ -604,9 +607,8 @@ export class HasuraService {
         provider_id
         publisher
         themes
-        title
-        updatedAt
         createdAt
+        updatedAt
       }
       }`;
     try {
@@ -721,8 +723,8 @@ export class HasuraService {
         themes
         title
         provider_id
-        updatedAt
         createdAt
+        updatedAt
       }
     }
     `;
@@ -742,6 +744,8 @@ export class HasuraService {
     const collectionMutation = `query MyQuery {
       collection(where: {id: {_eq: ${id}}}) {
         id
+        provider_id
+        title
         icon
         domain
         description
@@ -752,10 +756,8 @@ export class HasuraService {
         minAge
         publisher
         themes
-        title
-        provider_id
-        updatedAt
         createdAt
+        updatedAt
         collectionContentRelation {
           id
           content_id

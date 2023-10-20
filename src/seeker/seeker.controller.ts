@@ -64,9 +64,6 @@ export class SeekerController {
 
     @Get('/collection')
     async getCollection(@Request() request){
-        // this.logggerService.log('POST /createContent',request.user.id);
-        // let provider_id = request.user.id
-        // console.log("provider_id",provider_id)
         return this.seekerService.getCollection()
     }
 
