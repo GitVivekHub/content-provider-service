@@ -16,6 +16,10 @@ export class ProviderService {
         return this.hasuraService.getContent(id)
     }
 
+    async getContentById(id, provider_id) {
+        return this.hasuraService.getContentById(id, provider_id)
+    }
+
     async editContent(id, createContentdto) {
         return this.hasuraService.editContent(id, createContentdto)
     }

@@ -422,6 +422,34 @@ export class HasuraService {
     }
   }
 
+  async getContentById(id, provider_id) {
+    const query = `query GetUser {
+      fln_content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
+        code
+        competency
+        contentType
+        description
+        domain
+        goal
+        image
+        language
+        link
+        sourceOrganisation
+        themes
+        title
+        id
+        user_id
+      }
+  }`;
+    try {
+      const response = await this.queryDb(query);
+      return response;
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating Admin", error);
+      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async editContent(id, createContentdto) {
     // console.log("createContentdto", createContentdto)
     const query = `mutation UpdateMyData($id: Int!, $themes: String, $code: String, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String) {

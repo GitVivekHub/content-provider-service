@@ -33,6 +33,13 @@ export class ProviderController {
         return this.providerService.getContent(request.user.id)
     }
 
+    @Get('/contentById/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async getContentById(@Request() request, @Param('id') id){
+        this.logggerService.log('GET /getContent',request.user.id);
+        return this.providerService.getContentById(id, request.user.id)
+    }
+
     @Patch('/content/:id')
     // @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
     async editContent(@Request() request,@Param('id') id, @Body() createContentdto?:CreateContentDto){
