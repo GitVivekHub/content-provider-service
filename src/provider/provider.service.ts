@@ -24,6 +24,10 @@ export class ProviderService {
         return this.hasuraService.editContent(id, createContentdto)
     }
 
+    async deleteContent(id, provider_id) {
+        return this.hasuraService.deleteContent(id, provider_id)
+    }
+
     async resetPassword(email, resetPasswordDto) {
         console.log("email", email)
         console.log("resetPasswordDto", resetPasswordDto)

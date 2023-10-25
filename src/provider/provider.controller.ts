@@ -47,6 +47,16 @@ export class ProviderController {
         return this.providerService.editContent(id,createContentdto)
     }
 
+    @Delete('/content/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async deleteContent(@Request() request, @Param('id') id){
+        this.logggerService.log('POST /deleteContent',request.user.id);
+        let provider_id = request.user.id
+        console.log("provider_id",provider_id)
+        console.log("id",id)
+        return this.providerService.deleteContent(id, provider_id)
+    }
+
     @Patch('/resetPassword')
     @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
     async resetPassword(@Request() request, @Body() resetPasswordDto: ResetPasswordDto){

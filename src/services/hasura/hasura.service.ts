@@ -586,6 +586,26 @@ export class HasuraService {
     }
   }
 
+  async deleteContent(id, provider_id) {
+    console.log("provider_id", provider_id)
+    console.log("id", id)
+    const contentMutation = `mutation MyMutation {
+      delete_fln_content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
+        affected_rows
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(contentMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in deleting content", error);
+      throw new HttpException("Something Went wrong in deleting content", HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async findCollection(getCollectiondto) {
     let result = 'where: {'
     Object.entries(getCollectiondto).forEach(([key, value]) => {
