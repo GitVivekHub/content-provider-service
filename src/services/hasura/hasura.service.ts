@@ -422,6 +422,8 @@ export class HasuraService {
         collection
         code
         author
+        createdAt
+        updatedAt
       }
   }`;
     try {
@@ -461,6 +463,8 @@ export class HasuraService {
         collection
         code
         author
+        createdAt
+        updatedAt
       }
   }`;
     try {
