@@ -25,4 +25,5 @@ export class CreateContentDto {
     author: string
     curricularGoals: string
     learningOutcomes: string
+    category: string
 }

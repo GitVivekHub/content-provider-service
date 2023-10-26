@@ -305,8 +305,8 @@ export class HasuraService {
   }
 
   async createContent(id, createContentdto) {
-    const query = `mutation InsertFlnContent($user_id:Int,$description: String,$code:String,$competency:String,$contentType:String,$domain:String,$goal:String,$image:String,$language:String,$link:String,$sourceOrganisation:String,$themes:String,$title:String, $content_id: String, $publisher: String, $collection: Boolean, $urlType: String, $mimeType: String, $minAge: Int, $maxAge: Int, $author: String, $learningOutcomes: String ) {
-      insert_fln_content(objects: {user_id:$user_id,description: $description,code: $code, competency:$competency, contentType:$contentType, domain:$domain, goal:$goal, image:$image, language:$language, link: $link, sourceOrganisation: $sourceOrganisation, themes: $themes, title: $title, content_id: $content_id, publisher: $publisher, collection: $collection, urlType: $urlType, mimeType: $mimeType, minAge: $minAge, maxAge: $maxAge, author: $author, learningOutcomes: $learningOutcomes  }) {
+    const query = `mutation InsertFlnContent($user_id:Int,$description: String,$code:String,$competency:String,$contentType:String,$domain:String,$goal:String,$image:String,$language:String,$link:String,$sourceOrganisation:String,$themes:String,$title:String, $content_id: String, $publisher: String, $collection: Boolean, $urlType: String, $mimeType: String, $minAge: Int, $maxAge: Int, $author: String, $learningOutcomes: String, $category: string ) {
+      insert_fln_content(objects: {user_id:$user_id,description: $description,code: $code, competency:$competency, contentType:$contentType, domain:$domain, goal:$goal, image:$image, language:$language, link: $link, sourceOrganisation: $sourceOrganisation, themes: $themes, title: $title, content_id: $content_id, publisher: $publisher, collection: $collection, urlType: $urlType, mimeType: $mimeType, minAge: $minAge, maxAge: $maxAge, author: $author, learningOutcomes: $learningOutcomes, category: $category  }) {
         returning {
           id
           user_id
@@ -422,6 +422,7 @@ export class HasuraService {
         collection
         code
         author
+        category
         createdAt
         updatedAt
       }
@@ -463,6 +464,7 @@ export class HasuraService {
         collection
         code
         author
+        category
         createdAt
         updatedAt
       }
@@ -478,7 +480,7 @@ export class HasuraService {
 
   async editContent(id, createContentdto) {
     // console.log("createContentdto", createContentdto)
-    const query = `mutation UpdateMyData($id: Int!, $themes: String, $code: String, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String, $image: String, $publisher: String, $collection: Boolean, $urlType: String, $url: String, $mimeType: String, $minAge: Int, $maxAge: Int, $author: String, $curricularGoals: String, $learningOutcomes: String) {
+    const query = `mutation UpdateMyData($id: Int!, $themes: String, $code: String, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String, $image: String, $publisher: String, $collection: Boolean, $urlType: String, $url: String, $mimeType: String, $minAge: Int, $maxAge: Int, $author: String, $curricularGoals: String, $learningOutcomes: String, $category: string) {
       update_fln_content(where: { id: { _eq: $id } }, _set: {
         themes: $themes
         code: $code
@@ -502,6 +504,7 @@ export class HasuraService {
         author: $author
         curricularGoals: $curricularGoals
         learningOutcomes: $learningOutcomes
+        category: $category
       }) {
         affected_rows
         returning {
@@ -530,6 +533,7 @@ export class HasuraService {
           author
           curricularGoals
           learningOutcomes
+          category
         }
       }
     }
@@ -577,6 +581,7 @@ export class HasuraService {
         maxAge
         author
         learningOutcomes
+        category
         createdAt
         updatedAt
       }
