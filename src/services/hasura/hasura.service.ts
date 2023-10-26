@@ -131,7 +131,6 @@ export class HasuraService {
     }
   }
 
-
   async createProviderUser(providerUser) {
     const query = `mutation InsertProvider($user_id: Int,$organization:String,$source_code:String) {
       insert_Provider(objects: {user_id: $user_id, organization: $organization, source_code:$source_code}) {
@@ -276,6 +275,7 @@ export class HasuraService {
       throw new HttpException(userResponse, HttpStatus.BAD_REQUEST);
     }
   }
+
   async findOne(email: string): Promise<any> {
     console.log(email)
     const query = `
@@ -366,33 +366,33 @@ export class HasuraService {
 
   }
 
-  async getBookmarkContent(seeker_id) {
-    const query = `query GetUser {
-      bookmark_content(where: {seeker_id: {_eq: ${seeker_id}}}) {
-        code
-        competency
-        contentType
-        description
-        domain
-        goal
-        image
-        language
-        link
-        sourceOrganisation
-        themes
-        title
-        id
-        seeker_id
-      }
-  }`;
-    try {
-      const response = await this.queryDb(query);
-      return response;
-    } catch (error) {
-      this.logger.error("Something Went wrong in creating Admin", error);
-      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
-    }
-  }
+  // async getBookmarkContent(seeker_id) {
+  //   const query = `query GetUser {
+  //     bookmark_content(where: {seeker_id: {_eq: ${seeker_id}}}) {
+  //       code
+  //       competency
+  //       contentType
+  //       description
+  //       domain
+  //       goal
+  //       image
+  //       language
+  //       link
+  //       sourceOrganisation
+  //       themes
+  //       title
+  //       id
+  //       seeker_id
+  //     }
+  // }`;
+  //   try {
+  //     const response = await this.queryDb(query);
+  //     return response;
+  //   } catch (error) {
+  //     this.logger.error("Something Went wrong in creating Admin", error);
+  //     throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  //   }
+  // }
 
   async getContent(id) {
     const query = `query GetUser {
@@ -972,5 +972,205 @@ export class HasuraService {
 
   }
 
+  // seeker query
+  async createBookmark(seeker_id, body) {
+    console.log("seeker_id", seeker_id)
+    console.log("body", body)
+    const query = `mutation MyMutation {
+        insert_bookmark(objects: {
+          seeker_id: ${seeker_id}, 
+          title: "${body.title}"
+        }) {
+          returning {
+            id
+            seeker_id
+            title
+            createdAt
+            updatedAt
+          }
+        }
+      }`;
+
+    try {
+      return await this.queryDb(query);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in creating Bookmark", error);
+      throw new HttpException("Something Went wrong in creating Bookmark", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async getBookmark(seeker_id) {
+    console.log("provider_id", seeker_id)
+    const query = `query MyQuery {
+      bookmark(where: {seeker_id: {_eq: ${seeker_id}}}) {
+        id
+        seeker_id
+        title
+        updatedAt
+        createdAt
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(query);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in creating User", error);
+      throw new HttpException("Something Went wrong in creating User", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async getBookmarkContent(id, seeker_id) {
+    console.log("id", id)
+    const query = `query MyQuery {
+      bookmark(where: {id: {_eq: ${id}}, seeker_id: {_eq: ${seeker_id}}}) {
+        id
+        seeker_id
+        title
+        createdAt
+        updatedAt
+        bookmarkContentRelation {
+          id
+          content_id
+          bookmark_id
+          createdAt
+          updatedAt
+          bookmarkContentFlnContentRelation {
+            id
+            user_id
+            content_id
+            title
+            url
+            urlType
+            themes
+            sourceOrganisation
+            publisher
+            minAge
+            mimeType
+            maxAge
+            link
+            learningOutcomes
+            language
+            image
+            goal
+            domain
+            description
+            curricularGoals
+            contentType
+            competency
+            collection
+            code
+            author
+            createdAt
+            updatedAt
+          }
+        }
+      }
+    } 
+    `;
+
+    try {
+      return await this.queryDb(query);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in fetching content list", error);
+      throw new HttpException("Something Went wrong in content list", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async updateBookmark(id, seeker_id, body) {
+    console.log("seeker_id", seeker_id)
+    console.log("id", id)
+    console.log("body", body)
+    const query = `mutation MyMutation {
+      update_bookmark(where: {id: {_eq: ${id}}, seeker_id: {_eq: ${seeker_id}}}, _set: {title: "${body.title}"}) {
+        affected_rows
+        returning {
+          id
+          seeker_id
+          title
+          updatedAt
+          createdAt
+        }
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(query);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in creating User", error);
+      throw new HttpException("Something Went wrong in creating User", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async deleteBookmark(id, seeker_id) {
+    console.log("seeker_id", seeker_id)
+    console.log("id", id)
+    const collectionMutation = `mutation MyMutation {
+      delete_bookmark(where: {id: {_eq: ${id}}, seeker_id: {_eq: ${seeker_id}}}) {
+        affected_rows
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(collectionMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in deleting collection", error);
+      throw new HttpException("Something Went wrong in deleting collection", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async addContentBookmark(body) {
+    console.log("body", body)
+    const collectionContentMutation = `mutation MyMutation {
+      insert_bookmark_content(objects: {bookmark_id: ${body.bookmark_id}, content_id: ${body.content_id}}) {
+        returning {
+          id
+          bookmark_id
+          content_id
+        }
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(collectionContentMutation);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in deleting collection", error);
+      throw new HttpException("Something Went wrong in deleting collection", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async deleteContentBookmark(id, seeker_id) {
+    console.log("id", id)
+    const query = `mutation MyMutation {
+      delete_bookmark_content(where: {id: {_eq: ${id}}}) {
+        affected_rows
+      }
+    }
+    `;
+
+    try {
+      return await this.queryDb(query);
+
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in deleting collection", error);
+      throw new HttpException("Something Went wrong in deleting collection", HttpStatus.BAD_REQUEST);
+    }
+  }
 
 }

@@ -40,9 +40,9 @@ export class SeekerService {
         return this.hasuraService.removeBookmarkContent(id, seeker_id)
     }
 
-    async getBookmarkContent(seeker_id){
-        return this.hasuraService.getBookmarkContent(seeker_id)
-    }
+    // async getBookmarkContent(seeker_id){
+    //     return this.hasuraService.getBookmarkContent(seeker_id)
+    // }
 
     async getCollection() {
         return this.hasuraService.getAllCollection()
@@ -50,5 +50,33 @@ export class SeekerService {
 
     async getCollectionContent(id) {
         return this.hasuraService.getCollectionContent(id)
+    }
+
+    async createBookmark(seeker_id, body) {
+        return this.hasuraService.createBookmark(seeker_id, body)
+    }
+
+    async getBookmark(seeker_id) {
+        return this.hasuraService.getBookmark(seeker_id)
+    }
+
+    async getBookmarkContent(id, seeker_id) {
+        return this.hasuraService.getBookmarkContent(id, seeker_id)
+    }
+
+    async updateBookmark(id, seeker_id, body) {
+        return this.hasuraService.updateBookmark(id, seeker_id, body)
+    }
+
+    async deleteBookmark(id, seeker_id) {
+        return this.hasuraService.deleteBookmark(id, seeker_id)
+    }
+
+    async addContentBookmark(body) {
+        return this.hasuraService.addContentBookmark(body)
+    }
+
+    async deleteContentBookmark(id, seeker_id) {
+        return this.hasuraService.deleteContentBookmark(id, seeker_id)
     }
 }

@@ -53,14 +53,14 @@ export class SeekerController {
         return this.seekerService.removeBookmarkContent(id, seeker_id)
     }
 
-    @Get('/bookmarkContent')
-    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
-    async getBookmarkContent(@Request() request){
-        console.log("user", request.user);
-        this.logggerService.log('POST /createContent',request.user.id);
-        let seeker_id = request.user.id
-        return this.seekerService.getBookmarkContent(seeker_id)
-    }
+    // @Get('/bookmarkContent')
+    // @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    // async getBookmarkContent(@Request() request){
+    //     console.log("user", request.user);
+    //     this.logggerService.log('POST /createContent',request.user.id);
+    //     let seeker_id = request.user.id
+    //     return this.seekerService.getBookmarkContent(seeker_id)
+    // }
 
     @Get('/collection')
     async getCollection(@Request() request){
@@ -70,6 +70,77 @@ export class SeekerController {
     @Get('/collection/:id')
     async getCollectionContent(@Request() request, @Param('id') id){
         return this.seekerService.getCollectionContent(id)
+    }
+
+
+    ////////////////
+    @Post('/bookmark')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async createBookmark(@Request() request,@Body() body){
+        this.logggerService.log('POST /createBookmark',request.user.id);
+        let seeker_id = request.user.id
+        console.log("seeker_id",seeker_id)
+        console.log("body", body);
+        return this.seekerService.createBookmark(seeker_id, body)
+    }
+
+    @Get('/bookmark')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async getBookmark(@Request() request){
+        this.logggerService.log('POST /getBookmark',request.user.id);
+        let seeker_id = request.user.id
+        console.log("seeker_id",seeker_id)
+        return this.seekerService.getBookmark(seeker_id)
+    }
+
+    @Get('/bookmark/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async getBookmarkContent(@Request() request, @Param('id') id){
+        this.logggerService.log('POST /getBookmarkContent',request.user.id);
+        let seeker_id = request.user.id
+        console.log("seeker_id",seeker_id)
+        return this.seekerService.getBookmarkContent(id, seeker_id)
+    }
+
+    @Patch('/bookmark/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async updateBookmark(@Request() request, @Param('id') id, @Body() body){
+        this.logggerService.log('POST /updateBookmark',request.user.id);
+        let seeker_id = request.user.id
+        console.log("seeker_id",seeker_id)
+        console.log("id",id)
+        console.log("body",body)
+        return this.seekerService.updateBookmark(id, seeker_id, body)
+    }
+
+    @Delete('/bookmark/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async deleteCollection(@Request() request, @Param('id') id){
+        this.logggerService.log('POST /deleteCollection',request.user.id);
+        let seeker_id = request.user.id
+        console.log("seeker_id",seeker_id)
+        console.log("id",id)
+        return this.seekerService.deleteBookmark(id, seeker_id)
+    }
+
+    @Post('/contentBookmark')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async addContentBookmark(@Request() request,@Body() body){
+        this.logggerService.log('POST /addContentBookmark',request.user.id);
+        let seeker_id = request.user.id
+        console.log("seeker_id",seeker_id)
+        console.log("body", body);
+        return this.seekerService.addContentBookmark(body)
+    }
+
+    @Delete('/contentBookmark/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async deleteContentBookmark(@Request() request, @Param('id') id){
+        this.logggerService.log('POST /deleteContentBookmark',request.user.id);
+        let seeker_id = request.user.id
+        console.log("seeker_id",seeker_id)
+        console.log("id",id)
+        return this.seekerService.deleteContentBookmark(id, seeker_id)
     }
     
 }
