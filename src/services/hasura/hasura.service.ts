@@ -788,6 +788,7 @@ export class HasuraService {
         minAge
         publisher
         themes
+        category
         createdAt
         updatedAt
         collectionContentRelation {
