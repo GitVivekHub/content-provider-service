@@ -110,6 +110,7 @@ export class ProviderService {
                     maxAge: parseInt(log['Max age']),
                     author: log['Author'],
                     learningOutcomes: log['Learning Outomes'],
+                    category: log['Category'],
                 })
 
             }

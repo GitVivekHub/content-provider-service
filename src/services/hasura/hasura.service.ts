@@ -720,6 +720,7 @@ export class HasuraService {
         publisher
         themes
         title
+        category
         provider_id
         updatedAt
         createdAt
