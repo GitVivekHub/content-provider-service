@@ -539,7 +539,7 @@ export class HasuraService {
     }
     `
     try {
-      const response = await this.queryDb(query, {id: id, ...createContentdto});
+      const response = await this.queryDb(query, { id: id, ...createContentdto });
       console.log(response)
       return response;
     } catch (error) {
@@ -739,7 +739,7 @@ export class HasuraService {
   }
 
   async getAllCollection() {
-    
+
     const collectionMutation = `query MyQuery {
       collection(where: {}) {
         id
@@ -796,20 +796,34 @@ export class HasuraService {
           content_id
           collection_id
           contentFlncontentRelation {
-            code
-            competency
-            contentType
-            description
-            domain
-            goal
             id
-            image
-            language
-            link
-            sourceOrganisation
-            themes
-            title
             user_id
+            title
+            themes
+            url
+            urlType
+            sourceOrganisation
+            publisher
+            minAge
+            mimeType
+            maxAge
+            link
+            learningOutcomes
+            language
+            image
+            goal
+            domain
+            description
+            curricularGoals
+            content_id
+            contentType
+            competency
+            collection
+            code
+            author
+            category
+            createdAt
+            updatedAt
           }
         }
       }
@@ -952,8 +966,8 @@ export class HasuraService {
 
   async createBulkContent(id, createContentdto) {
     let flnContentArray = [
-      {author: "suraj k", code: "1234", collection: false, competency: "", contentType: "", content_id: "3211", curricularGoals: "", description: "", domain: "", goal: "", image: "", language: "", learningOutcomes: "xyz", link: "", maxAge: 10, mimeType: "", minAge: 20, publisher: "", sourceOrganisation: "", themes: "", title: "Physics", url: "", urlType: "", user_id: 35},
-      {author: "suraj s", code: "1245", collection: false, competency: "", contentType: "", content_id: "3221", curricularGoals: "", description: "", domain: "", goal: "", image: "", language: "", learningOutcomes: "xyz", link: "", maxAge: 10, mimeType: "", minAge: 20, publisher: "", sourceOrganisation: "", themes: "", title: "Maths", url: "", urlType: "", user_id: 35}
+      { author: "suraj k", code: "1234", collection: false, competency: "", contentType: "", content_id: "3211", curricularGoals: "", description: "", domain: "", goal: "", image: "", language: "", learningOutcomes: "xyz", link: "", maxAge: 10, mimeType: "", minAge: 20, publisher: "", sourceOrganisation: "", themes: "", title: "Physics", url: "", urlType: "", user_id: 35 },
+      { author: "suraj s", code: "1245", collection: false, competency: "", contentType: "", content_id: "3221", curricularGoals: "", description: "", domain: "", goal: "", image: "", language: "", learningOutcomes: "xyz", link: "", maxAge: 10, mimeType: "", minAge: 20, publisher: "", sourceOrganisation: "", themes: "", title: "Maths", url: "", urlType: "", user_id: 35 }
     ]
     const query = `mutation MyMutation {
       insert_fln_content(objects: [
@@ -969,7 +983,7 @@ export class HasuraService {
     }
     `
     try {
-      
+
       const response = await this.queryDb(query);
       console.log("response", response);
       return response
