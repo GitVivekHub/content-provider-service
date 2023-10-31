@@ -182,13 +182,13 @@ export class ProviderController {
         return await this.providerService.addFile(file, document_type)
     }
 
-    @Get('/:id/getImageUrl')
+    @Get('/getImageUrl/:id')
     @UseInterceptors(FileInterceptor('file'))
     async getFileUrl(
         @Param('id') id: string
     ) {
         console.log("get-file id", id)
-        await this.providerService.getFile(id)
+        return await this.providerService.getFile(id)
     }
 
 }

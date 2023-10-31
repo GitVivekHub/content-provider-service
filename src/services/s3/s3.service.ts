@@ -44,7 +44,7 @@ export class S3Service {
             if (response.$metadata.httpStatusCode === 200) {
                 const client = this.s3;
                 const command = new GetObjectCommand({ Bucket: bucket, Key: key });
-                return getSignedUrl(client, command);
+                return getSignedUrl(client, command, { expiresIn: expiresIn });
             }
             throw new Error('File not saved to s3!')
         } catch (err) {
