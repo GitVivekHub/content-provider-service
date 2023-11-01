@@ -176,6 +176,7 @@ export class AppService {
     const provider = intent?.provider?.descriptor?.name;
     const query = intent?.item?.descriptor?.name;
     const tagGroup = intent?.item?.tags;
+    console.log('query: ', query);
     console.log('tag group: ', tagGroup);
     
     const flattenedTags: any = {};
@@ -216,7 +217,7 @@ export class AppService {
     
     try {
       
-      const resp = await this.hasuraService.findContent(obj)
+      const resp = await this.hasuraService.findContent(query)
       console.log("resp", resp.data)
       const flnResponse: any = resp.data.fln_content;
       const catalog = flnCatalogGenerator(flnResponse, query);

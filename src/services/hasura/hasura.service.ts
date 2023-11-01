@@ -548,7 +548,7 @@ export class HasuraService {
 
   }
 
-  async findContent(getContentdto) {
+  async findContent1(getContentdto) {
     let result = 'where: {'
     Object.entries(getContentdto).forEach(([key, value]) => {
       console.log(`${key}: ${value}`);
@@ -558,6 +558,53 @@ export class HasuraService {
     console.log("result", result)
     const query = `query MyQuery {
       fln_content(${result}) {
+        id
+        code
+        competency
+        contentType
+        description
+        domain
+        goal
+        image
+        language
+        link
+        sourceOrganisation
+        themes
+        title
+        user_id
+        content_id
+        publisher
+        collection
+        urlType
+        mimeType
+        minAge
+        maxAge
+        author
+        learningOutcomes
+        category
+        createdAt
+        updatedAt
+      }
+      }`;
+    try {
+      const response = await this.queryDb(query);
+      return response;
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating Admin", error);
+      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async findContent(searchQuery) {
+    // let result = 'where: {'
+    // Object.entries(getContentdto).forEach(([key, value]) => {
+    //   console.log(`${key}: ${value}`);
+    //   result += `${key}: {_eq: "${value}"}, `;
+    // });
+    // result += '}'
+    // console.log("result", result)
+    const query = `query MyQuery {
+      fln_content(where: {_or: [{domain: {_iregex: "${searchQuery}"}}, {competency: {_iregex: "${searchQuery}"}}, {contentType: {_iregex: "${searchQuery}"}}, {description: {_iregex: "${searchQuery}"}}, {language: {_iregex: "${searchQuery}"}}, {sourceOrganisation: {_iregex: "${searchQuery}"}}, {title: {_iregex: "${searchQuery}"}}]}) {
         id
         code
         competency
