@@ -1241,4 +1241,70 @@ export class HasuraService {
     }
   }
 
+  //scholarship
+  async createScholarship(provider_id, scholarship) {
+    const query = `mutation MyMutation(
+        $provider_id: Int,
+        $domain: String,
+        $name: String,
+        $description: String,
+        $provider: String,
+        $creator:String,
+        $category:String,
+        $applicationDeadline:String,
+        $amount:Int,
+        $duration:String,
+        $eligibilityCriteria:String,
+        $applicationProcessing:String, 
+        $selectionCriteria: String, 
+        $noOfRecipients: String, 
+        $termsAndConditions: String, 
+        $additionalResources: String, 
+        $applicationForm: String, 
+        $applicationSubmissionDate: String, 
+        $contactInformation: String, 
+        $status: String, 
+        $keywords: String 
+      ) {
+      insert_scholarship_content(objects: {
+        provider_id:$provider_id,
+        domain: $domain,
+        name: $name, 
+        description: $description, 
+        provider: $provider, 
+        creator: $creator, 
+        category: $category, 
+        applicationDeadline: $applicationDeadline, 
+        amount: $amount, 
+        duration: $duration, 
+        eligibilityCriteria: $eligibilityCriteria, 
+        applicationProcessing: $applicationProcessing, 
+        selectionCriteria: $selectionCriteria, 
+        noOfRecipients: $noOfRecipients, 
+        termsAndConditions: $termsAndConditions, 
+        additionalResources: $additionalResources, 
+        applicationForm: $applicationForm, 
+        applicationSubmissionDate: $applicationSubmissionDate, 
+        contactInformation: $contactInformation,
+        status: $status, 
+        keywords: $keywords  
+      }) {
+        returning {
+          id
+          provider_id
+        }
+      }
+    }
+    `
+    try {
+      console.log("scholarship ", scholarship);
+      const response = await this.queryDb(query, { provider_id: provider_id, ...scholarship });
+      console.log("response", response);
+      return response
+    } catch (error) {
+      throw new HttpException('Failed to create scholarship', HttpStatus.NOT_FOUND);
+    }
+
+  }
+
 }

@@ -152,4 +152,9 @@ export class ProviderService {
         const key = id;
         return await this.s3Service.getFileUrl(key);
     }
+
+    //createScholarship
+    async createScholarship(provider_id, scholarship) {
+        return this.hasuraService.createScholarship(provider_id, scholarship)
+    }
 }

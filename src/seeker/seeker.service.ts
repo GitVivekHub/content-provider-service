@@ -25,7 +25,7 @@ export class SeekerService {
     }
 
     async getContent(getContentdto) {
-        return this.hasuraService.findContent(getContentdto);
+        return this.hasuraService.findContent1(getContentdto);
     }
 
     async searchCollection(getCollectiondto) {

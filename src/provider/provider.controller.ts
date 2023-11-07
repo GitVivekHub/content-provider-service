@@ -9,6 +9,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { createReadStream } from 'fs';
 import * as csvParser from 'csv-parser';
+import { ScholarshipDto } from 'src/dto/scholarship.dto';
 
 @Controller('provider')
 export class ProviderController {
@@ -41,7 +42,7 @@ export class ProviderController {
     }
 
     @Patch('/content/:id')
-    // @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
     async editContent(@Request() request,@Param('id') id, @Body() createContentdto?:CreateContentDto){
         console.log("createContentdto", createContentdto);
         return this.providerService.editContent(id,createContentdto)
@@ -189,6 +190,17 @@ export class ProviderController {
     ) {
         console.log("get-file id", id)
         return await this.providerService.getFile(id)
+    }
+
+    //scholarship
+    @Post('/scholarship')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async createScholarship(@Request() request,@Body() scholarship?:ScholarshipDto){
+        console.log("user", request.user);
+        console.log("scholarship", scholarship);
+        this.logggerService.log('POST /scholarship',request.user.id);
+        let provider_id = request.user.id
+        return this.providerService.createScholarship(provider_id, scholarship)
     }
 
 }
