@@ -1308,9 +1308,9 @@ export class HasuraService {
   //configuration
 
   async createConfig(user_id,body) {
-    //console.log("body", body)
-    const query = `mutation MyMutation {
-      update_Seeker(where: {user_id: {_eq: ${user_id}}}, _set: {apiEndPoint: "${body.apiEndPoint}", bookmark: "${body.bookmark}", displayOrder: ${body.displayOrder}, filterBy: "${body.filterBy}", filters: ${body.filters}, logo: "${body.logo}", orderBy: "${body.orderBy}", pagination: ${body.pagination}, positionByLine: ${body.positionByLine}, positionLogo: ${body.positionLogo}, positionSiteName: ${body.positionSiteName}, rating: "${body.rating}", share: "${body.share}", siteByLine: "${body.siteByLine}", siteName: "${body.siteName}", lableTitle: "${body.lableTitle}", lableAuthor: "${body.lableAuthor}", lableDesc: "${body.lableDesc}", lableRating: "${body.lableRating}"}) {
+    console.log("body", body)
+    const query = `mutation MyMutation($user_id:Int!,$apiEndPoint:String,$bookmark:String,$displayOrder:json,$filterBy:String,$filters:json,$logo:String,$orderBy:String,$pagination:Int, $positionByLine: Boolean, $positionLogo: Boolean, $positionSiteName: Boolean, $rating: String, $share: String, $siteByLine: String, $siteName: String, $lableTitle: String, $lableAuthor: String, $lableDesc: String, $lableRating: String ) {
+      update_Seeker(where: {user_id: {_eq: $user_id}}, _set: {apiEndPoint: $apiEndPoint, bookmark: $bookmark, displayOrder: $displayOrder, filterBy: $filterBy, filters: $filters, logo: $logo, orderBy: $orderBy, pagination: $pagination, positionByLine: $positionByLine, positionLogo: $positionLogo, positionSiteName: $positionSiteName, rating: $rating, share: $share, siteByLine: $siteByLine, siteName: $siteName, lableTitle: $lableTitle, lableAuthor: $lableAuthor, lableDesc: $lableDesc, lableRating: $lableRating}) {
         affected_rows
         returning {
           id
@@ -1320,7 +1320,7 @@ export class HasuraService {
     }
     `
     try {
-      const response = await this.queryDb(query)
+      const response = await this.queryDb(query, {user_id, ...body})
       console.log("response", response)
       return response;
     } catch (error) {

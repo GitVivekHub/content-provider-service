@@ -12,8 +12,8 @@ export class CreateSeekerDto {
     bookmark: string
     rating: string
     share: string
-    filters: {}
-    displayOrder: {}
+    filters: any
+    displayOrder: any
     orderBy: string
     filterBy: string
     pagination: number
