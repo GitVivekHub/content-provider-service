@@ -1308,8 +1308,9 @@ export class HasuraService {
   //configuration
 
   async createConfig(user_id,body) {
+    //console.log("body", body)
     const query = `mutation MyMutation {
-      update_Seeker(where: {user_id: {_eq: ${user_id}}}, _set: {apiEndPoint: "${body.apiEndPoint}", bookmark: "${body.bookmark}", displayOrder: ${body.displayOrder}, filterBy: "${body.filterBy}", filters: ${body.filters}, logo: "${body.logo}", orderBy: "${body.orderBy}", pagination: ${body.pagination}, positionByLine: ${body.positionByLine}, positionLogo: ${body.positionLogo}, positionSiteName: ${body.positionSiteName}, rating: "${body.rating}", share: "${body.share}", siteByLine: "${body.siteByLine}", siteName: "${body.siteName}"}) {
+      update_Seeker(where: {user_id: {_eq: ${user_id}}}, _set: {apiEndPoint: "${body.apiEndPoint}", bookmark: "${body.bookmark}", displayOrder: ${body.displayOrder}, filterBy: "${body.filterBy}", filters: ${body.filters}, logo: "${body.logo}", orderBy: "${body.orderBy}", pagination: ${body.pagination}, positionByLine: ${body.positionByLine}, positionLogo: ${body.positionLogo}, positionSiteName: ${body.positionSiteName}, rating: "${body.rating}", share: "${body.share}", siteByLine: "${body.siteByLine}", siteName: "${body.siteName}", lableTitle: "${body.lableTitle}", lableAuthor: "${body.lableAuthor}", lableDesc: "${body.lableDesc}", lableRating: "${body.lableRating}"}) {
         affected_rows
         returning {
           id
@@ -1347,6 +1348,10 @@ export class HasuraService {
         share
         siteByLine
         siteName
+        lableTitle
+        lableAuthor
+        lableDesc
+        lableRating
         createdAt
         updatedAt
       }

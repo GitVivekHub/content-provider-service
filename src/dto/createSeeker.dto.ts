@@ -17,4 +17,8 @@ export class CreateSeekerDto {
     orderBy: string
     filterBy: string
     pagination: number
+    lableTitle: string
+    lableAuthor: string
+    lableDesc: string
+    lableRating: string
 }
