@@ -79,4 +79,12 @@ export class SeekerService {
     async deleteContentBookmark(id, seeker_id) {
         return this.hasuraService.deleteContentBookmark(id, seeker_id)
     }
+
+    async createConfig(user_id,body){
+        return this.hasuraService.createConfig(user_id,body)
+    }
+
+    async getConfig(user_id) {
+        return this.hasuraService.getConfig(user_id)
+    }
 }

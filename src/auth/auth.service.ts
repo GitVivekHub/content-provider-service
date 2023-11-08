@@ -40,8 +40,8 @@ export class AuthService {
             return response;
         }else if (createUser.role==='seeker'){
             let seeker = new CreateSeekerDto()
-            seeker.organization = createUserDto.organization
-            seeker.source_code = createUserDto.source_code
+            // seeker.organization = createUserDto.organization
+            // seeker.source_code = createUserDto.source_code
             seeker.user_id = createUser.id
             const response = await this.hasuraService.createSeekerUser(seeker);
             return response;

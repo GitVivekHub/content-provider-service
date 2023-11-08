@@ -153,14 +153,12 @@ export class HasuraService {
   }
 
   async createSeekerUser(seeker) {
-    const query = `mutation InsertSeeker($user_id: Int,$organization:String,$source_code:String) {
-      insert_Seeker(objects: {user_id: $user_id, organization: $organization, source_code:$source_code}) {
+    const query = `mutation InsertSeeker($user_id: Int) {
+      insert_Seeker(objects: {user_id: $user_id}) {
         affected_rows
         returning {
           id
           user_id
-          organization
-          source_code
         }
       }
     }`
@@ -1305,6 +1303,63 @@ export class HasuraService {
       throw new HttpException('Failed to create scholarship', HttpStatus.NOT_FOUND);
     }
 
+  }
+
+  //configuration
+
+  async createConfig(user_id,body) {
+    const query = `mutation MyMutation {
+      update_Seeker(where: {user_id: {_eq: ${user_id}}}, _set: {apiEndPoint: "${body.apiEndPoint}", bookmark: "${body.bookmark}", displayOrder: ${body.displayOrder}, filterBy: "${body.filterBy}", filters: ${body.filters}, logo: "${body.logo}", orderBy: "${body.orderBy}", pagination: ${body.pagination}, positionByLine: ${body.positionByLine}, positionLogo: ${body.positionLogo}, positionSiteName: ${body.positionSiteName}, rating: "${body.rating}", share: "${body.share}", siteByLine: "${body.siteByLine}", siteName: "${body.siteName}"}) {
+        affected_rows
+        returning {
+          id
+          user_id
+        }
+      }
+    }
+    `
+    try {
+      const response = await this.queryDb(query)
+      console.log("response", response)
+      return response;
+    } catch (error) {
+      throw new HttpException('Unabe to create Seeker configuration', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async getConfig(user_id) {
+    const query = `query MyQuery {
+      Seeker(where: {user_id: {_eq: ${user_id}}}) {
+        id
+        user_id
+        apiEndPoint
+        bookmark
+        displayOrder
+        filterBy
+        filters
+        logo
+        orderBy
+        pagination
+        positionByLine
+        positionLogo
+        positionSiteName
+        rating
+        share
+        siteByLine
+        siteName
+        createdAt
+        updatedAt
+      }
+    }
+    
+    `
+    try {
+      const response = await this.queryDb(query)
+      console.log("response", response)
+      return response;
+    } catch (error) {
+      throw new HttpException('Unabe to get Seeker configuration', HttpStatus.BAD_REQUEST);
+    }
   }
 
 }

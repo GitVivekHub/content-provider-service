@@ -1,6 +1,7 @@
 import { Body, Controller, Patch, UseGuards, Request, Post, Delete, Param, Get } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateContentDto } from 'src/dto/createContent.dto';
+import { CreateSeekerDto } from 'src/dto/createSeeker.dto';
 import { ResetPasswordDto } from 'src/dto/resetPassword.dto';
 import { RoleGuard } from 'src/role.guard';
 import { LoggerService } from 'src/services/logger/logger.service';
@@ -141,6 +142,25 @@ export class SeekerController {
         console.log("seeker_id",seeker_id)
         console.log("id",id)
         return this.seekerService.deleteContentBookmark(id, seeker_id)
+    }
+
+    //site-configuration
+    @Post('/configuration')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async createConfig(@Request() request,@Body() createSeekerDto:CreateSeekerDto){
+        console.log("user", request.user);
+        this.logggerService.log('POST /createConfig',request.user.id);
+        let user_id = request.user.id
+        return this.seekerService.createConfig(user_id,createSeekerDto)
+    }
+
+    @Get('/configuration')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
+    async getConfig(@Request() request){
+        console.log("user", request.user);
+        this.logggerService.log('POST /createConfig',request.user.id);
+        let user_id = request.user.id
+        return this.seekerService.getConfig(user_id)
     }
     
 }
