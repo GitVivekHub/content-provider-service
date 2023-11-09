@@ -21,4 +21,7 @@ export class CreateSeekerDto {
     lableAuthor: string
     lableDesc: string
     lableRating: string
+    headerColor: string
+    headerFontSize: string
+    footerText: string
 }
