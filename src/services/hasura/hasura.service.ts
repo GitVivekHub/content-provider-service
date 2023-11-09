@@ -548,14 +548,23 @@ export class HasuraService {
 
   async findContent1(getContentdto) {
     let result = 'where: {'
+    let order = ''
     Object.entries(getContentdto).forEach(([key, value]) => {
       console.log(`${key}: ${value}`);
-      result += `${key}: {_eq: "${value}"}, `;
+      if(key == 'orderBy') {
+        console.log("554", `${key}: ${value}`);
+        order = `order_by: {${value}: desc}`
+      } else {
+        console.log("557", `${key}: ${value}`);
+        result += `${key}: {_eq: "${value}"}, `;
+      }
+      
     });
     result += '}'
     console.log("result", result)
+    console.log("order", order)
     const query = `query MyQuery {
-      fln_content(${result}) {
+      fln_content(${order}, ${result}) {
         id
         code
         competency
