@@ -253,7 +253,16 @@ export const flnCatalogGenerator = (
       descriptor: {
         name: provider,
       },
-      categories: [],
+      categories: providerWise[provider].map((course: any) => {
+        const providerItem = {
+          id: course.category,
+          parent_category_id: course.category || '',
+          descriptor: {
+            name: course.category,
+          }
+        };
+        return providerItem;
+      }),
       items: providerWise[provider].map((course: any) => {
         const providerItem = {
           id: `${course.id}`,
@@ -261,7 +270,7 @@ export const flnCatalogGenerator = (
           descriptor: {
             name: course.title,
             long_desc: course.description ? course.description : '',
-            code: course.code,
+            code: course.code ? course.code : '123',
             competency: course.competency,
             contentType: course.contentType,
             domain: course.domain,
@@ -271,6 +280,7 @@ export const flnCatalogGenerator = (
             sourceOrganisation: course.sourceOrganisation,
             themes: course.themes,
             title: course.title,
+
             images: [
               {
                 url:
@@ -278,7 +288,7 @@ export const flnCatalogGenerator = (
                     ? encodeURI(
                       'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg'
                     )
-                    : encodeURI(course.image),
+                    : encodeURI('https://image/'+course.image),
               },
             ],
           },
@@ -331,7 +341,7 @@ export const flnCatalogGenerator = (
                   descriptor: {
                     name: 'enrollmentEndDate',
                   },
-                  value: '2023-07-31T18:29:00.000000Z',
+                  value: course.createdAt || '',
                 },
               ],
             },
