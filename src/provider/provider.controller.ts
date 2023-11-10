@@ -203,4 +203,31 @@ export class ProviderController {
         return this.providerService.createScholarship(provider_id, scholarship)
     }
 
+    @Get('/scholarship')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async getScholarship(@Request() request){
+        console.log("user", request.user);
+        this.logggerService.log('POST /scholarship',request.user.id);
+        let provider_id = request.user.id
+        return this.providerService.getScholarship(provider_id)
+    }
+
+    @Get('/scholarship/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async getScholarshipById(@Request() request, @Param('id') id){
+        console.log("user", request.user);
+        this.logggerService.log('POST /scholarship',request.user.id);
+        let provider_id = request.user.id
+        return this.providerService.getScholarshipById(id, provider_id)
+    }
+
+    @Patch('/scholarship/:id')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async editScholarshipById(@Request() request, @Param('id') id, @Body() scholarship?:ScholarshipDto){
+        console.log("user", request.user);
+        this.logggerService.log('POST /scholarship',request.user.id);
+        let provider_id = request.user.id
+        return this.providerService.editScholarshipById(id, provider_id, scholarship)
+    }
+
 }

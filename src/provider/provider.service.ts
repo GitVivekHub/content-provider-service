@@ -153,8 +153,20 @@ export class ProviderService {
         return await this.s3Service.getFileUrl(key);
     }
 
-    //createScholarship
+    //Scholarship
     async createScholarship(provider_id, scholarship) {
         return this.hasuraService.createScholarship(provider_id, scholarship)
+    }
+
+    async getScholarship(provider_id) {
+        return this.hasuraService.getScholarship(provider_id)
+    }
+
+    async getScholarshipById(id, provider_id) {
+        return this.hasuraService.getScholarshipById(id, provider_id)
+    }
+
+    async editScholarshipById(id, provider_id, scholarship) {
+        return this.hasuraService.editScholarshipById(id, provider_id, scholarship)
     }
 }

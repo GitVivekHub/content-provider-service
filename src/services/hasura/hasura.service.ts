@@ -1314,6 +1314,149 @@ export class HasuraService {
 
   }
 
+  async getScholarship(provider_id) {
+    const query = `query MyQuery {
+      scholarship_content(where: {provider_id: {_eq: ${provider_id}}}) {
+        id
+        name
+        provider
+        provider_id
+        selectionCriteria
+        status
+        termsAndConditions
+        keywords
+        noOfRecipients
+        eligibilityCriteria
+        duration
+        domain
+        description
+        creator
+        contactInformation
+        category
+        applicationSubmissionDate
+        applicationProcessing
+        applicationForm
+        applicationDeadline
+        amount
+        additionalResources
+        createdAt
+        updatedAt
+      }
+    }`
+    try {
+      const response = await this.queryDb(query)
+      console.log("response", response)
+      return response;
+    } catch (error) {
+      throw new HttpException('Unabe to create Seeker configuration', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async getScholarshipById(id, provider_id) {
+    const query = `query MyQuery {
+      scholarship_content(where: {provider_id: {_eq: ${provider_id}}, id: {_eq: ${id}}}) {
+        id
+        name
+        provider
+        provider_id
+        selectionCriteria
+        status
+        termsAndConditions
+        keywords
+        noOfRecipients
+        eligibilityCriteria
+        duration
+        domain
+        description
+        creator
+        contactInformation
+        category
+        applicationSubmissionDate
+        applicationProcessing
+        applicationForm
+        applicationDeadline
+        amount
+        additionalResources
+        createdAt
+        updatedAt
+      }
+    }`
+    try {
+      const response = await this.queryDb(query)
+      console.log("response", response)
+      return response;
+    } catch (error) {
+      throw new HttpException('Unabe to create Seeker configuration', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async editScholarshipById(id, provider_id, scholarship) {
+    console.log("id", id)
+    console.log("provider_id", provider_id)
+    const query = `mutation MyMutation(
+      $id: Int!,
+      $provider_id: Int,
+      $domain: String,
+      $name: String,
+      $description: String,
+      $provider: String,
+      $creator:String,
+      $category:String,
+      $applicationDeadline:String,
+      $amount:Int,
+      $duration:String,
+      $eligibilityCriteria:String,
+      $applicationProcessing:String, 
+      $selectionCriteria: String, 
+      $noOfRecipients: String, 
+      $termsAndConditions: String, 
+      $additionalResources: String, 
+      $applicationForm: String, 
+      $applicationSubmissionDate: String, 
+      $contactInformation: String, 
+      $status: String, 
+      $keywords: String 
+    ) {
+      update_scholarship_content(where: {id: {_eq: $id}, provider_id: {_eq: $provider_id}},
+        _set: {
+      provider_id:$provider_id,
+      domain: $domain,
+      name: $name, 
+      description: $description, 
+      provider: $provider, 
+      creator: $creator, 
+      category: $category, 
+      applicationDeadline: $applicationDeadline, 
+      amount: $amount, 
+      duration: $duration, 
+      eligibilityCriteria: $eligibilityCriteria, 
+      applicationProcessing: $applicationProcessing, 
+      selectionCriteria: $selectionCriteria, 
+      noOfRecipients: $noOfRecipients, 
+      termsAndConditions: $termsAndConditions, 
+      additionalResources: $additionalResources, 
+      applicationForm: $applicationForm, 
+      applicationSubmissionDate: $applicationSubmissionDate, 
+      contactInformation: $contactInformation,
+      status: $status, 
+      keywords: $keywords  
+    }) {
+      returning {
+        id
+        provider_id
+      }
+    }
+    }`
+    try {
+      console.log("scholarship ", scholarship);
+      const response = await this.queryDb(query, { id: id, provider_id: provider_id, ...scholarship });
+      console.log("response", response);
+      return response
+    } catch (error) {
+      throw new HttpException('Failed to create scholarship', HttpStatus.NOT_FOUND);
+    }
+  }
+
   //configuration
 
   async createConfig(user_id,body) {
