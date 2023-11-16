@@ -280,6 +280,12 @@ export const flnCatalogGenerator = (
             sourceOrganisation: course.sourceOrganisation,
             themes: course.themes,
             title: course.title,
+            minAge: course.minAge,
+            maxAge: course.maxAge,
+            author: course.author,
+            curricularGoals: course.curricularGoals,
+            learningOutcomes: course.learningOutcomes,
+            category: course.category,
 
             images: [
               {
