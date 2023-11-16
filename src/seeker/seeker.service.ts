@@ -87,4 +87,8 @@ export class SeekerService {
     async getConfig(user_id) {
         return this.hasuraService.getConfig(user_id)
     }
+
+    async getScholarship(getContentdto) {
+        return this.hasuraService.findScholarship(getContentdto);
+    }
 }

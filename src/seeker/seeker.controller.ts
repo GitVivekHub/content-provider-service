@@ -33,6 +33,12 @@ export class SeekerController {
         return this.seekerService.searchCollection(body)
     }
 
+    @Post('/searchScholarship')
+    async getScholarship(@Request() request,@Body() body){
+        this.logggerService.log('POST /getScholarship');
+        return this.seekerService.getScholarship(body)
+    }
+
     @Post('/bookmarkContent')
     @UseGuards(AuthGuard("jwt"), new RoleGuard("seeker"))
     async createContentBookmark(@Request() request,@Body() createContentdto?:CreateContentDto){

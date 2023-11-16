@@ -1457,6 +1457,59 @@ export class HasuraService {
     }
   }
 
+  async findScholarship(getContentdto) {
+    let result = 'where: {'
+    let order = ''
+    Object.entries(getContentdto).forEach(([key, value]) => {
+      console.log(`${key}: ${value}`);
+      if(key == 'orderBy') {
+        console.log("554", `${key}: ${value}`);
+        order = `order_by: {${value}: desc}`
+      } else {
+        console.log("557", `${key}: ${value}`);
+        result += `${key}: {_eq: "${value}"}, `;
+      }
+      
+    });
+    result += '}'
+    console.log("result", result)
+    console.log("order", order)
+    const query = `query MyQuery {
+      scholarship_content(${order}, ${result}) {
+        id
+        domain
+        name
+        description
+        provider
+        creator
+        category
+        applicationDeadline
+        amount
+        duration
+        eligibilityCriteria
+        applicationProcessing
+        selectionCriteria
+        noOfRecipients
+        termsAndConditions
+        additionalResources
+        applicationForm
+        applicationSubmissionDate
+        contactInformation
+        status
+        keywords
+        createdAt
+        updatedAt
+      }
+      }`;
+    try {
+      const response = await this.queryDb(query);
+      return response;
+    } catch (error) {
+      this.logger.error("Something Went wrong in finding scholarship data", error);
+      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   //configuration
 
   async createConfig(user_id,body) {
