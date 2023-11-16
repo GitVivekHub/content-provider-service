@@ -3,7 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lastValueFrom, map } from 'rxjs';
 import { components } from 'types/schema';
 import { SwayamApiResponse } from 'types/SwayamApiResponse';
-import { selectItemMapper, flnCatalogGenerator, flnCatalogGeneratorV4 } from 'utils/generator';
+import { selectItemMapper, flnCatalogGenerator, flnCatalogGeneratorV4, scholarshipCatalogGenerator } from 'utils/generator';
 
 // getting course data
 import * as fs from 'fs';
@@ -13,7 +13,7 @@ const courseData = JSON.parse(file);
 
 @Injectable()
 export class AppService {
-  constructor(private readonly httpService: HttpService, private readonly hasuraService:HasuraService) { }
+  constructor(private readonly httpService: HttpService, private readonly hasuraService: HasuraService) { }
 
   getHello(): string {
     return 'Onest-network Backend is running!!';
@@ -25,7 +25,7 @@ export class AppService {
   }) {
 
     console.log("body 26", JSON.stringify(body))
-    
+
     const intent: any = body.message.intent;
     console.log('intent: ', intent);
 
@@ -35,7 +35,7 @@ export class AppService {
     const tagGroup = intent?.item?.tags;
     console.log('tag group: ', tagGroup);
     console.log('tag group [0]: ', tagGroup[0]);
-    
+
     const flattenedTags: any = {};
     if (tagGroup) {
       (tagGroup[0].list as any[])?.forEach((tag) => {
@@ -61,7 +61,7 @@ export class AppService {
       const resp = await lastValueFrom(
         this.httpService
           .get('https://onest-strapi.tekdinext.com/fln-contents', {
-          //  .get('http://localhost:1337/api/fln-contents', {
+            //  .get('http://localhost:1337/api/fln-contents', {
             params: {
               language: language,
               domain: domain,
@@ -105,7 +105,7 @@ export class AppService {
     const query = intent?.item?.descriptor?.name;
     const tagGroup = intent?.item?.tags;
     console.log('tag group: ', tagGroup);
-    
+
     const flattenedTags: any = {};
     if (tagGroup) {
       (tagGroup[0].list as any[])?.forEach((tag) => {
@@ -126,14 +126,14 @@ export class AppService {
     const contentType = flattenedTags?.contentType !== '' ? flattenedTags?.contentType
       : null;
 
-      console.log("language", language)
+    console.log("language", language)
 
     try {
 
       const resp = await lastValueFrom(
         this.httpService
           .get('https://onest-strapi.tekdinext.com/api/fln-contents', {
-          //  .get('http://localhost:1337/api/fln-contents', {
+            //  .get('http://localhost:1337/api/fln-contents', {
             params: {
               'filters[language][$eq]': language,
               'filters[domain][$eq]': domain,
@@ -178,7 +178,7 @@ export class AppService {
     const tagGroup = intent?.item?.tags;
     console.log('query: ', query);
     console.log('tag group: ', tagGroup);
-    
+
     const flattenedTags: any = {};
     if (tagGroup) {
       (tagGroup[0].list as any[])?.forEach((tag) => {
@@ -186,52 +186,69 @@ export class AppService {
       });
     }
     console.log('flattened tags: ', flattenedTags);
-    const domain = flattenedTags?.domain !== '' ? flattenedTags?.domain: null;
-    const theme = flattenedTags?.theme !== '' ? flattenedTags?.theme: null;
-    const goal = flattenedTags?.goal !== '' ? flattenedTags?.goal: null;
-    const competency = flattenedTags?.competency !== '' ? flattenedTags?.competency: null;
-    const language = flattenedTags?.language !== '' ? flattenedTags?.language: null;
-    const contentType = flattenedTags?.contentType !== '' ? flattenedTags?.contentType: null;
+    const domain = flattenedTags?.domain !== '' ? flattenedTags?.domain : null;
+    const theme = flattenedTags?.theme !== '' ? flattenedTags?.theme : null;
+    const goal = flattenedTags?.goal !== '' ? flattenedTags?.goal : null;
+    const competency = flattenedTags?.competency !== '' ? flattenedTags?.competency : null;
+    const language = flattenedTags?.language !== '' ? flattenedTags?.language : null;
+    const contentType = flattenedTags?.contentType !== '' ? flattenedTags?.contentType : null;
 
     let obj = {}
-    if(flattenedTags.domain) {
+    if (flattenedTags.domain) {
       obj['domain'] = flattenedTags.domain
     }
-    if(flattenedTags?.theme) {
+    if (flattenedTags?.theme) {
       obj['theme'] = flattenedTags?.theme
     }
-    if(flattenedTags?.goal) {
+    if (flattenedTags?.goal) {
       obj['goal'] = flattenedTags?.goal
     }
-    if(flattenedTags?.competency) {
+    if (flattenedTags?.competency) {
       obj['competency'] = flattenedTags?.competency
     }
-    if(flattenedTags?.language) {
+    if (flattenedTags?.language) {
       obj['language'] = flattenedTags?.language
     }
-    if(flattenedTags?.contentType) {
+    if (flattenedTags?.contentType) {
       obj['contentType'] = flattenedTags?.contentType
     }
 
     console.log("filter obj", obj)
-    
-    try {
-      
-      const resp = await this.hasuraService.findContent(query)
-      console.log("resp", resp.data)
-      const flnResponse: any = resp.data.fln_content;
-      const catalog = flnCatalogGenerator(flnResponse, query);
 
-      body.context.action = 'on_search'
-      const courseData: any = {
-        context: body.context,
-        message: {
-          catalog: catalog,
-        },
-      };
-      console.log("courseData", courseData)
-      console.log("courseData 158", JSON.stringify(courseData))
-      return courseData;
+    try {
+      if (body.context.domain === 'onest:learning-experience') {
+          const resp = await this.hasuraService.findContent(query)
+          console.log("resp", resp.data)
+          const flnResponse: any = resp.data.fln_content;
+          const catalog = flnCatalogGenerator(flnResponse, query);
+          body.context.action = 'on_search'
+          const courseData: any = {
+            context: body.context,
+            message: {
+              catalog: catalog,
+            },
+          };
+          console.log("courseData", courseData)
+          console.log("courseData 158", JSON.stringify(courseData))
+          return courseData;
+      } else {
+          const resp = await this.hasuraService.findScholarshipContent(query)
+          console.log("resp", resp.data)
+          const flnResponse: any = resp.data.scholarship_content;
+          const catalog = scholarshipCatalogGenerator(flnResponse, query);
+          body.context.action = 'on_search'
+          const courseData: any = {
+            context: body.context,
+            message: {
+              catalog: catalog,
+            },
+          };
+          console.log("courseData", courseData)
+          console.log("courseData 247", JSON.stringify(courseData))
+          return courseData;
+      }
+
+
     } catch (err) {
       console.log('err: ', err);
       throw new InternalServerErrorException(err);

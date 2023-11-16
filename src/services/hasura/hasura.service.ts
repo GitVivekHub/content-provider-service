@@ -649,6 +649,50 @@ export class HasuraService {
     }
   }
 
+  async findScholarshipContent(searchQuery) {
+    // let result = 'where: {'
+    // Object.entries(getContentdto).forEach(([key, value]) => {
+    //   console.log(`${key}: ${value}`);
+    //   result += `${key}: {_eq: "${value}"}, `;
+    // });
+    // result += '}'
+    // console.log("result", result)
+    const query = `query MyQuery {
+      scholarship_content(where: {_or: [{domain: {_iregex: "${searchQuery}"}}, {name: {_iregex: "${searchQuery}"}}, {description: {_iregex: "${searchQuery}"}}, {provider: {_iregex: "${searchQuery}"}}, {creator: {_iregex: "${searchQuery}"}}, {category: {_iregex: "${searchQuery}"}}, {applicationDeadline: {_iregex: "${searchQuery}"}}]}) {
+        id
+        domain
+        name
+        description
+        provider
+        creator
+        category
+        applicationDeadline
+        amount
+        duration
+        eligibilityCriteria
+        applicationProcessing
+        selectionCriteria
+        noOfRecipients
+        termsAndConditions
+        additionalResources
+        applicationForm
+        applicationSubmissionDate
+        contactInformation
+        status
+        keywords
+        createdAt
+        updatedAt
+      }
+      }`;
+    try {
+      const response = await this.queryDb(query);
+      return response;
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating Admin", error);
+      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async deleteContent(id, provider_id) {
     console.log("provider_id", provider_id)
     console.log("id", id)

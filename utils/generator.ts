@@ -363,6 +363,153 @@ export const flnCatalogGenerator = (
   return catalog;
 };
 
+export const scholarshipCatalogGenerator = (
+  apiData: any,
+  query: string,
+) => {
+  console.log("apidata 370", apiData)
+  const courses: ReadonlyArray<{ node: any }> =
+    apiData;
+  const providerWise = {};
+  let categories: any = new Set();
+
+  courses.forEach((course, index) => {
+    const item = course;
+    const provider = 'fln';
+    // creating the provider wise map
+    if (providerWise[provider]) {
+      providerWise[provider].push(item);
+    } else {
+      providerWise[provider] = [item];
+    }
+  });
+
+  categories = [];
+
+  const catalog = {};
+  catalog['descriptor'] = { name: `Catalog for ${query}` };
+
+  // adding providers
+  catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
+    const providerObj: components['schemas']['Provider'] = {
+      id: provider,
+      descriptor: {
+        name: provider,
+      },
+      categories: providerWise[provider].map((course: any) => {
+        const providerItem = {
+          id: course.category,
+          parent_category_id: course.category || '',
+          descriptor: {
+            name: course.category,
+          }
+        };
+        return providerItem;
+      }),
+      items: providerWise[provider].map((course: any) => {
+        const providerItem = {
+          id: `${course.id}`,
+          parent_item_id: '',
+          descriptor: {
+            domain: course.domain,
+            name: course.name ? course.name : '',
+            code: course.code ? course.code : '123',
+            description: course.description,
+            provider: course.provider,
+            creator: course.creator,
+            category: course.category,
+            applicationDeadline: course.applicationDeadline,
+            amount: course.amount,
+            duration: course.duration,
+            eligibilityCriteria: course.eligibilityCriteria,
+            applicationProcessing: course.applicationProcessing,
+            selectionCriteria: course.selectionCriteria,
+            noOfRecipients: course.noOfRecipients,
+            termsAndConditions: course.termsAndConditions,
+            curricularGoals: course.curricularGoals,
+            learningOutcomes: course.learningOutcomes,
+            additionalResources: course.additionalResources,
+            applicationSubmissionDate: course.applicationSubmissionDate,
+            contactInformation: course.contactInformation,
+            status: course.status,
+            keywords: course.keywords,
+
+            images: [
+              {
+                url:
+                  course.image == null
+                    ? encodeURI(
+                      'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg'
+                    )
+                    : encodeURI('https://image/'+course.image),
+              },
+            ],
+          },
+          price: {
+            currency: 'INR',
+            value: 0 + '', // map it to an actual response
+          },
+          category_id: course.primaryCategory || '',
+          recommended: course.featured ? true : false,
+          time: {
+            label: 'Course Schedule',
+            duration: `P${12}W`, // ISO 8601 duration format
+            range: {
+              start: '2023-07-23T18:30:00.000000Z',
+              end: '2023-10-12T18:30:00.000000Z'
+            },
+          },
+          rating: Math.floor(Math.random() * 6).toString(), // map it to an actual response
+          tags: [
+            {
+              descriptor: {
+                name: "courseInfo"
+              },
+              list: [
+                {
+                  descriptor: {
+                    name: 'credits',
+                  },
+                  value: course.credits || '',
+                },
+                {
+                  descriptor: {
+                    name: 'instructors',
+                  },
+                  value: '',
+                },
+                {
+                  descriptor: {
+                    name: 'offeringInstitue',
+                  },
+                  value: course.sourceOrganisation || '',
+                },
+                {
+                  descriptor: {
+                    name: 'url',
+                  },
+                  value: encodeURI(course.link || ''),
+                },
+                {
+                  descriptor: {
+                    name: 'enrollmentEndDate',
+                  },
+                  value: course.createdAt || '',
+                },
+              ],
+            },
+          ],
+          rateable: false,
+        };
+        return providerItem;
+      }),
+    };
+    return providerObj;
+  });
+
+  return catalog;
+};
+
 export const generateOrder = (
   action: string,
   message_id: string,
