@@ -286,6 +286,7 @@ export const flnCatalogGenerator = (
             curricularGoals: course.curricularGoals,
             learningOutcomes: course.learningOutcomes,
             category: course.category,
+            createdAt: course.createdAt,
 
             images: [
               {
@@ -433,6 +434,7 @@ export const scholarshipCatalogGenerator = (
             contactInformation: course.contactInformation,
             status: course.status,
             keywords: course.keywords,
+            createdAt: course.createdAt,
 
             images: [
               {
