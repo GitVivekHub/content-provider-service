@@ -214,9 +214,10 @@ export class AppService {
     }
 
     console.log("filter obj", obj)
-
+    console.log("217", body.context.domain)
     try {
-      if (body.context.domain === 'onest:learning-experience') {
+      if (body.context.domain == 'onest:learning-experiences') {
+        
           const resp = await this.hasuraService.findContent(query)
           console.log("resp", resp.data)
           const flnResponse: any = resp.data.fln_content;

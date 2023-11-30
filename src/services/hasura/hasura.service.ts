@@ -657,6 +657,7 @@ export class HasuraService {
     // });
     // result += '}'
     // console.log("result", result)
+    console.log("searchQuery", searchQuery)
     const query = `query MyQuery {
       scholarship_content(where: {_or: [{domain: {_iregex: "${searchQuery}"}}, {name: {_iregex: "${searchQuery}"}}, {description: {_iregex: "${searchQuery}"}}, {provider: {_iregex: "${searchQuery}"}}, {creator: {_iregex: "${searchQuery}"}}, {category: {_iregex: "${searchQuery}"}}, {applicationDeadline: {_iregex: "${searchQuery}"}}]}) {
         id
@@ -686,6 +687,7 @@ export class HasuraService {
       }`;
     try {
       const response = await this.queryDb(query);
+      console.log("response", response)
       return response;
     } catch (error) {
       this.logger.error("Something Went wrong in creating Admin", error);
@@ -837,7 +839,7 @@ export class HasuraService {
   }
 
   async getAllCollection() {
-
+    console.log("getAllCollection")
     const collectionMutation = `query MyQuery {
       collection(where: {}) {
         id
@@ -1055,8 +1057,10 @@ export class HasuraService {
           },
         }
       );
+      console.log("response.data", response.data)
       return response.data;
     } catch (error) {
+      console.log("error")
       return error;
 
     }
