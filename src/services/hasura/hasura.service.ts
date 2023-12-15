@@ -8,12 +8,13 @@ import { LoggerService } from 'src/services/logger/logger.service';
 export class HasuraService {
   private hasuraUrl = process.env.HASURA_URL;
   private adminSecretKey = process.env.HASURA_GRAPHQL_ADMIN_SECRET;
+  private nameSpace = process.env.HASURA_NAMESPACE;
 
   constructor(private readonly logger: LoggerService) { }
 
   async getProviderList() {
     const query = `query GetUser {
-    User(where: {role: {_eq: "provider"}}) {
+    ${this.nameSpace}{User(where: {role: {_eq: "provider"}}) {
       id
       name
       email
@@ -22,6 +23,7 @@ export class HasuraService {
       enable
       reason
     }
+  }
   }`;
     try {
       const response = await this.queryDb(query);
@@ -34,7 +36,7 @@ export class HasuraService {
 
   async getProviderInfoById(id) {
     const query = `query GetUser {
-      Provider(where: {user_id: {_eq: ${id}}}) {
+      ${this.nameSpace}{Provider(where: {user_id: {_eq: ${id}}}) {
         provideruserRelation {
           id
           name
@@ -49,6 +51,7 @@ export class HasuraService {
         addressLine3
         organization
       }
+    }
   }`;
     try {
       const response = await this.queryDb(query);
@@ -90,7 +93,7 @@ export class HasuraService {
 
   async getSeekerList() {
     const query = `query GetUser {
-    User(where: {role: {_eq: "seeker"}}) {
+      ${this.nameSpace}{User(where: {role: {_eq: "seeker"}}) {
       id
       name
       email
@@ -99,6 +102,7 @@ export class HasuraService {
       enable
       reason
     }
+  }
   }`;
     try {
       const response = await this.queryDb(query);
@@ -112,11 +116,12 @@ export class HasuraService {
   async adminCreate(user) {
     const userMutation = `
       mutation ($name: String!, $password: String!, $role: String!,$email: String!,$approved:Boolean) {
-        insert_User(objects: {name:$name,password:$password,role:$role,email:$email,approved:$approved}) {
+        ${this.nameSpace}{insert_User(objects: {name:$name,password:$password,role:$role,email:$email,approved:$approved}) {
           returning {
             id,role
           }
         }
+      }
       }
     `;
 
@@ -133,7 +138,7 @@ export class HasuraService {
 
   async createProviderUser(providerUser) {
     const query = `mutation InsertProvider($user_id: Int,$organization:String,$source_code:String) {
-      insert_Provider(objects: {user_id: $user_id, organization: $organization, source_code:$source_code}) {
+      ${this.nameSpace}{insert_Provider(objects: {user_id: $user_id, organization: $organization, source_code:$source_code}) {
         affected_rows
         returning {
           id
@@ -141,6 +146,7 @@ export class HasuraService {
           organization
           source_code
         }
+      }
       }
     }`
 
@@ -172,13 +178,14 @@ export class HasuraService {
 
   async updateapprovalStatus(id, user) {
     const query = `mutation updateApprovalStatus($id: Int!, $approved: Boolean, $reason: String) {
-      update_User_by_pk(pk_columns: { id: $id }, _set: { approved: $approved, reason: $reason }) {
+      ${this.nameSpace}{update_User_by_pk(pk_columns: { id: $id }, _set: { approved: $approved, reason: $reason }) {
         id
         name
         approved
         reason
         enable
       }
+    }
     }`;
     try {
       console.log("approval", user.approval)
@@ -191,13 +198,14 @@ export class HasuraService {
 
   async updateEnableStatus(id, user) {
     const query = `mutation updateApprovalStatus($id: Int!, $enable: Boolean) {
-      update_User_by_pk(pk_columns: { id: $id }, _set: { enable: $enable}) {
+      ${this.nameSpace}{update_User_by_pk(pk_columns: { id: $id }, _set: { enable: $enable}) {
         id
         name
         approved
         reason
         enable
       }
+    }
     }`;
     try {
       console.log("user", user)
@@ -212,13 +220,14 @@ export class HasuraService {
     console.log("id", id)
     console.log("password", password)
     const query = `mutation updateApprovalStatus($id: Int!, $password: String) {
-      update_User_by_pk(pk_columns: { id: $id }, _set: { password: $password}) {
+      ${this.nameSpace}{update_User_by_pk(pk_columns: { id: $id }, _set: { password: $password}) {
         id
         name
         approved
         reason
         enable
       }
+    }
     }`;
     try {
 
@@ -232,9 +241,10 @@ export class HasuraService {
   async isUserApproved(email: string) {
     const query = `
       query IsUserApproved($email: String!) {
-        User(where: { email: { _eq: $email }, approved: { _eq: true } }) {
+        ${this.nameSpace}{User(where: { email: { _eq: $email }, approved: { _eq: true } }) {
           id
         }
+      }
       }
     `;
     try {
@@ -254,11 +264,12 @@ export class HasuraService {
     console.log(user)
     const userMutation = `
       mutation ($name: String!, $password: String!, $role: String!,$email: String!) {
-        insert_User(objects: { password: $password, role: $role, email: $email,name:$name}) {
+        ${this.nameSpace}{insert_User(objects: { password: $password, role: $role, email: $email,name:$name}) {
           returning {
             id,role
           }
         }
+      }
       }
     `;
 
@@ -278,7 +289,7 @@ export class HasuraService {
     console.log(email)
     const query = `
       query ($email: String!) {
-        User(where: {email: {_eq: $email}}) {
+        ${this.nameSpace}{User(where: {email: {_eq: $email}}) {
           id
           name
           email
@@ -289,6 +300,7 @@ export class HasuraService {
           enable
         }
       }
+      }
     `;
 
     try {
@@ -296,7 +308,7 @@ export class HasuraService {
         email,
       });
       console.log(response);
-      return response.data.User[0] || null;
+      return response.data.icar_.User[0] || null;
     } catch (error) {
       throw new HttpException('Failed to fetch user by username', HttpStatus.NOT_FOUND);
     }
@@ -1625,13 +1637,14 @@ export class HasuraService {
 
   async createIcarContent(id, createIcarContentdto) {
     const query = `mutation InsertIcarContent($user_id:Int,$content_id: String,$title:String,$description:String,$icon:String,$publisher:String,$crop:String,$url:String,$state:jsonb,$district:jsonb,$region:jsonb,$language:String,$target_users:jsonb, $publishDate: String, $expiryDate: String, $branch: jsonb, $fileType: String, $contentType: String, $monthOrSeason: String ) {
-      insert_icar_content_new(objects: {user_id:$user_id,content_id: $content_id,title: $title, description:$description, icon:$icon, publisher:$publisher, crop:$crop, url:$url, state:$state, district: $district, region: $region, language: $language, target_users: $target_users, publishDate: $publishDate, expiryDate: $expiryDate, branch: $branch, fileType: $fileType, contentType: $contentType, monthOrSeason: $monthOrSeason}) {
+      ${this.nameSpace}{insert_Content(objects: {user_id:$user_id,content_id: $content_id,title: $title, description:$description, icon:$icon, publisher:$publisher, crop:$crop, url:$url, state:$state, district: $district, region: $region, language: $language, target_users: $target_users, publishDate: $publishDate, expiryDate: $expiryDate, branch: $branch, fileType: $fileType, contentType: $contentType, monthOrSeason: $monthOrSeason}) {
         returning {
           id
           user_id
         }
       }
     }
+  }
     `
     try {
       console.log("Response ", createIcarContentdto);
@@ -1647,7 +1660,7 @@ export class HasuraService {
 
   async findIcarContent(searchQuery) {
     const query =`query MyQuery {
-      icar_content_new {
+      ${this.nameSpace} {Content {
         contentType
         content_id
         crop
@@ -1668,6 +1681,7 @@ export class HasuraService {
         user_id
         branch
       }
+    }
     }`
     ;
   try {
