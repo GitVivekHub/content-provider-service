@@ -743,7 +743,7 @@ export const IcarCatalogGenerator = (
           id: `${content.id}`,
           parent_category_id: `${content.id}` || '',
           descriptor: {
-            name: content.target_users,
+            name: content.publisher,
           }
         };
         
