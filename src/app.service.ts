@@ -3,7 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lastValueFrom, map } from 'rxjs';
 import { components } from 'types/schema';
 import { SwayamApiResponse } from 'types/SwayamApiResponse';
-import { selectItemMapper, flnCatalogGenerator, flnCatalogGeneratorV4, scholarshipCatalogGenerator } from 'utils/generator';
+import { selectItemMapper, flnCatalogGenerator, flnCatalogGeneratorV4, scholarshipCatalogGenerator, IcarCatalogGenerator } from 'utils/generator';
 
 // getting course data
 import * as fs from 'fs';
@@ -385,6 +385,69 @@ export class AppService {
       return confirmDto;
     } catch (err) {
       console.log('err: ', err);
+      throw new InternalServerErrorException(err);
+    }
+  }
+
+  async getContentFromIcar(body: {
+    context: components['schemas']['Context'];
+    message: { intent: components['schemas']['Intent'] };
+  }) {
+    const intent: any = body.message.intent;
+
+    // destructuring the intent
+    const provider = intent?.provider?.descriptor?.name;
+    const query = intent?.item?.descriptor?.name;
+    const tagGroup = intent?.item?.tags;
+
+    const flattenedTags: any = {};
+    if (tagGroup) {
+      (tagGroup[0].list as any[])?.forEach((tag) => {
+        flattenedTags[tag.name] = tag.value;
+      });
+    }
+    const domain = flattenedTags?.domain !== '' ? flattenedTags?.domain : null;
+    const theme = flattenedTags?.theme !== '' ? flattenedTags?.theme : null;
+    const goal = flattenedTags?.goal !== '' ? flattenedTags?.goal : null;
+    const competency = flattenedTags?.competency !== '' ? flattenedTags?.competency : null;
+    const language = flattenedTags?.language !== '' ? flattenedTags?.language : null;
+    const contentType = flattenedTags?.contentType !== '' ? flattenedTags?.contentType : null;
+
+    let obj = {}
+    if (flattenedTags.domain) {
+      obj['domain'] = flattenedTags.domain
+    }
+    if (flattenedTags?.theme) {
+      obj['theme'] = flattenedTags?.theme
+    }
+    if (flattenedTags?.goal) {
+      obj['goal'] = flattenedTags?.goal
+    }
+    if (flattenedTags?.competency) {
+      obj['competency'] = flattenedTags?.competency
+    }
+    if (flattenedTags?.language) {
+      obj['language'] = flattenedTags?.language
+    }
+    if (flattenedTags?.contentType) {
+      obj['contentType'] = flattenedTags?.contentType
+    }
+
+ 
+    try {
+          const resp = await this.hasuraService.findIcarContent(query)
+          const icarResponse: any = resp.data.icar_content_new;
+          const catalog = IcarCatalogGenerator(icarResponse, query);
+          body.context.action = 'on_search'
+          const courseData: any = {
+            context: body.context,
+            message: {
+              catalog: catalog,
+            },
+          };
+          return courseData;
+       
+    } catch (err) {
       throw new InternalServerErrorException(err);
     }
   }

@@ -169,4 +169,8 @@ export class ProviderService {
     async editScholarshipById(id, provider_id, scholarship) {
         return this.hasuraService.editScholarshipById(id, provider_id, scholarship)
     }
+
+    async createIcarConten(id, createIcarContentdto) {
+        return this.hasuraService.createIcarContent(id, createIcarContentdto)
+    }
 }
