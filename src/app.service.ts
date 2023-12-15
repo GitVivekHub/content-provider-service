@@ -16,7 +16,7 @@ export class AppService {
   constructor(private readonly httpService: HttpService, private readonly hasuraService: HasuraService) { }
 
   getHello(): string {
-    return 'Onest-network Backend is running!!';
+    return 'Icar-network Backend is running!!';
   }
 
   async getCoursesFromFlnV3(body: {
