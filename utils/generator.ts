@@ -705,3 +705,150 @@ export const selectItemMapper = (item: any) => {
 
   return selectItemOrder;
 };
+
+export const IcarCatalogGenerator = (
+  apiData: any,
+  query: string,
+) => {
+  const courses: ReadonlyArray<{ node: any }> =
+    apiData;
+  const providerWise = {};
+  let categories: any = new Set();
+
+  courses.forEach((course, index) => {
+    const item = course;
+    const provider = 'icar';
+    // creating the provider wise map
+    if (providerWise[provider]) {
+      providerWise[provider].push(item);
+    } else {
+      providerWise[provider] = [item];
+    }
+  });
+
+  categories = [];
+
+  const catalog = {};
+  catalog['descriptor'] = { name: `Catalog for ${query}` };
+  // adding providers
+  catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
+    const providerObj: components['schemas']['Provider'] = {
+      id: provider,
+      descriptor: {
+        name: provider,
+      },
+      
+      categories: providerWise[provider].map((content: any) => {
+        const providerItem = {
+          id: `${content.id}`,
+          parent_category_id: `${content.id}` || '',
+          descriptor: {
+            name: content.target_users,
+          }
+        };
+        
+        return providerItem;
+      }),
+      items: providerWise[provider].map((content: any) => {
+        const providerItem = {
+          id: `${content.id}`,
+          parent_item_id: `${content.id}`,
+          descriptor: {
+            name: content.title,
+            content_id: content.content_id ,
+            description: content.description ,
+            icon: content.icon,
+            publisher: content.publisher,
+            // domain: course.domain,
+            crop: content.crop,
+            language: content.language,
+            url: content.url,
+            branch: content.branch,
+            fileType: content.fileType,
+            title: content.title,
+            contentType: content.contentType,
+            monthOrSeason: content.monthOrSeason,
+            user_id: content.user_id,
+            publishDate: content.publishDate,
+            expiryDate: content.expiryDate,
+            district: content.district,
+            state: content.state,
+            region: content.region,
+            target_users:content.target_users,
+
+
+            images: [
+              {
+                url:
+                content.image == null
+                    ? encodeURI(
+                      'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg'
+                    )
+                    : encodeURI('https://image/'+content.image),
+              },
+            ],
+          },
+          price: {
+            currency: 'INR',
+            value: 0 + '', // map it to an actual response
+          },
+          category_id: content.primaryCategory || '',
+          recommended: content.featured ? true : false,
+          time: {
+            label: 'Course Schedule',
+            duration: `P${12}W`, // ISO 8601 duration format
+            range: {
+              start: '2023-07-23T18:30:00.000000Z',
+              end: '2023-10-12T18:30:00.000000Z'
+            },
+          },
+          rating: Math.floor(Math.random() * 6).toString(), // map it to an actual response
+          tags: [
+            {
+              descriptor: {
+                name: "courseInfo"
+              },
+              list: [
+                {
+                  descriptor: {
+                    name: 'credits',
+                  },
+                  value: content.credits || '',
+                },
+                {
+                  descriptor: {
+                    name: 'instructors',
+                  },
+                  value: '',
+                },
+                {
+                  descriptor: {
+                    name: 'offeringInstitue',
+                  },
+                  value: content.sourceOrganisation || '',
+                },
+                {
+                  descriptor: {
+                    name: 'url',
+                  },
+                  value: encodeURI(content.link || ''),
+                },
+                {
+                  descriptor: {
+                    name: 'enrollmentEndDate',
+                  },
+                  value: content.createdAt || '',
+                },
+              ],
+            },
+          ],
+          rateable: false,
+        };
+        return providerItem;
+      }),
+    };
+    return providerObj;
+  });
+
+  return catalog;
+}

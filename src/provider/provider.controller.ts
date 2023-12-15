@@ -10,6 +10,7 @@ import { diskStorage } from 'multer';
 import { createReadStream } from 'fs';
 import * as csvParser from 'csv-parser';
 import { ScholarshipDto } from 'src/dto/scholarship.dto';
+import { CreateIcarContentDto } from 'src/dto/createIcarContent.dto';
 
 @Controller('provider')
 export class ProviderController {
@@ -228,6 +229,17 @@ export class ProviderController {
         this.logggerService.log('POST /scholarship',request.user.id);
         let provider_id = request.user.id
         return this.providerService.editScholarshipById(id, provider_id, scholarship)
+    }
+
+    @Post('/icarcontent')
+    @UseGuards(AuthGuard("jwt"), new RoleGuard("provider"))
+    async createIcarConten(@Request() request,@Body() createKvkContentdto?:CreateIcarContentDto){
+        console.log("user", request.user);
+        console.log("createKvkContentdto", createKvkContentdto);
+        this.logggerService.log('POST /createicarKvkContent',request.user.id);
+        let id = request.user.id
+        console.log("id",id)
+        return this.providerService.createIcarConten(id,createKvkContentdto)
     }
 
 }

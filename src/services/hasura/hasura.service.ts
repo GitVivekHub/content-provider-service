@@ -1623,4 +1623,60 @@ export class HasuraService {
     }
   }
 
+  async createIcarContent(id, createIcarContentdto) {
+    const query = `mutation InsertIcarContent($user_id:Int,$content_id: String,$title:String,$description:String,$icon:String,$publisher:String,$crop:String,$url:String,$state:jsonb,$district:jsonb,$region:jsonb,$language:String,$target_users:jsonb, $publishDate: String, $expiryDate: String, $branch: jsonb, $fileType: String, $contentType: String, $monthOrSeason: String ) {
+      insert_icar_content_new(objects: {user_id:$user_id,content_id: $content_id,title: $title, description:$description, icon:$icon, publisher:$publisher, crop:$crop, url:$url, state:$state, district: $district, region: $region, language: $language, target_users: $target_users, publishDate: $publishDate, expiryDate: $expiryDate, branch: $branch, fileType: $fileType, contentType: $contentType, monthOrSeason: $monthOrSeason}) {
+        returning {
+          id
+          user_id
+        }
+      }
+    }
+    `
+    try {
+      console.log("Response ", createIcarContentdto);
+      const response = await this.queryDb(query, { user_id: id, ...createIcarContentdto });
+      console.log("response", response);
+      return response
+    } catch (error) {
+      throw new HttpException('Failed to create Content', HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+
+  async findIcarContent(searchQuery) {
+    const query =`query MyQuery {
+      icar_content_new {
+        contentType
+        content_id
+        crop
+        description
+        expiryDate
+        fileType
+        icon
+        id
+        language
+        monthOrSeason
+        publishDate
+        publisher
+        region
+        state
+        target_users
+        title
+        url
+        user_id
+        branch
+      }
+    }`
+    ;
+  try {
+    const response = await this.queryDb(query);
+    return response;
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
+
 }
