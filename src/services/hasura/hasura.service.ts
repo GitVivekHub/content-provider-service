@@ -406,36 +406,28 @@ export class HasuraService {
 
   async getContent(id) {
     const query = `query GetUser {
-      fln_content(where: {user_id: {_eq: ${id}}}) {
-        id
-        user_id
-        title
-        themes
-        url
-        urlType
-        sourceOrganisation
-        publisher
-        minAge
-        mimeType
-        maxAge
-        link
-        learningOutcomes
-        language
-        image
-        goal
-        domain
-        description
-        curricularGoals
-        content_id
+      ${this.nameSpace}{Content(where: {user_id: {_eq: ${id}}}) {
         contentType
-        competency
-        collection
-        code
-        author
-        category
-        createdAt
-        updatedAt
+          content_id
+          crop
+          description
+          expiryDate
+          fileType
+          icon
+          id
+          language
+          monthOrSeason
+          publishDate
+          publisher
+          region
+          state
+          target_users
+          title
+          url
+          user_id
+          branch
       }
+    }
   }`;
     try {
       const response = await this.queryDb(query);
