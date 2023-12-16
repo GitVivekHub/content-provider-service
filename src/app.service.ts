@@ -15,6 +15,9 @@ const courseData = JSON.parse(file);
 export class AppService {
   constructor(private readonly httpService: HttpService, private readonly hasuraService: HasuraService) { }
 
+  private nameSpace = process.env.HASURA_NAMESPACE;
+
+
   getHello(): string {
     return 'Icar-network Backend is running!!';
   }
@@ -436,7 +439,7 @@ export class AppService {
  
     try {
           const resp = await this.hasuraService.findIcarContent(query)
-          const icarResponse: any = resp.data.icar_content_new;
+          const icarResponse: any = resp.data.icar_.Content;
           const catalog = IcarCatalogGenerator(icarResponse, query);
           body.context.action = 'on_search'
           const courseData: any = {
