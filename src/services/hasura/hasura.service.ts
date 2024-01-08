@@ -952,89 +952,9 @@ export class HasuraService {
     }
   }
 
-//   async updateCollection(id, provider_id, body) {
-//     console.log("provider_id", provider_id)
-//     console.log("id", id)
-//     console.log("body", body)
-//     const collectionMutation = `mutation MyMutation($id:Int,$provider_id:Int,$title:String,$description:String,$domain:String,$icon:String,$curricularGoals:String,$author:String,$category:String,$themes:String,$publisher:String,$language:String,$learningObjectives:String,$maxAge:Int,$minAge:Int) {
-//       ${this.nameSpace}{
-//       update_${this.nameSpace}collection(where: {id: {_eq: ${id}}, provider_id: {_eq: ${provider_id}}}, _set: 
-//         {author: $author,
-//         category: $category,
-//         curricularGoals: $curricularGoals,
-//         description: $description,
-//         domain: $domain,
-//         icon: $icon,
-//         language: $language,
-//         learningObjectives: $learningObjectives,
-//         maxAge: $maxAge,
-//         minAge: $minAge,
-//         publisher: $publisher,
-//         themes: $themes,
-//         title: $title}) {
-//         affected_rows
-//         returning {
-//           id
-//           provider_id
-//           title
-//           description
-//           domain
-//           icon
-//           curricularGoals
-//           author
-//           category
-//           themes
-//           publisher
-//           language
-//           learningObjectives
-//           maxAge
-//           minAge
-//           updatedAt
-//           createdAt
-//         }
-//       }
-//       }
-//     }
-//     `;
-
-// console.log(collectionMutation)
-    
-
-    
-
-//     try {
-//       const variables = {
-      
-//         provider_id,
-//         title: body.title,
-//         description: body.description,
-//         domain: body.domain,
-//         icon: body.icon,
-//         curricularGoals: body.curricularGoals,
-//         author: body.author,
-//         category: body.category,
-//         themes: body.themes,
-//         publisher: body.publisher,
-//         language: body.language,
-//         learningObjectives: body.learningObjectives,
-//         maxAge: body.maxAge,
-//         minAge: body.minAge
-//       };
-  
-//       return await this.queryDb(collectionMutation, {variables});
-//     } catch (error) {
-
-//       this.logger.error("Something Went wrong in creating User", error);
-//       throw new HttpException("Something Went wrong in creating User", HttpStatus.BAD_REQUEST);
-//     }
-//   }
-
 
 async updateCollection(id, provider_id, body) {
-  console.log("provider_id", provider_id);
-  console.log("body", body);
 
-  // Construct the update mutation dynamically based on the provided fields in the body
   let updateSet = {};
   Object.keys(body).forEach((key) => {
     updateSet[key] = body[key];
@@ -1076,7 +996,6 @@ async updateCollection(id, provider_id, body) {
 try {
   console.log(collectionMutation);
 
-  // Pass provider_id and updateSet as variables to the query
   return await this.queryDb(collectionMutation, { provider_id, id, updateSet });
 
 } catch (error) {
@@ -1085,16 +1004,6 @@ try {
 }
 
 
-  try {
-    console.log(collectionMutation);
-
-    // Pass provider_id and updateSet as variables to the query
-    return await this.queryDb(collectionMutation, { provider_id, id, updateSet });
-
-  } catch (error) {
-    this.logger.error("Something Went wrong in updating Collection", error);
-    throw new HttpException("Something Went wrong in updating Collection", HttpStatus.BAD_REQUEST);
-  }
 }
 
 
