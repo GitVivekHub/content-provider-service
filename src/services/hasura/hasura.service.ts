@@ -758,8 +758,10 @@ export class HasuraService {
   async createCollection(provider_id, body) {
     console.log("provider_id", provider_id)
     console.log("body", body)
-    const collectionMutation = `mutation MyMutation {
-        insert_collection(objects: {
+    const collectionMutation = `
+    mutation MyMutation($provider_id:Int,) {
+      ${this.nameSpace} {
+        insert_${this.nameSpace}collection(objects: {
           provider_id: ${provider_id}, 
           title: "${body.title}",
           description: "${body.description}",
@@ -770,11 +772,10 @@ export class HasuraService {
           language: "${body.language}",
           category: "${body.category}",
           themes: "${body.themes}",
-          minAge: "${body.minAge}",
-          maxAge: "${body.maxAge}",
+          minAge: ${body.minAge},
+          maxAge: ${body.maxAge},
           domain: "${body.domain}",
           curricularGoals: "${body.curricularGoals}",
-
         }) {
           returning {
             id
@@ -796,9 +797,12 @@ export class HasuraService {
             updatedAt
           }
         }
-      }`;
+      }
+    }
+    `;
 
     try {
+      console.log(collectionMutation)
       return await this.queryDb(collectionMutation);
 
     } catch (error) {
@@ -811,7 +815,8 @@ export class HasuraService {
   async getCollection(provider_id) {
     console.log("provider_id", provider_id)
     const collectionMutation = `query MyQuery {
-      collection(where: {provider_id: {_eq: ${provider_id}}}) {
+      ${this.nameSpace}{
+        ${this.nameSpace}collection(where: {provider_id: {_eq: ${provider_id}}}) {
         id
         icon
         domain
@@ -830,6 +835,7 @@ export class HasuraService {
         createdAt
       }
     }
+    }
     `;
 
     try {
@@ -845,7 +851,8 @@ export class HasuraService {
   async getAllCollection() {
     console.log("getAllCollection")
     const collectionMutation = `query MyQuery {
-      collection(where: {}) {
+      ${this.nameSpace}{
+        ${this.nameSpace}collection(where: {}) {
         id
         icon
         domain
@@ -862,6 +869,7 @@ export class HasuraService {
         createdAt
         updatedAt
       }
+    }
     }
     `;
 
@@ -944,45 +952,152 @@ export class HasuraService {
     }
   }
 
-  async updateCollection(id, provider_id, body) {
-    console.log("provider_id", provider_id)
-    console.log("id", id)
-    console.log("body", body)
-    const collectionMutation = `mutation MyMutation {
-      update_collection(where: {id: {_eq: ${id}}, provider_id: {_eq: ${provider_id}}}, _set: {author: "${body.author}", category: "${body.category}", curricularGoals: "${body.curricularGoals}", description: "${body.description}", domain: "${body.domain}", icon: "${body.icon}", language: "${body.language}", learningObjectives: "${body.learningObjectives}", maxAge: ${body.maxAge}, minAge: ${body.minAge}, publisher: "${body.publisher}", themes: "${body.themes}", title: "${body.title}"}) {
-        affected_rows
+//   async updateCollection(id, provider_id, body) {
+//     console.log("provider_id", provider_id)
+//     console.log("id", id)
+//     console.log("body", body)
+//     const collectionMutation = `mutation MyMutation($id:Int,$provider_id:Int,$title:String,$description:String,$domain:String,$icon:String,$curricularGoals:String,$author:String,$category:String,$themes:String,$publisher:String,$language:String,$learningObjectives:String,$maxAge:Int,$minAge:Int) {
+//       ${this.nameSpace}{
+//       update_${this.nameSpace}collection(where: {id: {_eq: ${id}}, provider_id: {_eq: ${provider_id}}}, _set: 
+//         {author: $author,
+//         category: $category,
+//         curricularGoals: $curricularGoals,
+//         description: $description,
+//         domain: $domain,
+//         icon: $icon,
+//         language: $language,
+//         learningObjectives: $learningObjectives,
+//         maxAge: $maxAge,
+//         minAge: $minAge,
+//         publisher: $publisher,
+//         themes: $themes,
+//         title: $title}) {
+//         affected_rows
+//         returning {
+//           id
+//           provider_id
+//           title
+//           description
+//           domain
+//           icon
+//           curricularGoals
+//           author
+//           category
+//           themes
+//           publisher
+//           language
+//           learningObjectives
+//           maxAge
+//           minAge
+//           updatedAt
+//           createdAt
+//         }
+//       }
+//       }
+//     }
+//     `;
+
+// console.log(collectionMutation)
+    
+
+    
+
+//     try {
+//       const variables = {
+      
+//         provider_id,
+//         title: body.title,
+//         description: body.description,
+//         domain: body.domain,
+//         icon: body.icon,
+//         curricularGoals: body.curricularGoals,
+//         author: body.author,
+//         category: body.category,
+//         themes: body.themes,
+//         publisher: body.publisher,
+//         language: body.language,
+//         learningObjectives: body.learningObjectives,
+//         maxAge: body.maxAge,
+//         minAge: body.minAge
+//       };
+  
+//       return await this.queryDb(collectionMutation, {variables});
+//     } catch (error) {
+
+//       this.logger.error("Something Went wrong in creating User", error);
+//       throw new HttpException("Something Went wrong in creating User", HttpStatus.BAD_REQUEST);
+//     }
+//   }
+
+
+async updateCollection(id, provider_id, body) {
+  console.log("provider_id", provider_id);
+  console.log("body", body);
+
+  // Construct the update mutation dynamically based on the provided fields in the body
+  let updateSet = {};
+  Object.keys(body).forEach((key) => {
+    updateSet[key] = body[key];
+  });
+
+
+
+  const collectionMutation = `
+  mutation MyMutation($provider_id: Int, $id: Int, $updateSet: ${this.nameSpace}collection_set_input) {
+    ${this.nameSpace} {
+      update_${this.nameSpace}collection(
+        where: { id: { _eq: $id }, provider_id: { _eq: $provider_id } },
+        _set: $updateSet
+      ) {
         returning {
           id
           provider_id
           title
           description
-          domain
           icon
-          curricularGoals
+          publisher
           author
+          learningObjectives
+          language
           category
           themes
-          publisher
-          language
-          learningObjectives
-          maxAge
           minAge
-          updatedAt
+          maxAge
+          domain
+          curricularGoals
           createdAt
+          updatedAt
         }
       }
     }
-    `;
-
-    try {
-      return await this.queryDb(collectionMutation);
-
-    } catch (error) {
-
-      this.logger.error("Something Went wrong in creating User", error);
-      throw new HttpException("Something Went wrong in creating User", HttpStatus.BAD_REQUEST);
-    }
   }
+`;
+
+try {
+  console.log(collectionMutation);
+
+  // Pass provider_id and updateSet as variables to the query
+  return await this.queryDb(collectionMutation, { provider_id, id, updateSet });
+
+} catch (error) {
+  this.logger.error("Something Went wrong in updating Collection", error);
+  throw new HttpException("Something Went wrong in updating Collection", HttpStatus.BAD_REQUEST);
+}
+
+
+  try {
+    console.log(collectionMutation);
+
+    // Pass provider_id and updateSet as variables to the query
+    return await this.queryDb(collectionMutation, { provider_id, id, updateSet });
+
+  } catch (error) {
+    this.logger.error("Something Went wrong in updating Collection", error);
+    throw new HttpException("Something Went wrong in updating Collection", HttpStatus.BAD_REQUEST);
+  }
+}
+
+
 
   async deleteCollection(id, provider_id) {
     console.log("provider_id", provider_id)
