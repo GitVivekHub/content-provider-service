@@ -215,7 +215,7 @@ export const selectItemMapper = (item: any) => {
         descriptor: {
           name: item.title,
           long_desc: item.description,
-          images: [item.icon],
+          //images: [item.icon],
         },
         price: {
           currency: 'INR',
