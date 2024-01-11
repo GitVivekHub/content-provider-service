@@ -90,13 +90,9 @@ export class AppService {
 
     // order['id'] = selectDto.context.transaction_id + Date.now();
 
-    const provider_id = selectDto.message.order.provider.id
-    const item_id = selectDto.message.order.items[0].id
-    console.log("data", provider_id, item_id)
+    const itemId = selectDto.message.order.items[0].id;
 
-    const query = { id: item_id, user_id: provider_id }
-
-    const courseData = await this.hasuraService.findIcarContentById(query)
+    const courseData = await this.hasuraService.findIcarContentById(itemId)
     console.log("contentData", courseData.data.icar_.Content)
 
     //return
@@ -131,6 +127,116 @@ export class AppService {
   }
 
   async handleConfirm(confirmDto: any) {
+    // fine tune the order here
+    const itemId = confirmDto.message.order.items[0].id;
+
+    const courseData = await this.hasuraService.findIcarContentById(itemId)
+    console.log("contentData", courseData.data.icar_.Content)
+
+    console.log("itemId", itemId)
+    const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
+    order['fulfillments'] = confirmDto.message.order.fulfillments;
+    order['id'] = confirmDto.context.transaction_id + Date.now();
+    order['state'] = 'COMPLETE';
+    order['type'] = 'DEFAULT';
+    order['created_at'] = new Date(Date.now());
+    order['updated_at'] = new Date(Date.now());
+    confirmDto.message.order = order;
+
+    return confirmDto
+    // storing draft order in database
+    const createOrderGQL = `mutation insertDraftOrder($order: dsep_orders_insert_input!) {
+      insert_dsep_orders_one (
+        object: $order
+      ) {
+        order_id
+      }
+    }`;
+
+    await lastValueFrom(
+      this.httpService
+        .post(
+          process.env.HASURA_URI,
+          {
+            query: createOrderGQL,
+            variables: {
+              order: {
+                order_id: confirmDto.message.order.id,
+                user_id:
+                  confirmDto.message?.order?.fulfillments[0]?.customer?.person
+                    ?.name,
+                created_at: new Date(Date.now()),
+                updated_at: new Date(Date.now()),
+                status: confirmDto.message.order.state,
+                order_details: confirmDto.message.order,
+              },
+            },
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'x-hasura-admin-secret': process.env.SECRET,
+            },
+          },
+        )
+        .pipe(map((item) => item.data)),
+    );
+
+    confirmDto.message.order = order;
+
+    // update order as confirmed in database
+    const updateOrderGQL = `mutation updateDSEPOrder($order_id: String, $changes: dsep_orders_set_input) {
+      update_dsep_orders (
+        where: {order_id: {_eq: $order_id}},
+        _set: $changes
+      ) {
+        affected_rows
+        returning {
+          order_id
+          status
+          order_details
+        }
+      }
+    }`;
+
+    try {
+      const res = await lastValueFrom(
+        this.httpService
+          .post(
+            process.env.HASURA_URI,
+            {
+              query: updateOrderGQL,
+              variables: {
+                order_id: order.id,
+                changes: {
+                  order_details: order,
+                  status: order.state,
+                },
+              },
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'x-hasura-admin-secret': process.env.SECRET,
+              },
+            },
+          )
+          .pipe(map((item) => item.data)),
+      );
+      console.log('res in test api update: ', res.data);
+
+      confirmDto.message.order = order;
+      confirmDto.context.action = 'on_confirm';
+      console.log('action: ', confirmDto.context.action);
+      return confirmDto;
+    } catch (err) {
+      console.log('err: ', err);
+      throw new InternalServerErrorException(err);
+    }
+  }
+
+
+  async handleConfirm2(confirmDto: any) {
     // fine tune the order here
     const itemId = confirmDto.message.order.items[0].id;
     const order: any = selectItemMapper(courseData[itemId]);

@@ -1709,11 +1709,11 @@ export class HasuraService {
     }
   }
 
-  async findIcarContentById(searchQuery) {
-    console.log("searchQuery", searchQuery)
+  async findIcarContentById(itemId) {
+    console.log("searchQuery", itemId)
     const query = `query MyQuery {
       icar_ {
-        Content(where: {id: {_eq: ${searchQuery.id}}, user_id: {_eq: ${searchQuery.user_id}}}) {
+        Content(where: {id: {_eq: ${itemId}}}) {
           id
           branch
           contentType
