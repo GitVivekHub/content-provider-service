@@ -3,7 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lastValueFrom, map } from 'rxjs';
 import { components } from 'types/schema';
 import { SwayamApiResponse } from 'types/SwayamApiResponse';
-import { selectItemMapper, flnCatalogGenerator, flnCatalogGeneratorV4, scholarshipCatalogGenerator, IcarCatalogGenerator } from 'utils/generator';
+import { selectItemMapper, scholarshipCatalogGenerator, IcarCatalogGenerator } from 'utils/generator';
 
 // getting course data
 import * as fs from 'fs';
@@ -94,6 +94,8 @@ export class AppService {
 
     const courseData = await this.hasuraService.findIcarContentById(itemId)
     console.log("contentData", courseData.data.icar_.Content)
+
+    delete courseData.data.icar_.Content[0].url
 
     //return
 
@@ -234,7 +236,6 @@ export class AppService {
       throw new InternalServerErrorException(err);
     }
   }
-
 
   async handleConfirm2(confirmDto: any) {
     // fine tune the order here

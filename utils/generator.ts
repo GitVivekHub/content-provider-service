@@ -2,367 +2,6 @@ import { components } from 'types/schema';
 import { SwayamApiResponse } from 'types/SwayamApiResponse';
 import { SwayamCourse } from 'types/SwayamCourese';
 
-export const flnCatalogGeneratorV3 = (
-  apiData: any,
-  query: string,
-) => {
-  const courses: ReadonlyArray<{ node: any }> =
-    apiData;
-  const providerWise = {};
-  let categories: any = new Set();
-
-  courses.forEach((course, index) => {
-    const item = course;
-    const provider = 'fln';
-    // creating the provider wise map
-    if (providerWise[provider]) {
-      providerWise[provider].push(item);
-    } else {
-      providerWise[provider] = [item];
-    }
-  });
-
-  categories = [];
-
-  const catalog = {};
-  catalog['descriptor'] = { name: `Catalog for ${query}` };
-
-  // adding providers
-  catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
-    const providerObj: components['schemas']['Provider'] = {
-      id: provider,
-      descriptor: {
-        name: provider,
-      },
-      categories: [],
-      items: providerWise[provider].map((course: any) => {
-        const providerItem = {
-          id: `${course.id}`,
-          parent_item_id: '',
-          descriptor: {
-            name: course.title,
-            long_desc: course.description ? course.description : '',
-            images: [
-              {
-                url:
-                  course.image === null
-                    ? encodeURI(
-                      'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg',
-                    )
-                    : encodeURI(course.image),
-              },
-            ],
-          },
-          price: {
-            currency: 'INR',
-            value: 0 + '', // map it to an actual response
-          },
-          category_id: course.primaryCategory || '',
-          recommended: course.featured ? true : false,
-          time: {
-            label: 'Course Schedule',
-            duration: `P${12}W`, // ISO 8601 duration format
-            range: {
-              start: '2023-07-23T18:30:00.000000Z',
-              end: '2023-10-12T18:30:00.000000Z'
-            },
-          },
-          rating: Math.floor(Math.random() * 6).toString(), // map it to an actual response
-          tags: [
-            {
-              name: 'courseInfo',
-              list: [
-                {
-                  name: 'credits',
-                  value: course.credits || '',
-                },
-                {
-                  name: 'instructors',
-                  value: '',
-                },
-                {
-                  name: 'offeringInstitue',
-                  value: course.sourceOrganisation || '',
-                },
-                {
-                  name: 'url',
-                  value: encodeURI(course.link || ''),
-                },
-                {
-                  name: 'enrollmentEndDate',
-                  value: '2023-07-31T18:29:00.000000Z',
-                },
-              ],
-            },
-          ],
-          rateable: false,
-        };
-        return providerItem;
-      }),
-    };
-    return providerObj;
-  });
-
-  return catalog;
-};
-
-export const flnCatalogGeneratorV4 = (
-  apiData: any,
-  query: string,
-) => {
-  const courses: ReadonlyArray<{ node: any }> =
-    apiData;
-  const providerWise = {};
-  let categories: any = new Set();
-
-  courses.forEach((course, index) => {
-    const item = course;
-    const provider = 'fln';
-    // creating the provider wise map
-    if (providerWise[provider]) {
-      providerWise[provider].push(item);
-    } else {
-      providerWise[provider] = [item];
-    }
-  });
-
-  categories = [];
-
-  const catalog = {};
-  catalog['descriptor'] = { name: `Catalog for ${query}` };
-
-  // adding providers
-  catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
-    const providerObj: components['schemas']['Provider'] = {
-      id: provider,
-      descriptor: {
-        name: provider,
-      },
-      categories: [],
-      items: providerWise[provider].map((course: any) => {
-        const providerItem = {
-          id: `${course.id}`,
-          parent_item_id: '',
-          descriptor: {
-            name: course.attributes.title,
-            long_desc: course.attributes.description ? course.attributes.description : '',
-            code: course.attributes.code,
-            competency: course.attributes.competency,
-            contentType: course.attributes.contentType,
-            domain: course.attributes.domain,
-            goal: course.attributes.goal,
-            language: course.attributes.language,
-            link: course.attributes.link,
-            sourceOrganisation: course.attributes.sourceOrganisation,
-            themes: course.attributes.themes,
-            title: course.attributes.title,
-            images: [
-              {
-                url:
-                  course.attributes.image == null
-                    ? encodeURI(
-                      'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg'
-                    )
-                    : encodeURI(course.attributes.image),
-              },
-            ],
-          },
-          price: {
-            currency: 'INR',
-            value: 0 + '', // map it to an actual response
-          },
-          category_id: course.primaryCategory || '',
-          recommended: course.featured ? true : false,
-          time: {
-            label: 'Course Schedule',
-            duration: `P${12}W`, // ISO 8601 duration format
-            range: {
-              start: '2023-07-23T18:30:00.000000Z',
-              end: '2023-10-12T18:30:00.000000Z'
-            },
-          },
-          rating: Math.floor(Math.random() * 6).toString(), // map it to an actual response
-          tags: [
-            {
-              name: 'courseInfo',
-              list: [
-                {
-                  name: 'credits',
-                  value: course.attributes.credits || '',
-                },
-                {
-                  name: 'instructors',
-                  value: '',
-                },
-                {
-                  name: 'offeringInstitue',
-                  value: course.attributes.sourceOrganisation || '',
-                },
-                {
-                  name: 'url',
-                  value: encodeURI(course.attributes.link || ''),
-                },
-                {
-                  name: 'enrollmentEndDate',
-                  value: '2023-07-31T18:29:00.000000Z',
-                },
-              ],
-            },
-          ],
-          rateable: false,
-        };
-        return providerItem;
-      }),
-    };
-    return providerObj;
-  });
-
-  return catalog;
-};
-
-export const flnCatalogGenerator = (
-  apiData: any,
-  query: string,
-) => {
-  console.log("apidata", apiData)
-  const courses: ReadonlyArray<{ node: any }> =
-    apiData;
-  const providerWise = {};
-  let categories: any = new Set();
-
-  courses.forEach((course, index) => {
-    const item = course;
-    const provider = 'fln';
-    // creating the provider wise map
-    if (providerWise[provider]) {
-      providerWise[provider].push(item);
-    } else {
-      providerWise[provider] = [item];
-    }
-  });
-
-  categories = [];
-
-  const catalog = {};
-  catalog['descriptor'] = { name: `Catalog for ${query}` };
-
-  // adding providers
-  catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
-    const providerObj: components['schemas']['Provider'] = {
-      id: provider,
-      descriptor: {
-        name: provider,
-      },
-      categories: providerWise[provider].map((course: any) => {
-        const providerItem = {
-          id: course.category,
-          parent_category_id: course.category || '',
-          descriptor: {
-            name: course.category,
-          }
-        };
-        return providerItem;
-      }),
-      items: providerWise[provider].map((course: any) => {
-        const providerItem = {
-          id: `${course.id}`,
-          parent_item_id: '',
-          descriptor: {
-            name: course.title,
-            long_desc: course.description ? course.description : '',
-            code: course.code ? course.code : '123',
-            competency: course.competency,
-            contentType: course.contentType,
-            domain: course.domain,
-            goal: course.goal,
-            language: course.language,
-            link: course.link,
-            sourceOrganisation: course.sourceOrganisation,
-            themes: course.themes,
-            title: course.title,
-            minAge: course.minAge,
-            maxAge: course.maxAge,
-            author: course.author,
-            curricularGoals: course.curricularGoals,
-            learningOutcomes: course.learningOutcomes,
-            category: course.category,
-            createdAt: course.createdAt,
-
-            images: [
-              {
-                url:
-                  course.image == null
-                    ? encodeURI(
-                      'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg'
-                    )
-                    : encodeURI('https://image/'+course.image),
-              },
-            ],
-          },
-          price: {
-            currency: 'INR',
-            value: 0 + '', // map it to an actual response
-          },
-          category_id: course.primaryCategory || '',
-          recommended: course.featured ? true : false,
-          time: {
-            label: 'Course Schedule',
-            duration: `P${12}W`, // ISO 8601 duration format
-            range: {
-              start: '2023-07-23T18:30:00.000000Z',
-              end: '2023-10-12T18:30:00.000000Z'
-            },
-          },
-          rating: Math.floor(Math.random() * 6).toString(), // map it to an actual response
-          tags: [
-            {
-              descriptor: {
-                name: "courseInfo"
-              },
-              list: [
-                {
-                  descriptor: {
-                    name: 'credits',
-                  },
-                  value: course.credits || '',
-                },
-                {
-                  descriptor: {
-                    name: 'instructors',
-                  },
-                  value: '',
-                },
-                {
-                  descriptor: {
-                    name: 'offeringInstitue',
-                  },
-                  value: course.sourceOrganisation || '',
-                },
-                {
-                  descriptor: {
-                    name: 'url',
-                  },
-                  value: encodeURI(course.link || ''),
-                },
-                {
-                  descriptor: {
-                    name: 'enrollmentEndDate',
-                  },
-                  value: course.createdAt || '',
-                },
-              ],
-            },
-          ],
-          rateable: false,
-        };
-        return providerItem;
-      }),
-    };
-    return providerObj;
-  });
-
-  return catalog;
-};
 
 export const scholarshipCatalogGenerator = (
   apiData: any,
@@ -599,55 +238,55 @@ export const selectItemMapper = (item: any) => {
             list: [
               {
                 name: 'title',
-                value: item.title + '',
+                value: item.title ?? '',
               },
               {
                 name: 'description',
-                value: item.description + '',
+                value: item.description ?? '',
               },
               {
                 name: 'url',
-                value: item.url + '',
+                value: item.url ?? '',
               },
               {
                 name: 'language',
-                value: item.language + '',
+                value: item.language ?? '',
               },
               {
                 name: 'fileType',
-                value: item.fileType + '',
+                value: item.fileType ?? '',
               },
               {
                 name: 'contentType',
-                value: item.contentType + '',
+                value: item.contentType ?? '',
               },
               {
                 name: 'monthOrSeason',
-                value: item.monthOrSeason + '',
+                value: item.monthOrSeason ?? '',
               },
               {
                 name: 'publishDate',
-                value: item.publishDate + '',
+                value: item.publishDate ?? '',
               },
               {
                 name: 'expiryDate',
-                value: item.expiryDate + '',
+                value: item.expiryDate ?? '',
               },
               {
                 name: 'state',
-                value: item.state + '',
+                value: item.state ?? '',
               },
               {
                 name: 'region',
-                value: item.region + '',
+                value: item.region ?? '',
               },
               {
                 name: 'target_users',
-                value: item.target_users + '',
+                value: item.target_users ?? '',
               },
               {
                 name: 'branch',
-                value: item.branch + '',
+                value: item.branch ?? '',
               }
             ],
           },
@@ -744,9 +383,9 @@ export const IcarCatalogGenerator = (
   const providerWise = {};
   let categories: any = new Set();
 
-  courses.forEach((course, index) => {
+  courses.forEach((course: any, index) => {
     const item = course;
-    const provider = 'icar';
+    const provider = course.user_id;
     // creating the provider wise map
     if (providerWise[provider]) {
       providerWise[provider].push(item);
@@ -789,21 +428,21 @@ export const IcarCatalogGenerator = (
             icon: content.icon,
             publisher: content.publisher,
             // domain: course.domain,
-            crop: content.crop,
-            language: content.language,
-            url: content.url,
-            branch: content.branch,
-            fileType: content.fileType,
-            title: content.title,
-            contentType: content.contentType,
-            monthOrSeason: content.monthOrSeason,
-            user_id: content.user_id,
-            publishDate: content.publishDate,
-            expiryDate: content.expiryDate,
-            district: content.district,
-            state: content.state,
-            region: content.region,
-            target_users:content.target_users,
+            // crop: content.crop,
+            // language: content.language,
+            // url: content.url,
+            // branch: content.branch,
+            // fileType: content.fileType,
+            // title: content.title,
+            // contentType: content.contentType,
+            // monthOrSeason: content.monthOrSeason,
+            // user_id: content.user_id,
+            // publishDate: content.publishDate,
+            // expiryDate: content.expiryDate,
+            // district: content.district,
+            // state: content.state,
+            // region: content.region,
+            // target_users:content.target_users,
 
 
             images: [
@@ -813,7 +452,7 @@ export const IcarCatalogGenerator = (
                     ? encodeURI(
                       'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg'
                     )
-                    : encodeURI('https://image/'+content.image),
+                    : encodeURI('https://image/'+content.icon),
               },
             ],
           },
