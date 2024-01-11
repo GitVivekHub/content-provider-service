@@ -22,22 +22,16 @@ export class AppService {
     return 'Icar-network Backend is running!!';
   }
 
-  async getCoursesFromFlnV3(body: {
+  async handleSearch(body: {
     context: components['schemas']['Context'];
     message: { intent: components['schemas']['Intent'] };
   }) {
-
-    console.log("body 26", JSON.stringify(body))
-
     const intent: any = body.message.intent;
-    console.log('intent: ', intent);
 
     // destructuring the intent
     const provider = intent?.provider?.descriptor?.name;
     const query = intent?.item?.descriptor?.name;
     const tagGroup = intent?.item?.tags;
-    console.log('tag group: ', tagGroup);
-    console.log('tag group [0]: ', tagGroup[0]);
 
     const flattenedTags: any = {};
     if (tagGroup) {
@@ -45,150 +39,6 @@ export class AppService {
         flattenedTags[tag.name] = tag.value;
       });
     }
-    console.log('flattened tags: ', flattenedTags);
-    const domain = flattenedTags?.domain !== '' ? flattenedTags?.domain
-      : null;
-    const theme = flattenedTags?.theme !== '' ? flattenedTags?.theme
-      : null;
-    const goal = flattenedTags?.goal !== '' ? flattenedTags?.goal
-      : null;
-    const competency = flattenedTags?.competency !== '' ? flattenedTags?.competency
-      : null;
-    const language = flattenedTags?.language !== '' ? flattenedTags?.language
-      : null;
-    const contentType = flattenedTags?.contentType !== '' ? flattenedTags?.contentType
-      : null;
-
-    try {
-
-      const resp = await lastValueFrom(
-        this.httpService
-          .get('https://onest-strapi.tekdinext.com/fln-contents', {
-            //  .get('http://localhost:1337/api/fln-contents', {
-            params: {
-              language: language,
-              domain: domain,
-              themes: theme,
-              goal: goal,
-              competency: competency,
-              contentType: contentType
-            }
-          })
-          .pipe(map((item) => item.data)),
-      );
-      console.log("resp", resp)
-      const flnResponse: any = resp;
-      const catalog = flnCatalogGenerator(flnResponse, query);
-
-      const courseData: any = {
-        context: body.context,
-        message: {
-          catalog: catalog,
-        },
-      };
-      console.log("courseData", courseData)
-      console.log("courseData 86", JSON.stringify(courseData))
-      return courseData;
-    } catch (err) {
-      console.log('err: ', err);
-      throw new InternalServerErrorException(err);
-    }
-  }
-
-  async getCoursesFromFlnV4(body: {
-    context: components['schemas']['Context'];
-    message: { intent: components['schemas']['Intent'] };
-  }) {
-    console.log("body 98", JSON.stringify(body))
-    const intent: any = body.message.intent;
-    console.log('intent: ', intent);
-
-    // destructuring the intent
-    const provider = intent?.provider?.descriptor?.name;
-    const query = intent?.item?.descriptor?.name;
-    const tagGroup = intent?.item?.tags;
-    console.log('tag group: ', tagGroup);
-
-    const flattenedTags: any = {};
-    if (tagGroup) {
-      (tagGroup[0].list as any[])?.forEach((tag) => {
-        flattenedTags[tag.name] = tag.value;
-      });
-    }
-    console.log('flattened tags: ', flattenedTags);
-    const domain = flattenedTags?.domain !== '' ? flattenedTags?.domain
-      : null;
-    const theme = flattenedTags?.theme !== '' ? flattenedTags?.theme
-      : null;
-    const goal = flattenedTags?.goal !== '' ? flattenedTags?.goal
-      : null;
-    const competency = flattenedTags?.competency !== '' ? flattenedTags?.competency
-      : null;
-    const language = flattenedTags?.language !== '' ? flattenedTags?.language
-      : null;
-    const contentType = flattenedTags?.contentType !== '' ? flattenedTags?.contentType
-      : null;
-
-    console.log("language", language)
-
-    try {
-
-      const resp = await lastValueFrom(
-        this.httpService
-          .get('https://onest-strapi.tekdinext.com/api/fln-contents', {
-            //  .get('http://localhost:1337/api/fln-contents', {
-            params: {
-              'filters[language][$eq]': language,
-              'filters[domain][$eq]': domain,
-              'filters[themes][$eq]': theme,
-              'filters[goal][$eq]': goal,
-              'filters[competency]': competency,
-              'filters[contentType]': contentType
-            }
-          })
-          .pipe(map((item) => item.data.data)),
-      );
-      console.log("resp", resp)
-      const flnResponse: any = resp;
-      const catalog = flnCatalogGeneratorV4(flnResponse, query);
-
-      const courseData: any = {
-        context: body.context,
-        message: {
-          catalog: catalog,
-        },
-      };
-      console.log("courseData", courseData)
-      console.log("courseData 158", JSON.stringify(courseData))
-      return courseData;
-    } catch (err) {
-      console.log('err: ', err);
-      throw new InternalServerErrorException(err);
-    }
-  }
-
-  async getCoursesFromFln(body: {
-    context: components['schemas']['Context'];
-    message: { intent: components['schemas']['Intent'] };
-  }) {
-    console.log("body 98", JSON.stringify(body))
-    const intent: any = body.message.intent;
-    console.log('intent: ', intent);
-
-    // destructuring the intent
-    const provider = intent?.provider?.descriptor?.name;
-    const query = intent?.item?.descriptor?.name;
-    const tagGroup = intent?.item?.tags;
-    console.log('query: ', query);
-    console.log('tag group: ', tagGroup);
-
-    const flattenedTags: any = {};
-    if (tagGroup) {
-      (tagGroup[0].list as any[])?.forEach((tag) => {
-        flattenedTags[tag.name] = tag.value;
-      });
-    }
-    console.log('flattened tags: ', flattenedTags);
     const domain = flattenedTags?.domain !== '' ? flattenedTags?.domain : null;
     const theme = flattenedTags?.theme !== '' ? flattenedTags?.theme : null;
     const goal = flattenedTags?.goal !== '' ? flattenedTags?.goal : null;
@@ -216,45 +66,21 @@ export class AppService {
       obj['contentType'] = flattenedTags?.contentType
     }
 
-    console.log("filter obj", obj)
-    console.log("217", body.context.domain)
-    try {
-      if (body.context.domain == 'onest:learning-experiences') {
-        
-          const resp = await this.hasuraService.findContent(query)
-          console.log("resp", resp.data)
-          const flnResponse: any = resp.data.fln_content;
-          const catalog = flnCatalogGenerator(flnResponse, query);
-          body.context.action = 'on_search'
-          const courseData: any = {
-            context: body.context,
-            message: {
-              catalog: catalog,
-            },
-          };
-          console.log("courseData", courseData)
-          console.log("courseData 158", JSON.stringify(courseData))
-          return courseData;
-      } else {
-          const resp = await this.hasuraService.findScholarshipContent(query)
-          console.log("resp", resp.data)
-          const flnResponse: any = resp.data.scholarship_content;
-          const catalog = scholarshipCatalogGenerator(flnResponse, query);
-          body.context.action = 'on_search'
-          const courseData: any = {
-            context: body.context,
-            message: {
-              catalog: catalog,
-            },
-          };
-          console.log("courseData", courseData)
-          console.log("courseData 247", JSON.stringify(courseData))
-          return courseData;
-      }
 
+    try {
+      const resp = await this.hasuraService.findIcarContent(query)
+      const icarResponse: any = resp.data.icar_.Content;
+      const catalog = IcarCatalogGenerator(icarResponse, query);
+      body.context.action = 'on_search'
+      const courseData: any = {
+        context: body.context,
+        message: {
+          catalog: catalog,
+        },
+      };
+      return courseData;
 
     } catch (err) {
-      console.log('err: ', err);
       throw new InternalServerErrorException(err);
     }
   }
@@ -268,7 +94,7 @@ export class AppService {
     const item_id = selectDto.message.order.items[0].id
     console.log("data", provider_id, item_id)
 
-    const query = {id: item_id, user_id: provider_id}
+    const query = { id: item_id, user_id: provider_id }
 
     const courseData = await this.hasuraService.findIcarContentById(query)
     console.log("contentData", courseData.data.icar_.Content)
@@ -317,12 +143,12 @@ export class AppService {
     confirmDto.message.order = order;
     // storing draft order in database
     const createOrderGQL = `mutation insertDraftOrder($order: dsep_orders_insert_input!) {
-  insert_dsep_orders_one (
-    object: $order
-  ) {
-    order_id
-  }
-}`;
+      insert_dsep_orders_one (
+        object: $order
+      ) {
+        order_id
+      }
+    }`;
 
     await lastValueFrom(
       this.httpService
@@ -402,69 +228,6 @@ export class AppService {
       return confirmDto;
     } catch (err) {
       console.log('err: ', err);
-      throw new InternalServerErrorException(err);
-    }
-  }
-
-  async getContentFromIcar(body: {
-    context: components['schemas']['Context'];
-    message: { intent: components['schemas']['Intent'] };
-  }) {
-    const intent: any = body.message.intent;
-
-    // destructuring the intent
-    const provider = intent?.provider?.descriptor?.name;
-    const query = intent?.item?.descriptor?.name;
-    const tagGroup = intent?.item?.tags;
-
-    const flattenedTags: any = {};
-    if (tagGroup) {
-      (tagGroup[0].list as any[])?.forEach((tag) => {
-        flattenedTags[tag.name] = tag.value;
-      });
-    }
-    const domain = flattenedTags?.domain !== '' ? flattenedTags?.domain : null;
-    const theme = flattenedTags?.theme !== '' ? flattenedTags?.theme : null;
-    const goal = flattenedTags?.goal !== '' ? flattenedTags?.goal : null;
-    const competency = flattenedTags?.competency !== '' ? flattenedTags?.competency : null;
-    const language = flattenedTags?.language !== '' ? flattenedTags?.language : null;
-    const contentType = flattenedTags?.contentType !== '' ? flattenedTags?.contentType : null;
-
-    let obj = {}
-    if (flattenedTags.domain) {
-      obj['domain'] = flattenedTags.domain
-    }
-    if (flattenedTags?.theme) {
-      obj['theme'] = flattenedTags?.theme
-    }
-    if (flattenedTags?.goal) {
-      obj['goal'] = flattenedTags?.goal
-    }
-    if (flattenedTags?.competency) {
-      obj['competency'] = flattenedTags?.competency
-    }
-    if (flattenedTags?.language) {
-      obj['language'] = flattenedTags?.language
-    }
-    if (flattenedTags?.contentType) {
-      obj['contentType'] = flattenedTags?.contentType
-    }
-
- 
-    try {
-          const resp = await this.hasuraService.findIcarContent(query)
-          const icarResponse: any = resp.data.icar_.Content;
-          const catalog = IcarCatalogGenerator(icarResponse, query);
-          body.context.action = 'on_search'
-          const courseData: any = {
-            context: body.context,
-            message: {
-              catalog: catalog,
-            },
-          };
-          return courseData;
-       
-    } catch (err) {
       throw new InternalServerErrorException(err);
     }
   }

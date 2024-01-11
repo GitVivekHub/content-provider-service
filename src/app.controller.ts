@@ -12,10 +12,10 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  // @Post('dsep/search')
-  // getCoursesFromFln(@Body() body: any) {
-  //   return this.appService.getCoursesFromFln(body);
-  // }
+  @Post('dsep/search')
+  getContentFromIcar(@Body() body: any) {
+    return this.appService.handleSearch(body);
+  }
 
   @Post('dsep/select')
   selectCourse(@Body() body: any) {
@@ -32,8 +32,4 @@ export class AppController {
     return this.appService.handleConfirm(body);
   }
 
-  @Post('dsep/search')
-  getContentFromIcar(@Body() body: any) {
-    return this.appService.getContentFromIcar(body);
-  }
 }
