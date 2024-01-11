@@ -143,6 +143,7 @@ export class AppService {
     order['type'] = 'DEFAULT';
     order['created_at'] = new Date(Date.now());
     order['updated_at'] = new Date(Date.now());
+    confirmDto.context.action = 'on_confirm'
     confirmDto.message.order = order;
 
     return confirmDto
