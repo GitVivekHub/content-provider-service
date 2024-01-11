@@ -14,21 +14,25 @@ export class AppController {
 
   @Post('dsep/search')
   getContentFromIcar(@Body() body: any) {
+    console.log("search api calling")
     return this.appService.handleSearch(body);
   }
 
   @Post('dsep/select')
   selectCourse(@Body() body: any) {
+    console.log("select api calling")
     return this.appService.handleSelect(body);
   }
 
   @Post('dsep/init')
   initCourse(@Body() body: any) {
+    console.log("init api calling")
     return this.appService.handleInit(body);
   }
 
   @Post('dsep/confirm')
   confirmCourse(@Body() body: any) {
+    console.log("confirm api calling")
     return this.appService.handleConfirm(body);
   }
 
