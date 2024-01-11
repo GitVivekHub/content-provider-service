@@ -202,7 +202,7 @@ export const selectItemMapper = (item: any) => {
   console.log("item 563", item)
   const selectItemOrder = {
     provider: {
-      id: item.user_id,
+      id: `${item.user_id}`,
       descriptor: {
         name: item.publisher,
       },
@@ -210,8 +210,8 @@ export const selectItemMapper = (item: any) => {
     },
     items: [
       {
-        id: item.id,
-        parent_item_id: item.id,
+        id: `${item.id}`,
+        parent_item_id: `${item.id}`,
         descriptor: {
           name: item.title,
           long_desc: item.description,
