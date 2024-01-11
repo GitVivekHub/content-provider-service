@@ -560,13 +560,14 @@ export const generateOrder = (
 };
 
 export const selectItemMapper = (item: any) => {
+  console.log("item 563", item)
   const selectItemOrder = {
     provider: {
-      id: item.ncCode,
+      id: item.user_id,
       descriptor: {
-        name: item.ncCode,
+        name: item.publisher,
       },
-      category_id: item.category[0].name,
+      category_id: item.publisher,
     },
     items: [
       {
@@ -574,25 +575,21 @@ export const selectItemMapper = (item: any) => {
         parent_item_id: item.id,
         descriptor: {
           name: item.title,
-          long_desc:
-            "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-          images: [{ url: encodeURI(item.coursePictureUrl) }],
+          long_desc: item.description,
+          images: item.icon,
         },
         price: {
           currency: 'INR',
           value: '0',
         },
-        category_id: item.category[0].name,
+        category_id: item.crop,
         recommended: false,
         time: {
           label: 'Course Schedule',
-          duration: `P${item.weeks}W`, // ISO 8601 duration format
+          duration: `P${item.weeks}W` || '', // ISO 8601 duration format
           range: {
-            start: item.startDate.toString(),
-            end:
-              item.endDate.toString() === ''
-                ? item.startDate.toString()
-                : item.endDate.toString(),
+            start: item?.startDate?.toString()?  item.startDate.toString() : '',
+            end: item?.endDate?.toString()? item.endDate.toString() : '',
           },
         },
         rating: Math.floor(Math.random() * 6).toString(),
@@ -601,25 +598,57 @@ export const selectItemMapper = (item: any) => {
             name: 'courseDetails',
             list: [
               {
-                name: 'credits',
-                value: item.credits + '',
+                name: 'title',
+                value: item.title + '',
               },
               {
-                name: 'instructors',
-                value: item.explorerInstructorName ?? '',
-              },
-              {
-                name: 'offeringInstitue',
-                value: item.instructorInstitute ?? '',
+                name: 'description',
+                value: item.description + '',
               },
               {
                 name: 'url',
-                value: item.url ?? '',
+                value: item.url + '',
               },
               {
-                name: 'enrollmentEndDate',
-                value: item.enrollmentEndDate.toString(),
+                name: 'language',
+                value: item.language + '',
               },
+              {
+                name: 'fileType',
+                value: item.fileType + '',
+              },
+              {
+                name: 'contentType',
+                value: item.contentType + '',
+              },
+              {
+                name: 'monthOrSeason',
+                value: item.monthOrSeason + '',
+              },
+              {
+                name: 'publishDate',
+                value: item.publishDate + '',
+              },
+              {
+                name: 'expiryDate',
+                value: item.expiryDate + '',
+              },
+              {
+                name: 'state',
+                value: item.state + '',
+              },
+              {
+                name: 'region',
+                value: item.region + '',
+              },
+              {
+                name: 'target_users',
+                value: item.target_users + '',
+              },
+              {
+                name: 'branch',
+                value: item.branch + '',
+              }
             ],
           },
           {

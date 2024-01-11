@@ -264,8 +264,22 @@ export class AppService {
 
     // order['id'] = selectDto.context.transaction_id + Date.now();
 
-    const itemId = selectDto.message.order.items[0].id;
-    const order: any = selectItemMapper(courseData[itemId]);
+    const provider_id = selectDto.message.order.provider.id
+    const item_id = selectDto.message.order.items[0].id
+    console.log("data", provider_id, item_id)
+
+    const query = {id: item_id, user_id: provider_id}
+
+    const courseData = await this.hasuraService.findIcarContentById(query)
+    console.log("contentData", courseData.data.icar_.Content)
+
+    //return
+
+    //const itemId = selectDto.message.order.items[0].id;
+    //const order: any = selectItemMapper(courseData[itemId]);
+
+    const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
+
 
 
     // order?.items.map((item) => {

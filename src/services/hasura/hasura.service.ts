@@ -555,14 +555,14 @@ export class HasuraService {
     let order = ''
     Object.entries(getContentdto).forEach(([key, value]) => {
       console.log(`${key}: ${value}`);
-      if(key == 'orderBy') {
+      if (key == 'orderBy') {
         console.log("554", `${key}: ${value}`);
         order = `order_by: {${value}: desc}`
       } else {
         console.log("557", `${key}: ${value}`);
         result += `${key}: {_eq: "${value}"}, `;
       }
-      
+
     });
     result += '}'
     console.log("result", result)
@@ -953,16 +953,16 @@ export class HasuraService {
   }
 
 
-async updateCollection(id, provider_id, body) {
+  async updateCollection(id, provider_id, body) {
 
-  let updateSet = {};
-  Object.keys(body).forEach((key) => {
-    updateSet[key] = body[key];
-  });
+    let updateSet = {};
+    Object.keys(body).forEach((key) => {
+      updateSet[key] = body[key];
+    });
 
 
 
-  const collectionMutation = `
+    const collectionMutation = `
   mutation MyMutation($provider_id: Int, $id: Int, $updateSet: ${this.nameSpace}collection_set_input) {
     ${this.nameSpace} {
       update_${this.nameSpace}collection(
@@ -993,18 +993,18 @@ async updateCollection(id, provider_id, body) {
   }
 `;
 
-try {
-  console.log(collectionMutation);
+    try {
+      console.log(collectionMutation);
 
-  return await this.queryDb(collectionMutation, { provider_id, id, updateSet });
+      return await this.queryDb(collectionMutation, { provider_id, id, updateSet });
 
-} catch (error) {
-  this.logger.error("Something Went wrong in updating Collection", error);
-  throw new HttpException("Something Went wrong in updating Collection", HttpStatus.BAD_REQUEST);
-}
+    } catch (error) {
+      this.logger.error("Something Went wrong in updating Collection", error);
+      throw new HttpException("Something Went wrong in updating Collection", HttpStatus.BAD_REQUEST);
+    }
 
 
-}
+  }
 
 
 
@@ -1538,14 +1538,14 @@ try {
     let order = ''
     Object.entries(getContentdto).forEach(([key, value]) => {
       console.log(`${key}: ${value}`);
-      if(key == 'orderBy') {
+      if (key == 'orderBy') {
         console.log("554", `${key}: ${value}`);
         order = `order_by: {${value}: desc}`
       } else {
         console.log("557", `${key}: ${value}`);
         result += `${key}: {_eq: "${value}"}, `;
       }
-      
+
     });
     result += '}'
     console.log("result", result)
@@ -1588,7 +1588,7 @@ try {
 
   //configuration
 
-  async createConfig(user_id,body) {
+  async createConfig(user_id, body) {
     console.log("body", body)
     const query = `mutation MyMutation($user_id:Int!,$apiEndPoint:String,$bookmark:String,$displayOrder:json,$filterBy:String,$filters:json,$logo:String,$orderBy:String,$pagination:Int, $positionByLine: Boolean, $positionLogo: Boolean, $positionSiteName: Boolean, $rating: String, $share: String, $siteByLine: String, $siteName: String, $lableTitle: String, $lableAuthor: String, $lableDesc: String, $lableRating: String, $headerColor: String, $headerFontSize: String, $footerText: String) {
       update_Seeker(where: {user_id: {_eq: $user_id}}, _set: {apiEndPoint: $apiEndPoint, bookmark: $bookmark, displayOrder: $displayOrder, filterBy: $filterBy, filters: $filters, logo: $logo, orderBy: $orderBy, pagination: $pagination, positionByLine: $positionByLine, positionLogo: $positionLogo, positionSiteName: $positionSiteName, rating: $rating, share: $share, siteByLine: $siteByLine, siteName: $siteName, lableTitle: $lableTitle, lableAuthor: $lableAuthor, lableDesc: $lableDesc, lableRating: $lableRating, headerColor: $headerColor, headerFontSize: $headerFontSize, footerText: $footerText}) {
@@ -1601,7 +1601,7 @@ try {
     }
     `
     try {
-      const response = await this.queryDb(query, {user_id, ...body})
+      const response = await this.queryDb(query, { user_id, ...body })
       console.log("response", response)
       return response;
     } catch (error) {
@@ -1675,7 +1675,7 @@ try {
 
 
   async findIcarContent(searchQuery) {
-    const query =`query MyQuery {
+    const query = `query MyQuery {
       ${this.nameSpace} {Content {
         contentType
         content_id
@@ -1699,14 +1699,53 @@ try {
       }
     }
     }`
-    ;
-  try {
-    const response = await this.queryDb(query);
-    return response;
-  } catch (error) {
-    this.logger.error("Something Went wrong in creating Admin", error);
-    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+      ;
+    try {
+      const response = await this.queryDb(query);
+      return response;
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating Admin", error);
+      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+    }
   }
-}
+
+  async findIcarContentById(searchQuery) {
+    console.log("searchQuery", searchQuery)
+    const query = `query MyQuery {
+      icar_ {
+        Content(where: {id: {_eq: ${searchQuery.id}}, user_id: {_eq: ${searchQuery.user_id}}}) {
+          id
+          branch
+          contentType
+          content_id
+          crop
+          description
+          district
+          expiryDate
+          fileType
+          icon
+          language
+          monthOrSeason
+          publishDate
+          publisher
+          region
+          state
+          target_users
+          title
+          url
+          user_id
+        }
+      }
+    }
+    `
+      ;
+    try {
+      const response = await this.queryDb(query);
+      return response;
+    } catch (error) {
+      this.logger.error("Something Went wrong in creating Admin", error);
+      throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+    }
+  }
 
 }
