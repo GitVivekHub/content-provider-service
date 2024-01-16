@@ -1,6 +1,5 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { response } from 'express';
 import { LoggerService } from 'src/services/logger/logger.service';
 
 
@@ -1676,29 +1675,39 @@ export class HasuraService {
 
   async findIcarContent(searchQuery) {
     const query = `query MyQuery {
-      ${this.nameSpace} {Content {
-        contentType
+  icar_ {
+    Content {
+      branch
+      contentType
+      content_id
+      crop
+      description
+      district
+      expiryDate
+      fileType
+      icon
+      id
+      language
+      monthOrSeason
+      publishDate
+      publisher
+      region
+      state
+      target_users
+      title
+      url
+      user_id
+      ContentRatingRelationship {
         content_id
-        crop
-        description
-        expiryDate
-        fileType
-        icon
         id
-        language
-        monthOrSeason
-        publishDate
-        publisher
-        region
-        state
-        target_users
-        title
-        url
+        ratingValue
         user_id
-        branch
       }
     }
-    }`
+  }
+}
+
+    `
       ;
     try {
       const response = await this.queryDb(query);
@@ -1747,5 +1756,36 @@ export class HasuraService {
       throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
     }
   }
+
+async rateIcarContentById(content_id,ratingValue) {
+
+
+  const query = `mutation MyMutation {
+  icar_ {
+    insert_Rating(objects: {content_id: "${content_id}", ratingValue: "${ratingValue}"}) {
+      affected_rows
+      returning {
+        content_id
+        id
+        ratingValue
+        user_id
+      }
+    }
+  }
+}
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+    return response;
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+
+
+} 
+
+
 
 }
