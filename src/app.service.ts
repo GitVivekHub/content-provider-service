@@ -340,9 +340,9 @@ export class AppService {
 
     const itemId = ratingDto.message.items[0].id;
     const rating = ratingDto.message.items[0].rating;
-    // const feedback = ratingDto.message.items[0].feedback; 
+    const feedback = ratingDto.message.items[0].feedback; 
 
-    const courseData = await this.hasuraService.rateIcarContentById(itemId,rating)
+    const courseData = await this.hasuraService.rateIcarContentById(itemId,rating,feedback)
     ratingDto.context.action = 'on_rating';
     const resp = ratingDto;
     return resp;

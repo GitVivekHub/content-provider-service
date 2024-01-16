@@ -1702,6 +1702,7 @@ export class HasuraService {
         id
         ratingValue
         user_id
+        feedback
       }
     }
   }
@@ -1757,16 +1758,17 @@ export class HasuraService {
     }
   }
 
-async rateIcarContentById(content_id,ratingValue) {
+async rateIcarContentById(content_id,ratingValue,feedback) {
 
 
   const query = `mutation MyMutation {
   icar_ {
-    insert_Rating(objects: {content_id: "${content_id}", ratingValue: "${ratingValue}"}) {
+    insert_Rating(objects: {content_id: "${content_id}", ratingValue: "${ratingValue}" , feedback: "${feedback}"}) {
       affected_rows
       returning {
         content_id
         id
+        feedback
         ratingValue
         user_id
       }

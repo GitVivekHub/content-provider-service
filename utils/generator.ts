@@ -474,6 +474,7 @@ export const IcarCatalogGenerator = (
           },
           // rating:"5", // map it to an actual response
           rating: averageRating(content),
+          feedback:feedback(content),
           tags: [
             {
               descriptor: {
@@ -536,3 +537,45 @@ export const averageRating = (
   }
   return sum/crr.length;
 }
+
+
+export const feedback = (data: any) => {
+  const result = {
+    ratingValues: [],
+    feedbacks: [],
+  };
+
+  const filteredData = data.ContentRatingRelationship
+  .filter(item => item.feedback && item.feedback.trim() !== "null" && item.feedback.trim() !== "undefined");
+  filteredData.sort((a, b) => b.id - a.id);
+
+
+  const maxItems = Math.min(filteredData.length, 5);
+
+  for (let i = 0; i < maxItems; i++) {
+    const currentItem = filteredData[i];
+    if (currentItem.ratingValue) {
+      result.ratingValues.push(currentItem.ratingValue);
+    }
+    if (currentItem.feedback) {
+      result.feedbacks.push(currentItem.feedback);
+    }
+  }
+
+  return result;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
