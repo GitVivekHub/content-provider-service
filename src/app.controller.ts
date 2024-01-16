@@ -36,4 +36,10 @@ export class AppController {
     return this.appService.handleConfirm(body);
   }
 
+  @Post('dsep/rating')
+  giveRating(@Body() body: any) {
+    console.log("rating api calling")
+    return this.appService.handleRating(body);
+  }
+
 }

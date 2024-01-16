@@ -374,6 +374,8 @@ export const selectItemMapper = (item: any) => {
   return selectItemOrder;
 };
 
+
+
 export const IcarCatalogGenerator = (
   apiData: any,
   query: string,
@@ -470,7 +472,8 @@ export const IcarCatalogGenerator = (
               end: '2023-10-12T18:30:00.000000Z'
             },
           },
-          rating: Math.floor(Math.random() * 6).toString(), // map it to an actual response
+          // rating:"5", // map it to an actual response
+          rating: averageRating(content),
           tags: [
             {
               descriptor: {
@@ -519,4 +522,17 @@ export const IcarCatalogGenerator = (
   });
 
   return catalog;
+}
+
+
+
+export const averageRating = (
+  data: any
+) => {
+  let sum = 0;
+  const crr = data.ContentRatingRelationship
+  if(crr.length) {
+    crr.forEach(i => sum += i.ratingValue)
+  }
+  return sum/crr.length;
 }

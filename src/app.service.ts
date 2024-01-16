@@ -133,9 +133,6 @@ export class AppService {
     const itemId = confirmDto.message.order.items[0].id;
 
     const courseData = await this.hasuraService.findIcarContentById(itemId)
-    console.log("contentData", courseData.data.icar_.Content)
-
-    console.log("itemId", itemId)
     const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
     order['fulfillments'] = confirmDto.message.order.fulfillments;
     order['id'] = confirmDto.context.transaction_id + Date.now();
@@ -337,6 +334,19 @@ export class AppService {
       console.log('err: ', err);
       throw new InternalServerErrorException(err);
     }
+  }
+
+  async handleRating(ratingDto: any){
+
+    const itemId = ratingDto.message.items[0].id;
+    const rating = ratingDto.message.items[0].rating;
+    // const feedback = ratingDto.message.items[0].feedback; 
+
+    const courseData = await this.hasuraService.rateIcarContentById(itemId,rating)
+    ratingDto.context.action = 'on_rating';
+    const resp = ratingDto;
+    return resp;
+
   }
 
 }
