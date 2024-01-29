@@ -472,8 +472,8 @@ export const IcarCatalogGenerator = (
               end: '2023-10-12T18:30:00.000000Z'
             },
           },
-          // rating:"5", // map it to an actual response
-          rating: averageRating(content),
+           rating:"5", // map it to an actual response
+          //rating: averageRating(content),
           tags: [
             {
               descriptor: {

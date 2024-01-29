@@ -70,6 +70,7 @@ export class AppService {
     try {
       const resp = await this.hasuraService.findIcarContent(query)
       const icarResponse: any = resp.data.icar_.Content;
+      console.log("icarResponse", icarResponse.length)
       const catalog = IcarCatalogGenerator(icarResponse, query);
       body.context.action = 'on_search'
       const courseData: any = {
