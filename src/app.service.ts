@@ -119,9 +119,25 @@ export class AppService {
   }
 
   async handleInit(selectDto: any) {
-    // fine tune the order here
     const itemId = selectDto.message.order.items[0].id;
-    const order: any = selectItemMapper(courseData[itemId]);
+
+    const courseData = await this.hasuraService.findIcarContentById(itemId)
+    console.log("contentData", courseData.data.icar_.Content)
+
+    delete courseData.data.icar_.Content[0].url
+
+    //return
+
+    //const itemId = selectDto.message.order.items[0].id;
+    //const order: any = selectItemMapper(courseData[itemId]);
+
+    const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
+
+
+    // fine tune the order here
+    
+    // const itemId = selectDto.message.order.items[0].id;
+    // const order: any = selectItemMapper(courseData[itemId]);
     order['fulfillments'] = selectDto.message.order.fulfillments;
     selectDto.message.order = order;
     selectDto.context.action = 'on_init';
