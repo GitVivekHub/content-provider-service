@@ -260,7 +260,8 @@ export class HasuraService {
   }
 
   async createUser(user) {
-    console.log(user)
+    console.log("user", user)
+    console.log("nameSpace", this.nameSpace)
     const userMutation = `
       mutation ($name: String!, $password: String!, $role: String!,$email: String!) {
         ${this.nameSpace}{insert_User(objects: { password: $password, role: $role, email: $email,name:$name}) {
