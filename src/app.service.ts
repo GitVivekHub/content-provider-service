@@ -70,6 +70,7 @@ export class AppService {
     try {
       const resp = await this.hasuraService.findIcarContent(query)
       const icarResponse: any = resp.data.icar_.Content;
+      console.log("icarResponse", icarResponse.length)
       const catalog = IcarCatalogGenerator(icarResponse, query);
       body.context.action = 'on_search'
       const courseData: any = {
@@ -118,9 +119,25 @@ export class AppService {
   }
 
   async handleInit(selectDto: any) {
-    // fine tune the order here
     const itemId = selectDto.message.order.items[0].id;
-    const order: any = selectItemMapper(courseData[itemId]);
+
+    const courseData = await this.hasuraService.findIcarContentById(itemId)
+    console.log("contentData", courseData.data.icar_.Content)
+
+    delete courseData.data.icar_.Content[0].url
+
+    //return
+
+    //const itemId = selectDto.message.order.items[0].id;
+    //const order: any = selectItemMapper(courseData[itemId]);
+
+    const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
+
+
+    // fine tune the order here
+    
+    // const itemId = selectDto.message.order.items[0].id;
+    // const order: any = selectItemMapper(courseData[itemId]);
     order['fulfillments'] = selectDto.message.order.fulfillments;
     selectDto.message.order = order;
     selectDto.context.action = 'on_init';
@@ -140,6 +157,7 @@ export class AppService {
     order['type'] = 'DEFAULT';
     order['created_at'] = new Date(Date.now());
     order['updated_at'] = new Date(Date.now());
+    confirmDto.context.action = 'on_confirm'
     confirmDto.message.order = order;
 
     return confirmDto

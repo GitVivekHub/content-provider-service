@@ -12,6 +12,7 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  //dsep
   @Post('dsep/search')
   getContentFromIcar(@Body() body: any) {
     console.log("search api calling")
@@ -36,10 +37,29 @@ export class AppController {
     return this.appService.handleConfirm(body);
   }
 
-  @Post('dsep/rating')
-  giveRating(@Body() body: any) {
-    console.log("rating api calling")
-    return this.appService.handleRating(body);
+  //mobility
+  @Post('mobility/search')
+  getContentFromIcar1(@Body() body: any) {
+    console.log("search api calling")
+    return this.appService.handleSearch(body);
+  }
+
+  @Post('mobility/select')
+  selectCourse1(@Body() body: any) {
+    console.log("select api calling")
+    return this.appService.handleSelect(body);
+  }
+
+  @Post('mobility/init')
+  initCourse1(@Body() body: any) {
+    console.log("init api calling")
+    return this.appService.handleInit(body);
+  }
+
+  @Post('mobility/confirm')
+  confirmCourse1(@Body() body: any) {
+    console.log("confirm api calling")
+    return this.appService.handleConfirm(body);
   }
 
 }

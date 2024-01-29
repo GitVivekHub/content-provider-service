@@ -202,7 +202,7 @@ export const selectItemMapper = (item: any) => {
   console.log("item 563", item)
   const selectItemOrder = {
     provider: {
-      id: item.user_id,
+      id: `${item.user_id}`,
       descriptor: {
         name: item.publisher,
       },
@@ -210,12 +210,12 @@ export const selectItemMapper = (item: any) => {
     },
     items: [
       {
-        id: item.id,
-        parent_item_id: item.id,
+        id: `${item.id}`,
+        parent_item_id: `${item.id}`,
         descriptor: {
           name: item.title,
           long_desc: item.description,
-          images: item.icon,
+          //images: [item.icon],
         },
         price: {
           currency: 'INR',
@@ -223,14 +223,14 @@ export const selectItemMapper = (item: any) => {
         },
         category_id: item.crop,
         recommended: false,
-        time: {
-          label: 'Course Schedule',
-          duration: `P${item.weeks}W` || '', // ISO 8601 duration format
-          range: {
-            start: item?.startDate?.toString()?  item.startDate.toString() : '',
-            end: item?.endDate?.toString()? item.endDate.toString() : '',
-          },
-        },
+        // time: {
+        //   label: 'Course Schedule',
+        //   duration: `P${item.weeks}W` || '', // ISO 8601 duration format
+        //   range: {
+        //     start: item?.startDate?.toString()?  item.startDate.toString() : '',
+        //     end: item?.endDate?.toString()? item.endDate.toString() : '',
+        //   },
+        // },
         rating: Math.floor(Math.random() * 6).toString(),
         tags: [
           {
@@ -272,14 +272,14 @@ export const selectItemMapper = (item: any) => {
                 name: 'expiryDate',
                 value: item.expiryDate ?? '',
               },
-              {
-                name: 'state',
-                value: item.state ?? '',
-              },
-              {
-                name: 'region',
-                value: item.region ?? '',
-              },
+              // {
+              //   name: 'state',
+              //   value: item.state ?? '',
+              // },
+              // {
+              //   name: 'region',
+              //   value: item.region ?? '',
+              // },
               {
                 name: 'target_users',
                 value: item.target_users ?? '',
@@ -472,9 +472,8 @@ export const IcarCatalogGenerator = (
               end: '2023-10-12T18:30:00.000000Z'
             },
           },
-          // rating:"5", // map it to an actual response
-          rating: averageRating(content),
-          feedback:feedback(content),
+           rating:"5", // map it to an actual response
+          //rating: averageRating(content),
           tags: [
             {
               descriptor: {
