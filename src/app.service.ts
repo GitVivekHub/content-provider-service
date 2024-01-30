@@ -16,6 +16,9 @@ export class AppService {
   constructor(private readonly httpService: HttpService, private readonly hasuraService: HasuraService) { }
 
   private nameSpace = process.env.HASURA_NAMESPACE;
+  private base_url = process.env.BASE_URL;
+
+
 
 
   getHello(): string {
@@ -356,15 +359,46 @@ export class AppService {
 
   async handleRating(ratingDto: any){
 
-    const itemId = ratingDto.message.items[0].id;
-    const rating = ratingDto.message.items[0].rating;
-    const feedback = ratingDto.message.items[0].feedback; 
+    const itemId = ratingDto.message.ratings.id;
+    const rating = ratingDto.message.ratings.value;
+    const feedback = ratingDto.message.ratings.feedback; 
 
     const courseData = await this.hasuraService.rateIcarContentById(itemId,rating,feedback)
+  const id =courseData.data.icar_.insert_Rating.returning[0].id
+    
     ratingDto.context.action = 'on_rating';
+    ratingDto.message = {"feedback_form": {
+      "form": {
+        "url": `${this.base_url}/feedback/${id}`,
+        "mime_type" :"text/html"
+      },
+      "required": "false"
+    }
+  }
     const resp = ratingDto;
     return resp;
 
   }
 
+  generateFeedbackUrl(): string {
+    // Generate and return a feedback URL
+    // For simplicity, you can use a static URL or generate a unique URL as needed
+    return 'https://example.com/feedback';
+  }
+
+  async handleSubmit(description,id){
+    try{
+      const courseData = await this.hasuraService.SubmitFeedback(description,id)
+      return {message:"feedback submitted Successfully"}
+    }
+    catch(error){
+      return (error)
+
+    }
+    
+
+
+
+
+}
 }

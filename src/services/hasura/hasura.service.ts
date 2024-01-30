@@ -1675,7 +1675,7 @@ export class HasuraService {
 
   async findIcarContent(searchQuery) {
     const query = `query MyQuery {
-  icar_ {
+      ${this.nameSpace} {
     Content {
       branch
       contentType
@@ -1722,7 +1722,7 @@ export class HasuraService {
   async findIcarContentById(itemId) {
     console.log("searchQuery", itemId)
     const query = `query MyQuery {
-      icar_ {
+      ${this.nameSpace} {
         Content(where: {id: {_eq: ${itemId}}}) {
           id
           branch
@@ -1762,7 +1762,7 @@ async rateIcarContentById(content_id,ratingValue,feedback) {
 
 
   const query = `mutation MyMutation {
-  icar_ {
+    ${this.nameSpace} {
     insert_Rating(objects: {content_id: "${content_id}", ratingValue: "${ratingValue}" , feedback: "${feedback}"}) {
       affected_rows
       returning {
@@ -1782,6 +1782,35 @@ async rateIcarContentById(content_id,ratingValue,feedback) {
     return response;
   } catch (error) {
     this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+
+
+} 
+
+async SubmitFeedback(description,id) {
+
+
+  const query = `mutation MyMutation {
+    ${this.nameSpace} {
+    update_Rating(where: {id: {_eq: "${id}"}}, _set: {feedback: "${description}"}) {
+      returning {
+        feedback
+        content_id
+        id
+        ratingValue
+        user_id
+      }
+    }
+  }
+}`
+  
+    ;
+  try {
+    const response = await this.queryDb(query);
+    return response;
+  } catch (error) {
+    this.logger.error("Something Went wrong in submittin", error);
     throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
   }
 
