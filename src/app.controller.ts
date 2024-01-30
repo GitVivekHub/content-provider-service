@@ -1,7 +1,9 @@
-import { Controller, Get, Post, UseGuards, Request, Body } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Body, Render, Res, Req, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AppService } from './app.service';
 import { AuthService } from './auth/auth.service';
+import { Request, Response } from 'express';
+
 
 @Controller('')
 export class AppController {
@@ -61,5 +63,24 @@ export class AppController {
     console.log("confirm api calling")
     return this.appService.handleConfirm(body);
   }
+
+  @Post('dsep/rating')
+  giveRating(@Body() body: any) {
+    console.log("rating api calling")
+    return this.appService.handleRating(body);
+  }
+
+  @Get('feedback/:id')
+  @Render('feedback') 
+  getFeedbackForm(@Param('id') id: string) {
+    return {id};
+  }
+
+  @Post('/submit-feedback/:id')
+   submitFeedback(@Body('description') description: string,@Param('id') id: string) {
+   return this.appService.handleSubmit(description, id);
+  }
+
+
 
 }
