@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lastValueFrom, map } from 'rxjs';
 import { components } from 'types/schema';
 import { SwayamApiResponse } from 'types/SwayamApiResponse';
@@ -8,12 +8,13 @@ import { selectItemMapper, scholarshipCatalogGenerator, IcarCatalogGenerator } f
 // getting course data
 import * as fs from 'fs';
 import { HasuraService } from './services/hasura/hasura.service';
+import { AuthService } from './auth/auth.service';
 const file = fs.readFileSync('./course.json', 'utf8');
 const courseData = JSON.parse(file);
 
 @Injectable()
 export class AppService {
-  constructor(private readonly httpService: HttpService, private readonly hasuraService: HasuraService) { }
+  constructor(private readonly httpService: HttpService, private readonly hasuraService: HasuraService,private readonly authService: AuthService) { }
 
   private nameSpace = process.env.HASURA_NAMESPACE;
   private base_url = process.env.BASE_URL;
@@ -121,30 +122,29 @@ export class AppService {
     return resp;
   }
 
-  async handleInit(selectDto: any) {
-    const itemId = selectDto.message.order.items[0].id;
-
-    const courseData = await this.hasuraService.findIcarContentById(itemId)
-    console.log("contentData", courseData.data.icar_.Content)
-
-    delete courseData.data.icar_.Content[0].url
-
-    //return
-
-    //const itemId = selectDto.message.order.items[0].id;
-    //const order: any = selectItemMapper(courseData[itemId]);
-
-    const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
+  async handleInit(initDto: any) {   
+    const data ={
+       itemId : initDto.message.order.items[0].id,
+      name :initDto.message.order.fulfillments[0].customer.person.name,
+     age :initDto.message.order.fulfillments[0].customer.person.age,
+      gender :initDto.message.order.fulfillments[0].customer.person.gender,
+       email :initDto.message.order.fulfillments[0].customer.contact.email,
+       phone :initDto.message.order.fulfillments[0].customer.contact.phone,
+      role :"seeker",    
+    }
 
 
-    // fine tune the order here
-    
-    // const itemId = selectDto.message.order.items[0].id;
-    // const order: any = selectItemMapper(courseData[itemId]);
-    order['fulfillments'] = selectDto.message.order.fulfillments;
-    selectDto.message.order = order;
-    selectDto.context.action = 'on_init';
-    const resp = selectDto;
+const existinguser = await this.hasuraService.IsUserExist(data.email)
+
+if(existinguser===false){
+
+     const user = await this.authService.createUser(data)
+}
+
+
+ 
+    initDto.context.action = 'on_init';
+    const resp = initDto;
     return resp;
   }
 

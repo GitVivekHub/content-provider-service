@@ -24,4 +24,9 @@ export class CreateSeekerDto {
     headerColor: string
     headerFontSize: string
     footerText: string
+    email: string
+    name: string
+    gender: string
+    age: string
+    phone:string
 }
