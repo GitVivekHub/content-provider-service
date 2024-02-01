@@ -19,9 +19,14 @@ export class CreateUserDto {
     @IsString()
     organization:string
 
-
+    
     source_code:string
 
     approved:boolean
     enable: string
+    gender : string
+    age : string
+    phone: string
+
+
 }

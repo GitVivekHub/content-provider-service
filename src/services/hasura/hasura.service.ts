@@ -158,15 +158,21 @@ export class HasuraService {
   }
 
   async createSeekerUser(seeker) {
-    const query = `mutation InsertSeeker($user_id: Int) {
-      insert_Seeker(objects: {user_id: $user_id}) {
+    const query = `mutation InsertSeeker($user_id: Int, $email: String , $name:String, $age:String, $gender:String, $phone:String) {
+      ${this.nameSpace}{insert_Seeker(objects: {user_id: $user_id, email: $email, name: $name ,age: $age, gender: $gender, phone: $phone}) {
         affected_rows
         returning {
           id
           user_id
         }
       }
-    }`
+    }
+    }`;
+
+    console.log(query)
+
+    // Rest of your code to execute the query
+
     try {
       const response = await this.queryDb(query, seeker)
       return response;
@@ -263,7 +269,7 @@ export class HasuraService {
     console.log("user", user)
     console.log("nameSpace", this.nameSpace)
     const userMutation = `
-      mutation ($name: String!, $password: String!, $role: String!,$email: String!) {
+      mutation ($name: String!, $password: String, $role: String!,$email: String!) {
         ${this.nameSpace}{insert_User(objects: { password: $password, role: $role, email: $email,name:$name}) {
           returning {
             id,role
@@ -277,7 +283,32 @@ export class HasuraService {
       var userResponse = await this.queryDb(userMutation, user);
       this.logger.log("User Created")
       console.log("userResponse", userResponse)
-      return userResponse.data.insert_User.returning[0];
+      return userResponse.data.icar_.insert_User.returning[0];
+    } catch (error) {
+
+      this.logger.error("Something Went wrong in creating User", error);
+      throw new HttpException(userResponse, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async createUserSeeker(user) {
+    console.log(user)
+    const userMutation = `
+      mutation ($name: String!,$email: String!) {
+        ${this.nameSpace}{insert_Seeker_Details(objects: {  email: $email,name:$name}) {
+          returning {
+            id,role
+          }
+        }
+      }
+      }
+    `;
+
+    try {
+      var userResponse = await this.queryDb(userMutation, user);
+      this.logger.log("User Created")
+      console.log("userResponse", userResponse)
+      return userResponse.data.icar_.insert_User.returning[0];
     } catch (error) {
 
       this.logger.error("Something Went wrong in creating User", error);
@@ -1818,6 +1849,131 @@ async SubmitFeedback(description,id) {
 
 } 
 
+async IsUserExist(email) {
+  const query = `query MyQuery {
+    ${this.nameSpace} {
+      Seeker(where: {email: {_eq: "${email}"}}) {
+        id
+        name
+        phone
+        email
+      }
+    }
+  }
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+    if(response.data[`${this.nameSpace}`].Seeker[0]===undefined){
+      return false;
+    }else
+    {return true;}
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
+
+async FindUserByEmail(email) {
+  const query = `query MyQuery {
+    ${this.nameSpace} {
+      Seeker(where: {email: {_eq: "${email}"}}) {
+        id
+        name
+        phone
+        email
+        user_id
+      }
+    }
+  }
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+      return response;
+   
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
+
+async GenerateOrderId(itemId,id,order_id) {
+  const query = `mutation MyMutation {
+    ${this.nameSpace} {
+      insert_Order(objects: {content_id: "${itemId}", seeker_id: "${id}",order_id: "${order_id}" }) {
+        returning {
+          content_id
+          id
+          order_id
+          seeker_id
+        }
+      }
+    }
+  }
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+      return response;
+   
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
+
+async IsOrderExist(itemId,id) {
+  const query = `query MyQuery {
+    ${this.nameSpace} {
+      Order(where: {content_id: {_eq: "${itemId}"}, seeker_id: {_eq:"${id}"}}) {
+        content_id
+        id
+        order_id
+        seeker_id
+      }
+    }
+  }
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+   if(response.data[`${this.nameSpace}`].Order[0]===undefined){
+    return false
+   }
+   else{
+      return true;
+   }
+   
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
+
+async GetOrderId(itemId,id) {
+  const query = `query MyQuery {
+    ${this.nameSpace} {
+      Order(where: {content_id: {_eq: "${itemId}"}, seeker_id: {_eq:"${id}"}}) {
+        content_id
+        id
+        order_id
+        seeker_id
+        order_id
+      }
+    }
+  }
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+return response   
+   
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
 
 
 }
