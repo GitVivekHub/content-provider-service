@@ -11,6 +11,6 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - /Onest/backend/icar-provider-service/.env
+     - /Onest/backend/icar-provider-service/icar-provider-service/.env
      # - SANDBOXURL=https://onest-bap.tekdinext.com
      # - BPPCLIENTURL=http://172.31.18.165:7001
