@@ -24,6 +24,42 @@ export class AuthService {
     async createUser (createUserDto){
         const user = new CreateUserDto();
         user.email=createUserDto.email
+        if(createUserDto.role!=="seeker" || (createUserDto.role=="seeker" && createUserDto.password)){
+            console.log("if")
+            user.password= await bcrypt.hash(createUserDto.password,10)
+        }
+        user.name=createUserDto.name
+        user.role=createUserDto.role
+        console.log("user", user)
+        
+        const createUser = await this.hasuraService.createUser(user);
+
+        if(createUser.role ==='provider'){
+            let providerUser = new CreateProviderDto();
+            providerUser.organization = createUserDto.organization
+            providerUser.source_code = createUserDto.source_code;
+            providerUser.user_id = createUser.id
+
+            const response = await this.hasuraService.createProviderUser(providerUser);
+            return response;
+        }else if (createUser.role==='seeker'){
+            let seeker = new CreateSeekerDto()
+            // seeker.organization = createUserDto.organization
+            // seeker.source_code = createUserDto.source_code
+            seeker.age=createUserDto.age
+            seeker.gender=createUserDto.gender
+            seeker.phone=createUserDto.phone
+            seeker.name=createUserDto.name
+            seeker.email=createUserDto.email
+            seeker.user_id = createUser.id
+            const response = await this.hasuraService.createSeekerUser(seeker);
+            return response;
+        }
+    }
+
+    async createUserSeeker (createUserDto){
+        const user = new CreateUserDto();
+        user.email=createUserDto.email
         user.password= await bcrypt.hash(createUserDto.password,10)
         user.name=createUserDto.name
         user.role=createUserDto.role
@@ -42,11 +78,15 @@ export class AuthService {
             let seeker = new CreateSeekerDto()
             // seeker.organization = createUserDto.organization
             // seeker.source_code = createUserDto.source_code
+            seeker.name=createUserDto.name
+            seeker.email=createUserDto.email
             seeker.user_id = createUser.id
+            console.log("email",seeker.email)
             const response = await this.hasuraService.createSeekerUser(seeker);
             return response;
         }
     }
+
 
     async findOne(email){
         const user = await this.hasuraService.findOne(email)

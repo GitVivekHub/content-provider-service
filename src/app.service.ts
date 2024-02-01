@@ -1,22 +1,25 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lastValueFrom, map } from 'rxjs';
 import { components } from 'types/schema';
 import { SwayamApiResponse } from 'types/SwayamApiResponse';
 import { selectItemMapper, scholarshipCatalogGenerator, IcarCatalogGenerator } from 'utils/generator';
+import { v4 as uuidv4 } from 'uuid';
 
 // getting course data
 import * as fs from 'fs';
 import { HasuraService } from './services/hasura/hasura.service';
+import { AuthService } from './auth/auth.service';
 const file = fs.readFileSync('./course.json', 'utf8');
 const courseData = JSON.parse(file);
 
 @Injectable()
 export class AppService {
-  constructor(private readonly httpService: HttpService, private readonly hasuraService: HasuraService) { }
+  constructor(private readonly httpService: HttpService, private readonly hasuraService: HasuraService, private readonly authService: AuthService) { }
 
   private nameSpace = process.env.HASURA_NAMESPACE;
   private base_url = process.env.BASE_URL;
+  private namespace = process.env.NAMESPACE;
 
 
 
@@ -121,36 +124,75 @@ export class AppService {
     return resp;
   }
 
-  async handleInit(selectDto: any) {
-    const itemId = selectDto.message.order.items[0].id;
-
-    const courseData = await this.hasuraService.findIcarContentById(itemId)
-    console.log("contentData", courseData.data.icar_.Content)
-
-    delete courseData.data.icar_.Content[0].url
-
-    //return
-
-    //const itemId = selectDto.message.order.items[0].id;
-    //const order: any = selectItemMapper(courseData[itemId]);
-
-    const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
+  async handleInit(initDto: any) {
+    const data = {
+      itemId: initDto.message.order.items[0].id,
+      name: initDto.message.order.fulfillments[0].customer.person.name,
+      age: initDto.message.order.fulfillments[0].customer.person.age,
+      gender: initDto.message.order.fulfillments[0].customer.person.gender,
+      email: initDto.message.order.fulfillments[0].customer.contact.email,
+      phone: initDto.message.order.fulfillments[0].customer.contact.phone,
+      role: "seeker",
+    }
 
 
-    // fine tune the order here
-    
-    // const itemId = selectDto.message.order.items[0].id;
-    // const order: any = selectItemMapper(courseData[itemId]);
-    order['fulfillments'] = selectDto.message.order.fulfillments;
-    selectDto.message.order = order;
-    selectDto.context.action = 'on_init';
-    const resp = selectDto;
+    const existinguser = await this.hasuraService.IsUserExist(data.email)
+
+    if (existinguser === false) {
+
+      const user = await this.authService.createUser(data)
+    }
+
+
+
+    initDto.context.action = 'on_init';
+    const resp = initDto;
     return resp;
   }
 
   async handleConfirm(confirmDto: any) {
     // fine tune the order here
     const itemId = confirmDto.message.order.items[0].id;
+    const email = confirmDto.message.order.fulfillments[0].customer.contact.email;
+    const order_id = uuidv4();
+
+    const seeker = await this.hasuraService.FindUserByEmail(email)
+    const id = seeker.data[`${this.nameSpace}`].Seeker[0].id;
+
+    const presentOrder = await this.hasuraService.IsOrderExist(itemId, id)
+    if (!presentOrder) {
+
+      const Order = await this.hasuraService.GenerateOrderId(itemId, id, order_id)
+    }
+
+    const OrderDetails = await this.hasuraService.GetOrderId(itemId, id)
+    const orderId = OrderDetails.data[`${this.nameSpace}`].Order[0].order_id
+
+
+    const confirmObj = {
+      "context": {
+        "domain": "onest:learning-experiences",
+        "version": "1.1.0",
+        "action": "on_confirm",
+        "bap_uri": "https://sample.bap.io/",
+        "bap_id": "sample.bap.io",
+        "bpp_id": "infosys.springboard.io",
+        "bpp_uri": "https://infosys.springboard.io",
+        "transaction_id": "a9aaecca-10b7-4d19-b640-b047a7c62196",
+        "message_id": "d514a38f-e112-4bb8-a3d8-b8e5d8dea82d",
+        "ttl": "PT10M",
+        "timestamp": "2023-02-20T15:21:36.925Z"
+      },
+      "message": {
+        "order": {
+          "id": orderId,
+          ...confirmDto.message.order
+        }
+      }
+    };
+
+    return confirmObj;
+
 
     const courseData = await this.hasuraService.findIcarContentById(itemId)
     const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
@@ -357,24 +399,25 @@ export class AppService {
     }
   }
 
-  async handleRating(ratingDto: any){
+  async handleRating(ratingDto: any) {
 
     const itemId = ratingDto.message.ratings.id;
     const rating = ratingDto.message.ratings.value;
-    const feedback = ratingDto.message.ratings.feedback; 
+    const feedback = ratingDto.message.ratings.feedback;
 
-    const courseData = await this.hasuraService.rateIcarContentById(itemId,rating,feedback)
-  const id =courseData.data.icar_.insert_Rating.returning[0].id
-    
+    const courseData = await this.hasuraService.rateIcarContentById(itemId, rating, feedback)
+    const id = courseData.data.icar_.insert_Rating.returning[0].id
+
     ratingDto.context.action = 'on_rating';
-    ratingDto.message = {"feedback_form": {
-      "form": {
-        "url": `${this.base_url}/feedback/${id}`,
-        "mime_type" :"text/html"
-      },
-      "required": "false"
+    ratingDto.message = {
+      "feedback_form": {
+        "form": {
+          "url": `${this.base_url}/feedback/${id}`,
+          "mime_type": "text/html"
+        },
+        "required": "false"
+      }
     }
-  }
     const resp = ratingDto;
     return resp;
 
@@ -386,19 +429,19 @@ export class AppService {
     return 'https://example.com/feedback';
   }
 
-  async handleSubmit(description,id){
-    try{
-      const courseData = await this.hasuraService.SubmitFeedback(description,id)
-      return {message:"feedback submitted Successfully"}
+  async handleSubmit(description, id) {
+    try {
+      const courseData = await this.hasuraService.SubmitFeedback(description, id)
+      return { message: "feedback submitted Successfully" }
     }
-    catch(error){
+    catch (error) {
       return (error)
 
     }
-    
 
 
 
 
-}
+
+  }
 }
