@@ -167,37 +167,13 @@ export class AppService {
 
     const OrderDetails = await this.hasuraService.GetOrderId(itemId, id)
     const orderId = OrderDetails.data[`${this.nameSpace}`].Order[0].order_id
-
-
-    const confirmObj = {
-      "context": {
-        "domain": "onest:learning-experiences",
-        "version": "1.1.0",
-        "action": "on_confirm",
-        "bap_uri": "https://sample.bap.io/",
-        "bap_id": "sample.bap.io",
-        "bpp_id": "infosys.springboard.io",
-        "bpp_uri": "https://infosys.springboard.io",
-        "transaction_id": "a9aaecca-10b7-4d19-b640-b047a7c62196",
-        "message_id": "d514a38f-e112-4bb8-a3d8-b8e5d8dea82d",
-        "ttl": "PT10M",
-        "timestamp": "2023-02-20T15:21:36.925Z"
-      },
-      "message": {
-        "order": {
-          "id": orderId,
-          ...confirmDto.message.order
-        }
-      }
-    };
-
-    return confirmObj;
-
+    console.log("orderId", orderId)
 
     const courseData = await this.hasuraService.findIcarContentById(itemId)
     const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
     order['fulfillments'] = confirmDto.message.order.fulfillments;
-    order['id'] = confirmDto.context.transaction_id + Date.now();
+    //order['id'] = confirmDto.context.transaction_id + Date.now();
+    order['id'] = orderId;
     order['state'] = 'COMPLETE';
     order['type'] = 'DEFAULT';
     order['created_at'] = new Date(Date.now());
