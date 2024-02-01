@@ -156,24 +156,24 @@ export class AppService {
     const email = confirmDto.message.order.fulfillments[0].customer.contact.email;
     const order_id = uuidv4();
 
-    const seeker = await this.hasuraService.FindUserByEmail(email)
-    const id = seeker.data[`${this.nameSpace}`].Seeker[0].id;
+    // const seeker = await this.hasuraService.FindUserByEmail(email)
+    // const id = seeker.data[`${this.nameSpace}`].Seeker[0].id;
 
-    const presentOrder = await this.hasuraService.IsOrderExist(itemId, id)
-    if (!presentOrder) {
+    // const presentOrder = await this.hasuraService.IsOrderExist(itemId, id)
+    // if (!presentOrder) {
 
-      const Order = await this.hasuraService.GenerateOrderId(itemId, id, order_id)
-    }
+    //   const Order = await this.hasuraService.GenerateOrderId(itemId, id, order_id)
+    // }
 
-    const OrderDetails = await this.hasuraService.GetOrderId(itemId, id)
-    const orderId = OrderDetails.data[`${this.nameSpace}`].Order[0].order_id
-    console.log("orderId", orderId)
+    // const OrderDetails = await this.hasuraService.GetOrderId(itemId, id)
+    // const orderId = OrderDetails.data[`${this.nameSpace}`].Order[0].order_id
+    // console.log("orderId", orderId)
 
     const courseData = await this.hasuraService.findIcarContentById(itemId)
     const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
     order['fulfillments'] = confirmDto.message.order.fulfillments;
-    //order['id'] = confirmDto.context.transaction_id + Date.now();
-    order['id'] = orderId;
+    order['id'] = confirmDto.context.transaction_id + Date.now();
+    //rder['id'] = orderId
     order['state'] = 'COMPLETE';
     order['type'] = 'DEFAULT';
     order['created_at'] = new Date(Date.now());
