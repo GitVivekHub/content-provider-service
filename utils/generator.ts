@@ -405,7 +405,7 @@ export const IcarCatalogGenerator = (
     const providerObj: components['schemas']['Provider'] = {
       id: provider,
       descriptor: {
-        name: provider,
+        name: 'Icar',
       },
       
       categories: providerWise[provider].map((content: any) => {
