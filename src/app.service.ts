@@ -153,8 +153,8 @@ export class AppService {
   async handleConfirm(confirmDto: any) {
     // fine tune the order here
     const itemId = confirmDto.message.order.items[0].id;
-    const email = confirmDto.message.order.fulfillments[0].customer.contact.email;
-    const order_id = uuidv4();
+    // const email = confirmDto.message.order.fulfillments[0].customer.contact.email;
+    // const order_id = uuidv4();
 
     // const seeker = await this.hasuraService.FindUserByEmail(email)
     // const id = seeker.data[`${this.nameSpace}`].Seeker[0].id;
