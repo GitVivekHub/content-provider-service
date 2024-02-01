@@ -215,7 +215,16 @@ export const selectItemMapper = (item: any) => {
         descriptor: {
           name: item.title,
           long_desc: item.description,
-          //images: [item.icon],
+          // images: [
+          //   {
+          //     "url": "https://infyspringboard.onwingspan.com/web/assets/images/infosysheadstart/everyday-conversational-english.png"
+          //   }
+          // ],
+          media: [
+            {
+              "url": item.url
+            }
+          ]
         },
         price: {
           currency: 'INR',
