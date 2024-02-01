@@ -1874,5 +1874,106 @@ async IsUserExist(email) {
   }
 }
 
+async FindUserByEmail(email) {
+  const query = `query MyQuery {
+    ${this.nameSpace} {
+      Seeker(where: {email: {_eq: "${email}"}}) {
+        id
+        name
+        phone
+        email
+        user_id
+      }
+    }
+  }
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+      return response;
+   
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
+
+async GenerateOrderId(itemId,id,order_id) {
+  const query = `mutation MyMutation {
+    ${this.nameSpace} {
+      insert_Order(objects: {content_id: "${itemId}", seeker_id: "${id}",order_id: "${order_id}" }) {
+        returning {
+          content_id
+          id
+          order_id
+          seeker_id
+        }
+      }
+    }
+  }
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+      return response;
+   
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
+
+async IsOrderExist(itemId,id) {
+  const query = `query MyQuery {
+    ${this.nameSpace} {
+      Order(where: {content_id: {_eq: "${itemId}"}, seeker_id: {_eq:"${id}"}}) {
+        content_id
+        id
+        order_id
+        seeker_id
+      }
+    }
+  }
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+   if(response.data[`${this.nameSpace}`].Order[0]===undefined){
+    return false
+   }
+   else{
+      return true;
+   }
+   
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
+
+async GetOrderId(itemId,id) {
+  const query = `query MyQuery {
+    ${this.nameSpace} {
+      Order(where: {content_id: {_eq: "${itemId}"}, seeker_id: {_eq:"${id}"}}) {
+        content_id
+        id
+        order_id
+        seeker_id
+        order_id
+      }
+    }
+  }
+  `
+    ;
+  try {
+    const response = await this.queryDb(query);
+return response   
+   
+  } catch (error) {
+    this.logger.error("Something Went wrong in creating Admin", error);
+    throw new HttpException('Unable to Fetch content!', HttpStatus.BAD_REQUEST);
+  }
+}
+
 
 }

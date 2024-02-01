@@ -4,6 +4,7 @@ import { lastValueFrom, map } from 'rxjs';
 import { components } from 'types/schema';
 import { SwayamApiResponse } from 'types/SwayamApiResponse';
 import { selectItemMapper, scholarshipCatalogGenerator, IcarCatalogGenerator } from 'utils/generator';
+import { v4 as uuidv4 } from 'uuid';
 
 // getting course data
 import * as fs from 'fs';
@@ -18,6 +19,7 @@ export class AppService {
 
   private nameSpace = process.env.HASURA_NAMESPACE;
   private base_url = process.env.BASE_URL;
+  private namespace=process.env.NAMESPACE;
 
 
 
@@ -151,6 +153,46 @@ if(existinguser===false){
   async handleConfirm(confirmDto: any) {
     // fine tune the order here
     const itemId = confirmDto.message.order.items[0].id;
+    const email = confirmDto.message.order.fulfillments[0].customer.contact.email;
+    const order_id = uuidv4();
+
+       const seeker = await this.hasuraService.FindUserByEmail(email)
+       const id = seeker.data[`${this.nameSpace}`].Seeker[0].id;
+
+       const presentOrder = await this.hasuraService.IsOrderExist(itemId,id)
+       if(!presentOrder){
+
+       const Order = await this.hasuraService.GenerateOrderId(itemId,id,order_id)
+       }
+
+       const OrderDetails = await this.hasuraService.GetOrderId(itemId,id)
+       const orderId = OrderDetails.data[`${this.nameSpace}`].Order[0].order_id
+
+
+      const confirmObj ={
+        "context": {
+          "domain": "onest:learning-experiences",
+          "version": "1.1.0",
+          "action": "on_confirm",
+          "bap_uri": "https://sample.bap.io/",
+          "bap_id": "sample.bap.io",
+          "bpp_id": "infosys.springboard.io",
+          "bpp_uri": "https://infosys.springboard.io",
+          "transaction_id": "a9aaecca-10b7-4d19-b640-b047a7c62196",
+          "message_id": "d514a38f-e112-4bb8-a3d8-b8e5d8dea82d",
+          "ttl": "PT10M",
+          "timestamp": "2023-02-20T15:21:36.925Z"
+        },
+        "message": {
+          "order": {
+            "id": orderId,
+            ...confirmDto.message.order
+          }
+        }
+      };
+
+       return confirmObj;
+
 
     const courseData = await this.hasuraService.findIcarContentById(itemId)
     const order: any = selectItemMapper(courseData.data.icar_.Content[0]);
