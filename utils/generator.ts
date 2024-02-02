@@ -411,6 +411,7 @@ export const IcarCatalogGenerator = (
   catalog['descriptor'] = { name: `Catalog for ${query}` };
   // adding providers
   catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
+    
     const providerObj: components['schemas']['Provider'] = {
       id: provider,
       descriptor: {
@@ -418,6 +419,7 @@ export const IcarCatalogGenerator = (
       },
       
       categories: providerWise[provider].map((content: any) => {
+
         const providerItem = {
           id: `${content.id}`,
           parent_category_id: `${content.id}` || '',
@@ -429,6 +431,8 @@ export const IcarCatalogGenerator = (
         return providerItem;
       }),
       items: providerWise[provider].map((content: any) => {
+        const average = averageRating(content);
+
         const providerItem = {
           id: `${content.id}`,
           parent_item_id: `${content.id}`,
@@ -481,7 +485,10 @@ export const IcarCatalogGenerator = (
               end: '2023-10-12T18:30:00.000000Z'
             },
           },
-          rating: averageRating(content), // map it to an actual response
+          // rating: averageRating(content) || '',
+          // rateable: true,
+          ...(isNaN(average) ? {} : { rating: average.toString(), rateable: true }),
+          
           //rating: averageRating(content),
           tags: [
             {
@@ -522,7 +529,6 @@ export const IcarCatalogGenerator = (
               ],
             },
           ],
-          rateable: false,
         };
         return providerItem;
       }),
@@ -543,7 +549,8 @@ export const averageRating = (
   if(crr.length) {
     crr.forEach(i => sum += i.ratingValue)
   }
-  return sum/crr.length;
+  const average = sum/crr.length
+  return average
 }
 
 
