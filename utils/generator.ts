@@ -424,7 +424,7 @@ export const IcarCatalogGenerator = (
           id: `${content.id}`,
           parent_category_id: `${content.id}` || '',
           descriptor: {
-            name: content.publisher,
+            name: content.publisher? content.publisher :"",
           }
         };
         
@@ -435,13 +435,13 @@ export const IcarCatalogGenerator = (
 
         const providerItem = {
           id: `${content.id}`,
-          parent_item_id: `${content.id}`,
+          parent_item_id: `${content.id}`?`${content.id}`:"",
           descriptor: {
-            name: content.title,
-            content_id: content.content_id ,
-            description: content.description ,
-            icon: content.icon,
-            publisher: content.publisher,
+            name: content.title? content.title :"",
+            content_id: content.content_id ? content.content_id :"" ,
+            description: content.description?content.description:"" ,
+            icon: content.icon? content.icon: "",
+            publisher: content.publisher ? content.publisher :"",
             // domain: course.domain,
             // crop: content.crop,
             // language: content.language,
