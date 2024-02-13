@@ -529,6 +529,17 @@ export const IcarCatalogGenerator = (
               ],
             },
           ],
+          locations:[
+            {
+              id:"L1",
+              state:{
+                name:Array.isArray(content.state) && content.state.length > 0
+                ? content.state.join(', ')
+                : (content.state?content.state:""),
+                code:""
+              }
+            },
+          ]
         };
         return providerItem;
       }),
