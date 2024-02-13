@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   backend:
-    image: vistar-backend
+    image: icar-provider-service-backend
     container_name: "icar-service-provider-backend"
     restart: always
     ports:
