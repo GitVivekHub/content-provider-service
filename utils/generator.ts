@@ -430,6 +430,24 @@ export const IcarCatalogGenerator = (
         
         return providerItem;
       }),
+
+      locations:  providerWise[provider].map((content: any) => {
+
+        const LocationsItem = {
+          id:"L1",
+              state:{
+                name:Array.isArray(content.state) && content.state.length > 0
+                ? content.state.join(', ')
+                : (content.state?content.state:""),
+                code:""
+              }
+        }
+        return LocationsItem
+        }
+          ),
+
+
+
       items: providerWise[provider].map((content: any) => {
         const average = averageRating(content);
 
@@ -529,17 +547,7 @@ export const IcarCatalogGenerator = (
               ],
             },
           ],
-          locations:[
-            {
-              id:"L1",
-              state:{
-                name:Array.isArray(content.state) && content.state.length > 0
-                ? content.state.join(', ')
-                : (content.state?content.state:""),
-                code:""
-              }
-            },
-          ]
+          
         };
         return providerItem;
       }),
