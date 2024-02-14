@@ -6,6 +6,6 @@ services:
     container_name: "icar-service-provider-backend"
     restart: always
     ports:
-      - 9500:3000
+      - 3000:3000
     env_file:
       - /home/ubuntu/onest/icar-service-provider-backend/.env
