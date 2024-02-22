@@ -511,38 +511,32 @@ export const IcarCatalogGenerator = (
           tags: [
             {
               descriptor: {
-                name: "courseInfo"
+                name: "Content Info"
               },
               list: [
                 {
                   descriptor: {
-                    name: 'credits',
+                    name: 'Crop',
                   },
-                  value: content.credits || '',
+                  value: content.crop || '',
                 },
                 {
                   descriptor: {
-                    name: 'instructors',
+                    name: 'Language',
                   },
-                  value: '',
+                  value: content.language || '',
                 },
                 {
                   descriptor: {
-                    name: 'offeringInstitue',
+                    name: 'Branch',
                   },
-                  value: content.sourceOrganisation || '',
+                  value: content.branch || '',
                 },
                 {
                   descriptor: {
-                    name: 'url',
+                    name: 'Publish Date',
                   },
-                  value: encodeURI(content.link || ''),
-                },
-                {
-                  descriptor: {
-                    name: 'enrollmentEndDate',
-                  },
-                  value: content.createdAt || '',
+                  value: content.publishDate || '',
                 },
               ],
             },
