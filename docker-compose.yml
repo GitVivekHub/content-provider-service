@@ -3,7 +3,7 @@ version: "3.6"
 services:
   backend:
     image: icar-service-backend
-    container_name: "icar-service-backend"
+    container_name: "icar-service-backend" 
     restart: always
     ports:
       - 3444:3000
