@@ -1,6 +1,6 @@
 pipeline {
       agent {
-        label 'prod-3.6.124.160'
+        label 'dev-3.6.124.160'
       }
         stages {
         stage('Checkout'){
