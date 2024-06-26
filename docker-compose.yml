@@ -2,10 +2,10 @@ version: "3.6"
 
 services:
   backend:
-    image: icar-provider-service-backend
-    container_name: "icar-service-provider-backend"
+    image: icar-service-backend
+    container_name: "icar-service-backend"
     restart: always
     ports:
-      - 3000:3000
+      - 3444:3000
     env_file:
       - /home/ubuntu/onest/icar-service-provider-backend/.env
