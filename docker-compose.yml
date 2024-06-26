@@ -4,7 +4,7 @@ services:
   backend:
     image: icar-service-backend
     container_name: "icar-service-backend" 
-    restart: always
+    restart: always 
     ports:
       - 3444:3000
     env_file:
