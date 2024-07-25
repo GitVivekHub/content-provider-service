@@ -19,6 +19,7 @@ export class AppController {
   getContentFromIcar(@Body() body: any) {
     console.log("search api calling")
     return this.appService.handleSearch(body);
+    //return this.appService.getCoursesFromFln(body);
   }
 
   @Post('dsep/select')

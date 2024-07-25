@@ -385,7 +385,7 @@ export const selectItemMapper = (item: any) => {
 
 
 
-export const IcarCatalogGenerator = (
+export const IcarCatalogGenerator2 = (
   apiData: any,
   query: string,
 ) => {
@@ -539,6 +539,146 @@ export const IcarCatalogGenerator = (
   return catalog;
 }
 
+export const IcarCatalogGenerator = (
+  apiData: any,
+  query: string,
+) => {
+  const courses: ReadonlyArray<{ node: any }> =
+    apiData;
+  const providerWise = {};
+  let categories: any = new Set();
+
+  courses.forEach((course: any, index) => {
+    const item = course;
+    const provider = course.user_id;
+    // creating the provider wise map
+    if (providerWise[provider]) {
+      providerWise[provider].push(item);
+    } else {
+      providerWise[provider] = [item];
+    }
+  });
+
+  categories = [];
+
+  const catalog = {};
+  catalog['descriptor'] = { name: `Catalog for ${query}` };
+  // adding providers
+  catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
+    
+    const providerObj: components['schemas']['Provider'] = {
+      id: provider,
+      descriptor: {
+        name: 'Icar',
+      //   images: [
+      //     {
+      //         "url": "https://agri_acad.example.org/logo.png"
+      //     }
+      // ],
+      short_desc: "Icar Academic aggregator"
+      },
+      
+      // categories: providerWise[provider].map((content: any) => {
+
+      //   const providerItem = {
+      //     id: `${content.id}`,
+      //     parent_category_id: `${content.id}` || '',
+      //     descriptor: {
+      //       name: content.publisher,
+      //     }
+      //   };
+        
+      //   return providerItem;
+      // }),
+      items: providerWise[provider].map((content: any) => {
+        const average = averageRating(content);
+
+        const providerItem = {
+          id: `${content.id}`,
+          descriptor: {
+            name: content.name,
+            short_desc: content.description.slice(0, 30) + '...',
+            long_desc: content.description,
+            media: [
+                {
+                    mimetype: content.mimetype ? content.mimetype : "video/mp4",
+                    url: content.url
+                }
+            ],
+            images: [
+              {
+                url: content.icon
+              },
+            ],
+          },
+          // price: {
+          //   currency: 'INR',
+          //   value: 0 + '', // map it to an actual response
+          // },
+          // category_id: content.primaryCategory || '',
+          // recommended: content.featured ? true : false,
+          // time: {
+          //   label: 'Course Schedule',
+          //   duration: `P${12}W`, // ISO 8601 duration format
+          //   range: {
+          //     start: '2023-07-23T18:30:00.000000Z',
+          //     end: '2023-10-12T18:30:00.000000Z'
+          //   },
+          // },
+          // // rating: averageRating(content) || '',
+          // // rateable: true,
+          // ...(isNaN(average) ? {} : { rating: average.toString(), rateable: true }),
+          
+          //rating: averageRating(content),
+          // tags: [
+          //   {
+          //     descriptor: {
+          //       name: "courseInfo"
+          //     },
+          //     list: [
+          //       {
+          //         descriptor: {
+          //           name: 'credits',
+          //         },
+          //         value: content.credits || '',
+          //       },
+          //       {
+          //         descriptor: {
+          //           name: 'instructors',
+          //         },
+          //         value: '',
+          //       },
+          //       {
+          //         descriptor: {
+          //           name: 'offeringInstitue',
+          //         },
+          //         value: content.sourceOrganisation || '',
+          //       },
+          //       {
+          //         descriptor: {
+          //           name: 'url',
+          //         },
+          //         value: encodeURI(content.link || ''),
+          //       },
+          //       {
+          //         descriptor: {
+          //           name: 'enrollmentEndDate',
+          //         },
+          //         value: content.createdAt || '',
+          //       },
+          //     ],
+          //   },
+          // ],
+        };
+        return providerItem;
+      }),
+    };
+    return providerObj;
+  });
+
+  return catalog;
+}
+
 
 
 export const averageRating = (
@@ -580,7 +720,363 @@ export const feedback = (data: any) => {
   return result;
 };
 
+export const flnCatalogGenerator = (
+  apiData: any,
+  query: string,
+) => {
+  console.log("apidata", apiData)
+  console.log("query", query)
+  const courses: ReadonlyArray<{ node: any }> =
+    apiData;
+  const providerWise = {};
+  //let categories: any = new Set();
 
+  courses.forEach((course: any, index) => {
+    console.log("course 234", course)
+    const item = course;
+    const provider = course.user_id;
+    // creating the provider wise map
+    if (providerWise[provider]) {
+      providerWise[provider].push(item);
+    } else {
+      providerWise[provider] = [item];
+    }
+  });
+
+  //categories = [];
+
+  const catalog = {};
+  if(query) {
+    catalog['descriptor'] = { name: `Catalog for ${query}` };
+  } else {
+    catalog['descriptor'] = {}
+  }
+  
+
+  // adding providers
+  console.log("providerWise", providerWise)
+  catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
+    // console.log("--------> ",providerWise[provider])
+    const providerObj: components['schemas']['Provider'] = {
+      id: provider,
+      descriptor: {
+        name: providerWise[provider][0].flncontentProviderRelationshp?.organization ? providerWise[provider][0].flncontentProviderRelationshp.organization : "",
+        short_desc: providerWise[provider][0].flncontentProviderRelationshp.description ? providerWise[provider][0].flncontentProviderRelationshp.description : "",
+        images: getMediaArray(providerWise[provider][0].flncontentProviderRelationshp.image)
+      },
+      categories: providerWise[provider][0].flncontentProviderRelationshp.categories ? providerWise[provider][0].flncontentProviderRelationshp.categories : [],
+      fulfillments: providerWise[provider][0].flncontentProviderRelationshp.fulfillments ? providerWise[provider][0].flncontentProviderRelationshp?.fulfillments : [],
+      // categories: providerWise[provider].map((course: any) => {
+      //   const providerItem = {
+      //     id: course?.category ? course.category : '',
+      //     descriptor: {
+      //       code: course?.category ? course.category : '',
+      //       name: course?.category ? course.category : '',
+      //     }
+      //   };
+      //   return providerItem;
+      // }),
+
+      // categories: Array.from(new Set(providerWise[provider].map((course) => course.category)))
+      // .map((categoryId) => {
+      //     const course = providerWise[provider].find((course) => course.category === categoryId);
+      //     return {
+      //         id: course?.category || '',
+      //         descriptor: {
+      //             code: course?.category || '',
+      //             name: course?.category || '',
+      //         }
+      //     };
+      // }),
+
+      // fulfillments: [
+      //   {
+      //     "id": "1",
+      //     "type": "ONLINE",
+      //     "tracking": false
+      //   },
+      //   {
+      //     "id": "2",
+      //     "type": "IN-PERSON",
+      //     "tracking": false
+      //   },
+      //   {
+      //     "id": "3",
+      //     "type": "HYBRID",
+      //     "tracking": false
+      //   }
+      // ],
+      items: providerWise[provider].map((course: any) => {
+        const average = averageRating(course);
+
+        const providerItem = {
+          id: `${course.id}`,
+          quantity: {
+            maximum: {
+              count: 1
+            }
+          },
+          descriptor: {
+            name: course.title,
+            short_desc: course.description ? course.description : '',
+            long_desc: course.description ? course.description : '',
+            images: getMediaArray(course.image),
+            media: getMediaArray(course.image)
+          },
+          creator: {
+            descriptor: {
+              name: course.author ? course.author : '',
+              // short_desc: '',
+              // long_desc: '',
+              // images: [],
+            }
+          },
+          price: {
+            currency: 'INR',
+            value: 0 + '', // map it to an actual response
+          },
+          // category_id: course.primaryCategory || '',
+          // recommended: course.featured ? true : false,
+          // code: course.code ? course.code : '123',
+          // competency: course.competency,
+          // contentType: course.contentType,
+          // domain: course.domain,
+          // goal: course.goal,
+          // language: course.language,
+          // link: course.link,
+          // sourceOrganisation: course.sourceOrganisation,
+          // themes: course.themes,
+          // title: course.title,
+          // minAge: course.minAge,
+          // maxAge: course.maxAge,
+          // author: course.author,
+          // curricularGoals: course.curricularGoals,
+          // learningOutcomes: course.learningOutcomes,
+          // category: course.category,
+          // persona: course.persona,
+          // license: course.license,
+          // conditions: course.conditions,
+          // createdAt: course.createdAt,
+          // updatedAt: course.updatedAt,
+          // urlType: course.urlType,
+          // time: {
+          //   range: {
+          //     start: '2023-07-23T18:30:00.000000Z',
+          //     end: '2023-10-12T18:30:00.000000Z'
+          //   },
+          // },
+          category_ids: course?.category ? course.category : [],
+          fulfillment_ids: course?.fulfillments ? course.fulfillments : [],
+          rating: isNaN(average) ? average.toString() : "0",
+          rateable: true,
+          "add-ons": [{
+            //id: "",
+            descriptor: {
+              // name: "",
+              // short_desc: '',
+              // long_desc: '',
+              media: [
+                {
+                  mimetype: course.mimeType || "",
+                  url: course.link || ""
+                }
+              ],
+            }
+          }],
+          tags: [
+            {
+              display: true,
+              descriptor: {
+                name: "courseInfo",
+                code: "courseInfo",
+              },
+              list: [
+                {
+                  display: true,
+                  descriptor: {
+                    code: "sourceOrganisation",
+                    name: 'Source Organisation',
+                  },
+                  value: course.sourceOrganisation || 'sourceOrganisation',
+                },
+                // {
+                //   display: true,
+                //   descriptor: {
+                //     code: 'url',
+                //     name: 'url',
+                //   },
+                //   value: encodeURI(course.url || ''),
+                // },
+                // {
+                //   display: true,
+                //   descriptor: {
+                //     code: 'enrollmentEndDate',
+                //     name: 'EnrollmentEndDate',
+                //   },
+                //   value: course.createdAt || '',
+                // },
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'competency',
+                    name: 'Competency',
+                  },
+                  value: course.competency || 'competency',
+                },
+                // {
+                //   display: true,
+                //   descriptor: {
+                //     code: 'contentType',
+                //     name: 'Content Type',
+                //   },
+                //   value: course.contentType || 'contentType',
+                // },
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'domain',
+                    name: 'Domain',
+                  },
+                  value: course.domain || 'domain',
+                },
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'curriculargoal',
+                    name: 'Curricular Goal',
+                  },
+                  value: course.goal || 'curriculargoal',
+                },
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'language',
+                    name: 'Language',
+                  },
+                  value: course.language || 'language',
+                },
+                // {
+                //   display: true,
+                //   descriptor: {
+                //     code: 'themes',
+                //     name: 'Themes',
+                //   },
+                //   value: course.themes || 'themes',
+                // },
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'minAge',
+                    name: 'minAge',
+                  },
+                  value: `${course.minAge}` || 'minAge',
+                },
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'maxAge',
+                    name: 'maxAge',
+                  },
+                  value: `${course.maxAge}` || 'maxAge',
+                },
+                // {
+                //   display: true,
+                //   descriptor: {
+                //     code: 'author',
+                //     name: 'author',
+                //   },
+                //   value: course.author || 'author',
+                // },
+                // {
+                //   display: true,
+                //   descriptor: {
+                //     code: 'curricularGoals',
+                //     name: 'curricularGoals',
+                //   },
+                //   value: course.curricularGoals || 'curricularGoals',
+                // },
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'learningOutcomes',
+                    name: 'learningOutcomes',
+                  },
+                  value: course.learningOutcomes || 'learningOutcomes',
+                },
+                // {
+                //   display: true,
+                //   descriptor: {
+                //     code: 'persona',
+                //     name: 'persona',
+                //   },
+                //   value: course.persona || 'persona',
+                // },
+                // {
+                //   display: true,
+                //   descriptor: {
+                //     code: 'license',
+                //     name: 'license',
+                //   },
+                //   value: course.license || 'license',
+                // },
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'createdon',
+                    name: 'createdon',
+                  },
+                  value: course.createdAt || 'createdAt',
+                },
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'lastupdatedon',
+                    name: 'lastupdatedon',
+                  },
+                  value: course.updatedAt || 'updatedAt',
+                },
+              ],
+            },
+          ]
+        };
+        return providerItem;
+      }),
+    };
+    return providerObj;
+  });
+
+  return catalog;
+};
+
+const getMediaArray = (url: string | undefined) => {
+  if (url) {
+    const formattedUrl = isValidUrl(url)
+    if (formattedUrl) {
+      return [
+        {
+          url: url,
+        },
+      ]
+    }
+    else {
+      return [
+        {
+          url: encodeURI('https://image/' + url)
+        }
+      ]
+    }
+  }
+  return [];
+};
+
+const isValidUrl = (str: string) => {
+  try {
+    new URL(str);
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 
 
