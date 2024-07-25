@@ -1,16 +1,11 @@
-version: "3.3"
+version: "3.6"
 
 services:
-
-  icar-provider:
-    image: icar-provider-service:v3
-    restart: unless-stopped
-    #volumes:
-    #  - ./data/mongo_DB:/data/db
-
+  backend:
+    image: icar-service-backend
+    container_name: "icar-service-backend" 
+    restart: always 
     ports:
-      - "3000:3000"
+      - 3444:3000
     env_file:
-     - /Onest/backend/icar-provider-service/icar-provider-service/.env
-     # - SANDBOXURL=https://onest-bap.tekdinext.com
-     # - BPPCLIENTURL=http://172.31.18.165:7001
+      - /home/ubuntu/onest/icar-service-provider-backend/.env

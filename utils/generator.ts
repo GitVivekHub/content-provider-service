@@ -424,24 +424,42 @@ export const IcarCatalogGenerator2 = (
           id: `${content.id}`,
           parent_category_id: `${content.id}` || '',
           descriptor: {
-            name: content.publisher,
+            name: content.publisher? content.publisher :"",
           }
         };
         
         return providerItem;
       }),
+
+      locations:  providerWise[provider].map((content: any) => {
+
+        const LocationsItem = {
+          id:"L1",
+              state:{
+                name:Array.isArray(content.state) && content.state.length > 0
+                ? content.state.join(', ')
+                : (content.state?content.state:""),
+                code:""
+              }
+        }
+        return LocationsItem
+        }
+          ),
+
+
+
       items: providerWise[provider].map((content: any) => {
         const average = averageRating(content);
 
         const providerItem = {
           id: `${content.id}`,
-          parent_item_id: `${content.id}`,
+          parent_item_id: `${content.id}`?`${content.id}`:"",
           descriptor: {
-            name: content.title,
-            content_id: content.content_id ,
-            description: content.description ,
-            icon: content.icon,
-            publisher: content.publisher,
+            name: content.title? content.title :"",
+            content_id: content.content_id ? content.content_id :"" ,
+            description: content.description?content.description:"" ,
+            icon: content.icon? content.icon: "",
+            publisher: content.publisher ? content.publisher :"",
             // domain: course.domain,
             // crop: content.crop,
             // language: content.language,
@@ -493,42 +511,37 @@ export const IcarCatalogGenerator2 = (
           tags: [
             {
               descriptor: {
-                name: "courseInfo"
+                name: "Content Info"
               },
               list: [
                 {
                   descriptor: {
-                    name: 'credits',
+                    name: 'Crop',
                   },
-                  value: content.credits || '',
+                  value: content.crop || '',
                 },
                 {
                   descriptor: {
-                    name: 'instructors',
+                    name: 'Language',
                   },
-                  value: '',
+                  value: content.language || '',
                 },
                 {
                   descriptor: {
-                    name: 'offeringInstitue',
+                    name: 'Branch',
                   },
-                  value: content.sourceOrganisation || '',
+                  value: content.branch || '',
                 },
                 {
                   descriptor: {
-                    name: 'url',
+                    name: 'Publish Date',
                   },
-                  value: encodeURI(content.link || ''),
-                },
-                {
-                  descriptor: {
-                    name: 'enrollmentEndDate',
-                  },
-                  value: content.createdAt || '',
+                  value: content.publishDate || '',
                 },
               ],
             },
           ],
+          
         };
         return providerItem;
       }),
