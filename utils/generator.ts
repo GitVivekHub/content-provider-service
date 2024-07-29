@@ -609,7 +609,7 @@ export const IcarCatalogGenerator = (
         const providerItem = {
           id: `${content.id}`,
           descriptor: {
-            name: content.name,
+            name: content.title,
             short_desc: content.description.slice(0, 30) + '...',
             long_desc: content.description,
             media: [
