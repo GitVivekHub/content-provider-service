@@ -470,39 +470,64 @@ export class HasuraService {
   }
 
   async getContentById(id, provider_id) {
-    const query = `query GetUser {
-      fln_content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
-        id
-        user_id
-        title
-        themes
-        url
-        urlType
-        sourceOrganisation
-        publisher
-        minAge
-        mimeType
-        maxAge
-        link
-        learningOutcomes
-        language
-        image
-        goal
-        domain
-        description
-        curricularGoals
+  //   const query = `query GetUser {
+  //     fln_content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
+  //       id
+  //       user_id
+  //       title
+  //       themes
+  //       url
+  //       urlType
+  //       sourceOrganisation
+  //       publisher
+  //       minAge
+  //       mimeType
+  //       maxAge
+  //       link
+  //       learningOutcomes
+  //       language
+  //       image
+  //       goal
+  //       domain
+  //       description
+  //       curricularGoals
+  //       content_id
+  //       contentType
+  //       competency
+  //       collection
+  //       code
+  //       author
+  //       category
+  //       createdAt
+  //       updatedAt
+  //     }
+  // }`;
+  const query = `query GetUser {
+    ${this.nameSpace}{Content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
+      contentType
         content_id
-        contentType
-        competency
-        collection
-        code
-        author
-        category
-        createdAt
-        updatedAt
-      }
-  }`;
+        crop
+        description
+        expiryDate
+        fileType
+        icon
+        id
+        language
+        monthOrSeason
+        publishDate
+        publisher
+        region
+        state
+        target_users
+        title
+        url
+        user_id
+        branch
+    }
+  }
+}`
     try {
+      console.log("query", query)
       const response = await this.queryDb(query);
       return response;
     } catch (error) {
@@ -513,60 +538,126 @@ export class HasuraService {
 
   async editContent(id, createContentdto) {
     // console.log("createContentdto", createContentdto)
-    const query = `mutation UpdateMyData($id: Int!, $themes: String, $code: String, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String, $image: String, $publisher: String, $collection: Boolean, $urlType: String, $url: String, $mimeType: String, $minAge: Int, $maxAge: Int, $author: String, $curricularGoals: String, $learningOutcomes: String, $category: String) {
-      update_fln_content(where: { id: { _eq: $id } }, _set: {
-        themes: $themes
-        code: $code
-        competency: $competency
+    // const query = `mutation UpdateMyData($id: Int!, $themes: String, $code: String, $competency: String, $contentType: String, $description: String, $domain: String, $goal: String, $language: String, $link: String, $sourceOrganisation: String, $title: String, $image: String, $publisher: String, $collection: Boolean, $urlType: String, $url: String, $mimeType: String, $minAge: Int, $maxAge: Int, $author: String, $curricularGoals: String, $learningOutcomes: String, $category: String) {
+    //   update_icar_content(where: { id: { _eq: $id } }, _set: {
+    //     themes: $themes
+    //     code: $code
+    //     competency: $competency
+    //     contentType: $contentType
+    //     description: $description
+    //     domain: $domain
+    //     goal: $goal
+    //     language: $language
+    //     link: $link
+    //     sourceOrganisation: $sourceOrganisation
+    //     title: $title
+    //     image: $image
+    //     publisher: $publisher
+    //     collection: $collection
+    //     urlType: $urlType
+    //     url: $url
+    //     mimeType: $mimeType
+    //     minAge: $minAge
+    //     maxAge: $maxAge
+    //     author: $author
+    //     curricularGoals: $curricularGoals
+    //     learningOutcomes: $learningOutcomes
+    //     category: $category
+    //   }) {
+    //     affected_rows
+    //     returning {
+    //       id
+    //       user_id
+    //       code
+    //       competency
+    //       contentType
+    //       description
+    //       domain
+    //       goal
+    //       image
+    //       language
+    //       link
+    //       sourceOrganisation
+    //       themes
+    //       title
+    //       image
+    //       publisher
+    //       collection
+    //       urlType
+    //       url
+    //       mimeType
+    //       minAge
+    //       maxAge
+    //       author
+    //       curricularGoals
+    //       learningOutcomes
+    //       category
+    //     }
+    //   }
+    // }
+    // `
+
+    const query = `mutation UpdateMyData(
+      $id: Int!, 
+      $branch: String, 
+      $contentType: String,  
+      $crop: String, 
+      $description: String, 
+      $district: jsonb, 
+      $expiryDate: String, 
+      $fileType: String, 
+      $monthOrSeason: String, 
+      $publishDate: String, 
+      $publisher: String, 
+      $region: jsonb, 
+      $target_users: jsonb,  
+      $title: String, 
+      $state: jsonb, 
+      $url: String,
+      $icon: String
+      ) {
+      update_icar_content(where: { id: { _eq: $id } }, _set: {
+        
+        branch: $branch
         contentType: $contentType
+        crop: $crop
         description: $description
-        domain: $domain
-        goal: $goal
-        language: $language
-        link: $link
-        sourceOrganisation: $sourceOrganisation
-        title: $title
-        image: $image
+        district: $district
+        expiryDate: $expiryDate
+        fileType: $fileType
+        monthOrSeason: $monthOrSeason
+        publishDate: $publishDate
         publisher: $publisher
-        collection: $collection
-        urlType: $urlType
+        region: $region
+        state: $state
+        target_users: $target_users
+        title: $title
         url: $url
-        mimeType: $mimeType
-        minAge: $minAge
-        maxAge: $maxAge
-        author: $author
-        curricularGoals: $curricularGoals
-        learningOutcomes: $learningOutcomes
-        category: $category
+        icon: $icon
       }) {
         affected_rows
         returning {
           id
-          user_id
-          code
-          competency
+          branch
           contentType
+          content_id
+          crop
           description
-          domain
-          goal
-          image
-          language
-          link
-          sourceOrganisation
-          themes
-          title
-          image
+          district
+          expiryDate
+          fileType
+          icon
+          fileType
+          monthOrSeason
+          publishDate
           publisher
-          collection
-          urlType
+          region
+          state
+          target_users
+          title
           url
-          mimeType
-          minAge
-          maxAge
-          author
-          curricularGoals
-          learningOutcomes
-          category
+          user_id
+          
         }
       }
     }
