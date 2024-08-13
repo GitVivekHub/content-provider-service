@@ -834,10 +834,10 @@ export class HasuraService {
   async deleteContent(id, provider_id) {
     console.log("provider_id", provider_id)
     console.log("id", id)
-    const contentMutation = `mutation MyMutation {
-      delete_fln_content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
+    const contentMutation = `mutation MyMutation { 
+      ${this.nameSpace} {delete_Content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
         affected_rows
-      }
+      }}
     }
     `;
 
