@@ -373,6 +373,7 @@ export class HasuraService {
       $state: jsonb, 
       $url: String,
       $icon: String
+      $language: String
       ){${this.nameSpace} {
         insert_Content(objects: {
         user_id:$user_id
@@ -392,6 +393,7 @@ export class HasuraService {
         title: $title
         url: $url
         icon: $icon
+        language: $language
       }) {
         affected_rows
         returning {
@@ -415,6 +417,7 @@ export class HasuraService {
           title
           url
           user_id
+          language
         }
       }
       }
@@ -623,7 +626,8 @@ export class HasuraService {
       $title: String, 
       $state: jsonb, 
       $url: String,
-      $icon: String
+      $icon: String,
+      $language: String
       ){${this.nameSpace} {
         update_Content(where: { id: { _eq: $id } }, _set: {
         branch: $branch
@@ -642,6 +646,7 @@ export class HasuraService {
         title: $title
         url: $url
         icon: $icon
+        language: $language
       }) {
         affected_rows
         returning {
@@ -665,6 +670,7 @@ export class HasuraService {
           title
           url
           user_id
+          language
         }
       }
       }
