@@ -71,3 +71,32 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](LICENSE).
+
+
+ICAR Reference App
+
+Icar provider service is reference app for adding contents related to vistaar network. Provider can register themselves and add their contents to this app. Provider can create/read/update/delete their contents.
+
+Steps to install this app.
+Git clone https://github.com/tekdi/icar-provider-service.git
+cd icar-provider-service
+npm install
+npm run start
+run http://localhost:3000 on your browser to test the app is running
+Add .env file in this format
+
+HASURA_URL= https://onest-bap.tekdinext.com/hasura/v1/graphql
+HASURA_GRAPHQL_ADMIN_SECRET= "******"
+HASURA_NAMESPACE= icar_
+PORT=3000
+S3_REGION=ap-south-1
+S3_BUCKET=onest-bucket
+SECRET_ACCESS_KEY=******
+ACCESS_KEY_ID=******
+EXPIRES_IN=3600
+
+Restart the server: npm run start
+
+Import the postman collection to test the api:
+https://docs.google.com/document/d/1AxE89Aksh69jSwhV-DVt1i6sFzVWlPu2CLh2ddai6MU/edit?usp=sharing
+
