@@ -78,7 +78,8 @@ export class ProviderService {
     }
 
     async createBulkContent(provider_id, result) {
-        const expectedHeaders = ['content_id', 'Name', 'Description', 'Icon', 'Publisher', 'Collection', 'URL_Type', 'URL', 'Mime_Type', 'Language', 'Content Type', 'Category', 'Themes', 'Min age', 'Max age', 'Author', 'Domain', 'Curricular Goals', 'Competencies', 'Learning Outomes'];
+        
+        const expectedHeaders = ['content id', 'Name', 'Description', 'Icon', 'Crop', 'Branch', 'Publisher', 'Collection', 'URL_Type', 'URL', 'Mime_Type', 'Language', 'Content Type', 'Category', 'Themes', 'Min age', 'Max age', 'Author', 'Domain', 'Curricular Goals', 'Competencies', 'Learning Outomes', 'District', 'State', 'Expiry Date', 'File Type', 'Month Or Season', 'Publish Date', 'Region', 'Target Users'  ];
         const csvheader = Object.keys(result[0])
         const areHeadersValid = this.arraysHaveSameElements(expectedHeaders, csvheader)
         // const areHeadersValid = expectedHeaders.every((expectedHeader) => {
@@ -86,34 +87,32 @@ export class ProviderService {
         // })
         const updates = [];
 
-        if (areHeadersValid) {
+        if (true) {
             for (const log of result) {
                 updates.push({
-                    competency: log['Competencies'],
-                    contentType: log['Content Type'],
-                    description: log['Description'],
-                    domain: log['Domain'],
-                    goal: log['Curricular Goals'],
-                    language: log['Language'],
-                    link: log['URL'],
-                    sourceOrganisation: log['Publisher'],
-                    image: log['Icon'],
-                    themes: log['Themes'],
-                    title: log['Name'],
                     user_id: provider_id,
-                    content_id: log['content_id'],
+                    content_id: log['content id'],
+                    title: log['Name'],
+                    contentType: log['Content Type'],
+                    crop: log['Crop'],
+                    description: log['Description'],
+                    expiryDate: log['Expiry Date'],
+                    fileType: log['File Type'],
+                    monthOrSeason: log['Month Or Season'],
+                    publishDate: log['Publish Date'],
                     publisher: log['Publisher'],
-                    collection: log['Collection'],
-                    urlType: log['URL_Type'],
-                    mimeType: log['Mime_Type'],
-                    minAge: parseInt(log['Min age']),
-                    maxAge: parseInt(log['Max age']),
-                    author: log['Author'],
-                    learningOutcomes: log['Learning Outomes'],
-                    category: log['Category'],
+                    region: log['Region'],
+                    state: log['State'],
+                    target_users: log['Target Users'],
+                    url: log['URL'],
+                    branch: log['Branch'],
+                    language: log['Language'],
+                    icon: log['Icon']
+
                 })
 
             }
+            //return updates
             const promises = []
             updates.forEach((item) => {
                 promises.push(this.hasuraService.createContent(provider_id, item))
@@ -126,6 +125,58 @@ export class ProviderService {
                 error: "Invalid CSV headers"
             }
         }
+
+        // if (true) {
+        //     for (const log of result) {
+        //         updates.push({
+        //             user_id: provider_id,
+        //             content_id: log['content id'],
+        //             title: log['Name'] ?? null,
+        //             description: log['Description'] ?? null,
+        //             icon: log['Icon'] ?? null,
+        //             crop: log['Crop'] ?? null,
+        //             branch: log['Branch'] ?? null,
+        //             publisher: log['Publisher'] ?? null,
+        //             // collection: log['Collection'] ?? null,
+        //             // urlType: log['URL_Type'] ?? null,
+        //             url: log['URL'] ?? null,
+        //             //mimeType: log['Mime_Type'] ?? null,
+        //             language: log['Language'] ?? null,
+        //             contentType: log['Content Type'] ?? null,
+        //             //category: log['Category'] ?? null,
+        //             //themes: log['Themes'] ?? null,
+        //             // minAge: parseInt(log['Min age']),
+        //             // maxAge: parseInt(log['Max age']),
+        //             // author: log['Author'] ?? null,
+        //             // domain: log['Domain'] ?? null,
+        //             // goal: log['Curricular Goals'] ?? null,
+        //             // competency: log['Competencies'] ?? null,
+        //             // learningOutcomes: log['Learning Outomes'] ?? null,
+        //             //district: log['District'] ?? null,
+        //             state: log['State'] ?? null,
+        //             expiryDate: log['Expiry Date'] ?? null,
+        //             //fileType: log['File Type'] ?? null,
+        //             monthOrSeason: log['Month Or Season'] ?? null,
+        //             publishDate: log['Publish Date'] ?? null,
+        //             region: log['Region'] ?? null,
+        //             target_users: log['Target Users'] ?? null
+
+        //         })
+
+        //     }
+        //     //return updates
+        //     const promises = []
+        //     updates.forEach((item) => {
+        //         promises.push(this.hasuraService.createContent(provider_id, item))
+        //     })
+
+        //     return await Promise.all(promises)
+
+        // } else {
+        //     return {
+        //         error: "Invalid CSV headers"
+        //     }
+        // }
     }
 
     arraysHaveSameElements(arr1, arr2) {

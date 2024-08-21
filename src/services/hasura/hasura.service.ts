@@ -356,7 +356,8 @@ export class HasuraService {
     // }
     // `
     const query = `mutation MyMutation(
-      $user_id:Int, 
+      $user_id:Int,
+      $content_id: String, 
       $branch: jsonb, 
       $contentType: String,  
       $crop: String, 
@@ -377,6 +378,7 @@ export class HasuraService {
       ){${this.nameSpace} {
         insert_Content(objects: {
         user_id:$user_id
+        content_id: $content_id
         branch: $branch
         contentType: $contentType
         crop: $crop
