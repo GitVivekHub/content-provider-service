@@ -64,12 +64,18 @@ ICAR Reference App
 Icar provider service is reference app for adding contents related to vistaar network. Provider can register themselves and add their contents to this app. Provider can create/read/update/delete their contents.
 
 Steps to install this app.
-    1. Git clone https://github.com/tekdi/icar-provider-service.git
-    2. cd icar-provider-service
-    3. npm install
-    4. npm run start
-    5. run http://localhost:3000 on your browser to test the app is running
-    6. Add .env file in this format
+
+1. Git clone https://github.com/tekdi/icar-provider-service.git
+
+2. cd icar-provider-service
+
+3. npm install
+
+4. npm run start
+
+5. run http://localhost:3000 on your browser to test the app is running
+
+6. Add .env file in this format
 
         HASURA_URL= https://onest-bap.tekdinext.com/hasura/v1/graphql
         HASURA_GRAPHQL_ADMIN_SECRET= "******"
@@ -81,7 +87,7 @@ Steps to install this app.
         ACCESS_KEY_ID=******
         EXPIRES_IN=3600
 
-    7. Restart the server: npm run start
+7. Restart the server: npm run start
 
 Import the postman collection to test the api:
 
