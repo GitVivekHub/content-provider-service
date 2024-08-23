@@ -624,6 +624,7 @@ export const IcarCatalogGenerator = (
               },
             ],
           },
+          //rating: averageRating(content) || 0,
           // price: {
           //   currency: 'INR',
           //   value: 0 + '', // map it to an actual response
@@ -683,6 +684,9 @@ export const IcarCatalogGenerator = (
           //   },
           // ],
         };
+        if(averageRating(content)) {
+          providerItem['rating'] = averageRating(content)
+        }
         return providerItem;
       }),
     };

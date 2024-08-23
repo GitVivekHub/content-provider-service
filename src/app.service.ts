@@ -576,9 +576,9 @@ export class AppService {
   }
 
   async handleRating(ratingDto: any) {
-    const itemId = ratingDto.message.ratings.id;
-    const rating = ratingDto.message.ratings.value;
-    const feedback = ratingDto.message.ratings.feedback;
+    const itemId = ratingDto.message.ratings[0].id;
+    const rating = ratingDto.message.ratings[0].value ?? null;
+    const feedback = ratingDto.message.ratings[0].feedback ?? null;
 
     const courseData = await this.hasuraService.rateIcarContentById(
       itemId,
@@ -591,7 +591,8 @@ export class AppService {
     ratingDto.message = {
       feedback_form: {
         form: {
-          url: `${this.base_url}/feedback/${id}`,
+          //url: `${this.base_url}/feedback/${id}`,
+          url: `https://icar-api.tekdinext.com/feedback/${id}`,
           mime_type: "text/html",
         },
         required: "false",
@@ -608,11 +609,14 @@ export class AppService {
   }
 
   async handleSubmit(description, id) {
+    console.log("description", description)
+    console.log("id", id)
     try {
       const courseData = await this.hasuraService.SubmitFeedback(
         description,
         id
       );
+      console.log("courseData", courseData)
       return { message: "feedback submitted Successfully" };
     } catch (error) {
       return error;

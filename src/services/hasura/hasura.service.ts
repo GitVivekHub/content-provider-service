@@ -541,39 +541,39 @@ export class HasuraService {
   }
 
   async getContentById(id, provider_id) {
-  //   const query = `query GetUser {
-  //     fln_content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
-  //       id
-  //       user_id
-  //       title
-  //       themes
-  //       url
-  //       urlType
-  //       sourceOrganisation
-  //       publisher
-  //       minAge
-  //       mimeType
-  //       maxAge
-  //       link
-  //       learningOutcomes
-  //       language
-  //       image
-  //       goal
-  //       domain
-  //       description
-  //       curricularGoals
-  //       content_id
-  //       contentType
-  //       competency
-  //       collection
-  //       code
-  //       author
-  //       category
-  //       createdAt
-  //       updatedAt
-  //     }
-  // }`;
-  const query = `query GetUser {
+    //   const query = `query GetUser {
+    //     fln_content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
+    //       id
+    //       user_id
+    //       title
+    //       themes
+    //       url
+    //       urlType
+    //       sourceOrganisation
+    //       publisher
+    //       minAge
+    //       mimeType
+    //       maxAge
+    //       link
+    //       learningOutcomes
+    //       language
+    //       image
+    //       goal
+    //       domain
+    //       description
+    //       curricularGoals
+    //       content_id
+    //       contentType
+    //       competency
+    //       collection
+    //       code
+    //       author
+    //       category
+    //       createdAt
+    //       updatedAt
+    //     }
+    // }`;
+    const query = `query GetUser {
     ${this.nameSpace}{Content(where: {id: {_eq: ${id}}, user_id: {_eq: ${provider_id}}}) {
       contentType
         content_id
@@ -609,7 +609,7 @@ export class HasuraService {
 
   async editContent(id, createContentdto) {
     console.log("id", id)
-     console.log("createContentdto", createContentdto)
+    console.log("createContentdto", createContentdto)
 
     const query = `mutation UpdateMyData(
       $id: Int!, 
@@ -1906,19 +1906,18 @@ export class HasuraService {
     const query = `mutation MyMutation {
     ${this.nameSpace} {
     insert_Rating(objects: {content_id: "${content_id}", ratingValue: "${ratingValue}" , feedback: "${feedback}"}) {
-      affected_rows
-      returning {
-        content_id
-        id
-        feedback
-        ratingValue
-        user_id
+        affected_rows
+          returning {
+            content_id
+            id
+            feedback
+            ratingValue
+            user_id
+          }
+        }
       }
-    }
-  }
-}
-  `
-      ;
+    }`;
+    console.log("query", query)
     try {
       const response = await this.queryDb(query);
       return response;

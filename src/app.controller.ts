@@ -79,6 +79,8 @@ export class AppController {
 
   @Post('/submit-feedback/:id')
    submitFeedback(@Body('description') description: string,@Param('id') id: string) {
+    console.log("description", description)
+    console.log("id", id)
    return this.appService.handleSubmit(description, id);
   }
 
