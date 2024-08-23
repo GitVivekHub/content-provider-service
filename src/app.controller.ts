@@ -40,6 +40,12 @@ export class AppController {
     return this.appService.handleConfirm(body);
   }
 
+  @Post('dsep/rating')
+  giveRating(@Body() body: any) {
+    console.log("rating api calling")
+    return this.appService.handleRating(body);
+  }
+
   //mobility
   @Post('mobility/search')
   getContentFromIcar1(@Body() body: any) {
@@ -65,8 +71,8 @@ export class AppController {
     return this.appService.handleConfirm(body);
   }
 
-  @Post('dsep/rating')
-  giveRating(@Body() body: any) {
+  @Post('mobility/rating')
+  giveRating1(@Body() body: any) {
     console.log("rating api calling")
     return this.appService.handleRating(body);
   }
