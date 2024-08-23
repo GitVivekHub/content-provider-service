@@ -595,7 +595,7 @@ export class AppService {
           url: `https://icar-api.tekdinext.com/feedback/${id}`,
           mime_type: "text/html",
         },
-        required: "false",
+        required: false,
       },
     };
     const resp = ratingDto;
