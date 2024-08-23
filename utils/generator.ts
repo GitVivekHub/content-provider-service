@@ -685,7 +685,7 @@ export const IcarCatalogGenerator = (
           // ],
         };
         if(averageRating(content)) {
-          providerItem['rating'] = averageRating(content)
+          providerItem['rating'] = averageRating(content).toString()
         }
         return providerItem;
       }),
