@@ -91,7 +91,7 @@ Steps to install this app.
 
 Import the postman collection to test the api:
 
-link: https://docs.google.com/document/d/1AxE89Aksh69jSwhV-DVt1i6sFzVWlPu2CLh2ddai6MU/edit?usp=sharing
+link: https://www.postman.com/grey-escape-31127/workspace/icar-reference-app/collection/18319029-1a41994e-a329-4c15-b965-1ee478a6e71f?action=share&creator=18319029
 
 
 
