@@ -8,21 +8,12 @@
   <style>
     body {
       font-family: 'Arial', sans-serif;
-      background-color: #f4f4f4;
       margin: 0;
       padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
     }
-
-    h1 {
-      text-align: center;
-      color: #333;
-      padding: 50px;
-    }
-
     form {
       max-width: 400px;
       width: 100%;
@@ -31,13 +22,11 @@
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-
     label {
       display: block;
       margin-bottom: 8px;
       color: #333;
     }
-
     textarea {
       width: 100%;
       padding: 10px;
@@ -47,7 +36,6 @@
       border-radius: 4px;
       resize: vertical;
     }
-
     button {
       background-color: #4caf50;
       color: #fff;
@@ -57,16 +45,13 @@
       cursor: pointer;
       font-size: 16px;
     }
-
     button:hover {
       background-color: #45a049;
     }
   </style>
 </head>
 <body>
-  <h1>Feedback</h1>
   <form action="https://icar-api.tekdinext.com/submit-feedback/<%= id %>" method="post">
-    <label for="description">Your feedback is valuable for us</label>
     <textarea id="description" name="description" required></textarea>
     <br>
     <button type="submit">Submit Feedback</button>
