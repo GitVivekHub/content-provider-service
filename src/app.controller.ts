@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Body, Render, Res, Req, Param, Request, Response } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Body, Render, Res, Req, Param, Request, Response, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AppService } from './app.service';
 import { AuthService } from './auth/auth.service';
@@ -91,17 +91,18 @@ export class AppController {
     const referer = req.get('Referer');
     console.log("Referer", referer)
 
-    return this.appService.handleSubmit(description, id);
+    //return this.appService.handleSubmit(description, id);
 
     // Check if the referer is not empty and belongs to your allowed domain
-    // if (referer && referer.includes('vistaar.tekdinext.com')) {
-    //     // Allow access to the feedback form
-    //     return this.appService.handleSubmit(description, id);
+    if (referer && referer.includes('https://vistaar.tekdinext.com/')) {
+        // Allow access to the feedback form
+        return this.appService.handleSubmit(description, id);
         
-    // } else {
-    //     // Deny access if not loaded within the iframe
-    //     res.status(403).send('Access denied. This page can only be loaded within an iframe.');
-    // }
+    } else {
+        // Deny access if not loaded within the iframe
+        // res.status(403).send('Access denied. This page can only be loaded within an iframe.');
+        throw new HttpException('Access denied. This page can only be loaded within an iframe.', HttpStatus.FORBIDDEN);
+    }
 
   }
 
