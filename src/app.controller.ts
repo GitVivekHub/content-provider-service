@@ -84,7 +84,7 @@ export class AppController {
   }
 
   @Post('/submit-feedback/:id')
-   submitFeedback(@Body('description') description: string,@Param('id') id: string, @Request() req: any, @Response() res) {
+   submitFeedback(@Body('description') description: string,@Param('id') id: string, @Request() req: any) {
     console.log("description", description)
     console.log("id", id)
 
