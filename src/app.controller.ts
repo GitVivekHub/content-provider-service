@@ -94,7 +94,7 @@ export class AppController {
     //return this.appService.handleSubmit(description, id);
 
     // Check if the referer is not empty and belongs to your allowed domain
-    if (referer && referer.includes('https://vistaar.tekdinext.com/')) {
+    if (referer && referer.includes('https://vistaar.tekdinext.com/') || referer.includes('https://oan.tekdinext.com/')) {
         // Allow access to the feedback form
         return this.appService.handleSubmit(description, id);
         
