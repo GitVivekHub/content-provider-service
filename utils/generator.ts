@@ -615,12 +615,12 @@ export const IcarCatalogGenerator = (
             media: [
                 {
                     mimetype: content.mimetype ? content.mimetype : "video/mp4",
-                    url: content.url
+                    url: encodeURI(content.url.trim())
                 }
             ],
             images: [
               {
-                url: content.icon
+                url: encodeURI(content.icon.trim())
               },
             ],
           },

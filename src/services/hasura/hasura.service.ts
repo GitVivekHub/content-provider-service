@@ -1817,7 +1817,7 @@ export class HasuraService {
   async findIcarContent(searchQuery) {
     const query = `query MyQuery {
       ${this.nameSpace} {
-    Content {
+    Content (limit: 10){
       branch
       contentType
       content_id
