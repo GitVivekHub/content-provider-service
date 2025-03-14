@@ -1817,7 +1817,7 @@ export class HasuraService {
   async findIcarContent(searchQuery) {
     const query = `query MyQuery {
       ${this.nameSpace} {
-    Content (limit: 10){
+    Content{
       branch
       contentType
       content_id
@@ -1849,8 +1849,7 @@ export class HasuraService {
     }
   }
 }
-
-    `
+`
       ;
     try {
       const response = await this.queryDb(query);
