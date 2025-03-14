@@ -1221,7 +1221,7 @@ export class HasuraService {
         {
           headers: {
             'Content-Type': 'application/json',
-            'x-hasura-admin-secret': '#z4X39Q!g1W7fDvX'
+            'x-hasura-admin-secret': this.adminSecretKey
           },
         }
       );
