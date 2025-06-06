@@ -13,6 +13,7 @@ import {
   scholarshipCatalogGenerator,
   IcarCatalogGenerator,
   flnCatalogGenerator,
+  PmKisanIcarGenerator,
 } from "utils/generator";
 import { v4 as uuidv4 } from "uuid";
 
@@ -227,6 +228,9 @@ export class AppService {
     const provider = intent?.provider?.descriptor?.name;
     const query = intent?.item?.descriptor?.name;
     const tagGroup = intent?.item?.tags;
+    const categoryCode = intent?.category?.descriptor?.code;
+    const schemeCode = intent?.item?.descriptor?.code;
+    const requestDomain = body.context.domain;
 
     const flattenedTags: any = {};
     if (tagGroup) {
@@ -265,26 +269,43 @@ export class AppService {
     }
 
     try {
-      const resp = await this.hasuraService.findIcarContent(query);
-      const icarResponse: any = resp.data.icar_.Content;
-      console.log("icarResponse", icarResponse.length);
-      for (let item of icarResponse) {
+      // Construct the query string
+      let searchQuery = '';      
+      // Add where clause for knowledge-advisory:agrinet:vistaar domain
+      if (requestDomain === "knowledge-advisory:agrinet:vistaar") {
+        let whereClause = ' (where:';
+        
+        // Add category code filter if available
+        if (categoryCode) {
+          whereClause += `{ usecase: {_eq: "${categoryCode}"}`;
+        }
+        
+        // Add scheme code filter if available
+        if (schemeCode) {
+          whereClause += `, scheme_id: {_eq: "${schemeCode}"}`;
+        }
+        
+        whereClause += '})';
+        searchQuery = whereClause;
+      }
 
+      const resp = await this.hasuraService.findIcarContent(searchQuery);
+      const icarResponse: any = resp.data.icar_.Content;
+      for (let item of icarResponse) {
         if (item.icon) {
           if (!this.isValidUrl(item.icon)) {
             item.icon = await this.hasuraService.getImageUrl(item.icon);
           }
         }
-
-        // if (item.flncontentProviderRelationshp.image) {
-        //   if (!this.isValidUrl(item.flncontentProviderRelationshp.image)) {
-        //     item.flncontentProviderRelationshp.image = await this.hasuraService.getImageUrl(item.flncontentProviderRelationshp.image);
-        //   }
-        // }
-
+      }
+      // Use different catalog generator based on domain
+      let catalog;
+      if (requestDomain === "knowledge-advisory:agrinet:vistaar") {
+        catalog = PmKisanIcarGenerator(icarResponse, query);
+      } else {
+        catalog = IcarCatalogGenerator(icarResponse, query);
       }
 
-      const catalog = IcarCatalogGenerator(icarResponse, query);
       body.context.action = "on_search";
       const courseData: any = {
         context: body.context,

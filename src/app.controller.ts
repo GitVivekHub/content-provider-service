@@ -21,7 +21,12 @@ export class AppController {
     return this.appService.handleSearch(body);
     //return this.appService.getCoursesFromFln(body);
   }
-
+  //pmkisan
+  @Post('/pmkisan/search')
+  getContentFromPmkisan(@Body() body: any) {
+    console.log("search api calling")
+    return this.appService.handleSearch(body);
+  }
   @Post('dsep/select')
   selectCourse(@Body() body: any) {
     console.log("select api calling")
