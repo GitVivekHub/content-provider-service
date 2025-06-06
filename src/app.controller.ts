@@ -21,7 +21,7 @@ export class AppController {
     return this.appService.handleSearch(body);
     //return this.appService.getCoursesFromFln(body);
   }
-
+  
   @Post('dsep/select')
   selectCourse(@Body() body: any) {
     console.log("select api calling")

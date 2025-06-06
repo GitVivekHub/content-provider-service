@@ -354,7 +354,6 @@ export class HasuraService {
     //     }
     //   }
     // }
-    // `
     const query = `mutation MyMutation(
       $user_id:Int,
       $content_id: String, 
@@ -759,19 +758,19 @@ export class HasuraService {
         id
         code
         competency
-        contentType
-        description
+            contentType
+            description
         domain
         goal
         image
-        language
+            language
         link
         sourceOrganisation
         themes
-        title
-        user_id
-        content_id
-        publisher
+            title
+            user_id
+              content_id
+            publisher
         collection
         urlType
         mimeType
@@ -782,7 +781,7 @@ export class HasuraService {
         category
         createdAt
         updatedAt
-      }
+        }
       }`;
     try {
       const response = await this.queryDb(query);
@@ -1814,43 +1813,51 @@ export class HasuraService {
   }
 
 
-  async findIcarContent(searchQuery) {
+  async findIcarContent(searchQuery?: string) {
     const query = `query MyQuery {
       ${this.nameSpace} {
-    Content{
-      branch
-      contentType
-      content_id
-      crop
-      description
-      district
-      expiryDate
-      fileType
-      icon
-      id
-      language
-      monthOrSeason
-      publishDate
-      publisher
-      region
-      state
-      target_users
-      title
-      url
-      user_id
-      mimetype
-      ContentRatingRelationship {
-        content_id
-        id
-        ratingValue
-        user_id
-        feedback
+        Content${searchQuery || ''}{
+          branch
+          contentType
+          content_id
+          crop
+          description
+          district
+          expiryDate
+          fileType
+          icon
+          id
+          language
+          monthOrSeason
+          publishDate
+          publisher
+          region
+          state
+          target_users
+          title
+          url
+          user_id
+          mimetype
+          scheme_id
+          ContentRatingRelationship {
+            content_id
+            id
+            ratingValue
+            user_id
+            feedback
+          }
+          agri_domain
+          scheme_intro
+          scope
+          scheme_benefits
+          scheme_eligibility
+          scheme_support
+          scheme_misc
+          scheme_application
+          faq_url
+        }
       }
-    }
-  }
-}
-`
-      ;
+    }`;
     try {
       const response = await this.queryDb(query);
       return response;

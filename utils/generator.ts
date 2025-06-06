@@ -82,7 +82,7 @@ export const scholarshipCatalogGenerator = (
                     ? encodeURI(
                       'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg'
                     )
-                    : encodeURI('https://image/'+course.image),
+                    : encodeURI('https://image/' + course.image),
               },
             ],
           },
@@ -411,40 +411,40 @@ export const IcarCatalogGenerator2 = (
   catalog['descriptor'] = { name: `Catalog for ${query}` };
   // adding providers
   catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
-    
+
     const providerObj: components['schemas']['Provider'] = {
       id: provider,
       descriptor: {
         name: 'Icar',
       },
-      
+
       categories: providerWise[provider].map((content: any) => {
 
         const providerItem = {
           id: `${content.id}`,
           parent_category_id: `${content.id}` || '',
           descriptor: {
-            name: content.publisher? content.publisher :"",
+            name: content.publisher ? content.publisher : "",
           }
         };
-        
+
         return providerItem;
       }),
 
-      locations:  providerWise[provider].map((content: any) => {
+      locations: providerWise[provider].map((content: any) => {
 
         const LocationsItem = {
-          id:"L1",
-              state:{
-                name:Array.isArray(content.state) && content.state.length > 0
-                ? content.state.join(', ')
-                : (content.state?content.state:""),
-                code:""
-              }
+          id: "L1",
+          state: {
+            name: Array.isArray(content.state) && content.state.length > 0
+              ? content.state.join(', ')
+              : (content.state ? content.state : ""),
+            code: ""
+          }
         }
         return LocationsItem
-        }
-          ),
+      }
+      ),
 
 
 
@@ -453,13 +453,13 @@ export const IcarCatalogGenerator2 = (
 
         const providerItem = {
           id: `${content.id}`,
-          parent_item_id: `${content.id}`?`${content.id}`:"",
+          parent_item_id: `${content.id}` ? `${content.id}` : "",
           descriptor: {
-            name: content.title? content.title :"",
-            content_id: content.content_id ? content.content_id :"" ,
-            description: content.description?content.description:"" ,
-            icon: content.icon? content.icon: "",
-            publisher: content.publisher ? content.publisher :"",
+            name: content.title ? content.title : "",
+            content_id: content.content_id ? content.content_id : "",
+            description: content.description ? content.description : "",
+            icon: content.icon ? content.icon : "",
+            publisher: content.publisher ? content.publisher : "",
             // domain: course.domain,
             // crop: content.crop,
             // language: content.language,
@@ -481,11 +481,11 @@ export const IcarCatalogGenerator2 = (
             images: [
               {
                 url:
-                content.image == null
+                  content.image == null
                     ? encodeURI(
                       'https://thumbs.dreamstime.com/b/set-colored-pencils-placed-random-order-16759556.jpg'
                     )
-                    : encodeURI('https://image/'+content.icon),
+                    : encodeURI('https://image/' + content.icon),
               },
             ],
           },
@@ -506,7 +506,7 @@ export const IcarCatalogGenerator2 = (
           // rating: averageRating(content) || '',
           // rateable: true,
           ...(isNaN(average) ? {} : { rating: average.toString(), rateable: true }),
-          
+
           //rating: averageRating(content),
           tags: [
             {
@@ -541,7 +541,7 @@ export const IcarCatalogGenerator2 = (
               ],
             },
           ],
-          
+
         };
         return providerItem;
       }),
@@ -578,19 +578,19 @@ export const IcarCatalogGenerator = (
   catalog['descriptor'] = { name: `Catalog for ${query}` };
   // adding providers
   catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
-    
+
     const providerObj: components['schemas']['Provider'] = {
       id: provider,
       descriptor: {
         name: 'Icar',
-      //   images: [
-      //     {
-      //         "url": "https://agri_acad.example.org/logo.png"
-      //     }
-      // ],
-      short_desc: "Icar Academic aggregator"
+        //   images: [
+        //     {
+        //         "url": "https://agri_acad.example.org/logo.png"
+        //     }
+        // ],
+        short_desc: "Icar Academic aggregator"
       },
-      
+
       // categories: providerWise[provider].map((content: any) => {
 
       //   const providerItem = {
@@ -600,7 +600,7 @@ export const IcarCatalogGenerator = (
       //       name: content.publisher,
       //     }
       //   };
-        
+
       //   return providerItem;
       // }),
       items: providerWise[provider].map((content: any) => {
@@ -613,10 +613,10 @@ export const IcarCatalogGenerator = (
             short_desc: content.description.slice(0, 30) + '...',
             long_desc: content.description,
             media: [
-                {
-                    mimetype: content.mimetype ? content.mimetype : "video/mp4",
-                    url: encodeURI(content.url.trim())
-                }
+              {
+                mimetype: content.mimetype ? content.mimetype : "video/mp4",
+                url: encodeURI(content.url.trim())
+              }
             ],
             images: [
               {
@@ -642,7 +642,7 @@ export const IcarCatalogGenerator = (
           // // rating: averageRating(content) || '',
           // // rateable: true,
           // ...(isNaN(average) ? {} : { rating: average.toString(), rateable: true }),
-          
+
           //rating: averageRating(content),
           // tags: [
           //   {
@@ -684,7 +684,7 @@ export const IcarCatalogGenerator = (
           //   },
           // ],
         };
-        if(averageRating(content)) {
+        if (averageRating(content)) {
           providerItem['rating'] = averageRating(content).toString()
         }
         return providerItem;
@@ -703,10 +703,10 @@ export const averageRating = (
 ) => {
   let sum = 0;
   const crr = data.ContentRatingRelationship
-  if(crr.length) {
+  if (crr.length) {
     crr.forEach(i => sum += i.ratingValue)
   }
-  const average = sum/crr.length
+  const average = sum / crr.length
   return average
 }
 
@@ -718,7 +718,7 @@ export const feedback = (data: any) => {
   };
 
   const filteredData = data.ContentRatingRelationship
-  .filter(item => item.feedback && item.feedback.trim() !== "null" && item.feedback.trim() !== "undefined");
+    .filter(item => item.feedback && item.feedback.trim() !== "null" && item.feedback.trim() !== "undefined");
   filteredData.sort((a, b) => b.id - a.id);
 
 
@@ -763,12 +763,12 @@ export const flnCatalogGenerator = (
   //categories = [];
 
   const catalog = {};
-  if(query) {
+  if (query) {
     catalog['descriptor'] = { name: `Catalog for ${query}` };
   } else {
     catalog['descriptor'] = {}
   }
-  
+
 
   // adding providers
   console.log("providerWise", providerWise)
@@ -1093,6 +1093,171 @@ const isValidUrl = (str: string) => {
   } catch (error) {
     return false;
   }
+};
+
+export const PmKisanIcarGenerator = (
+  apiData: any,
+  query: string,
+) => {
+  const schemes: ReadonlyArray<{ node: any }> = apiData;
+  const providerWise = {};
+  let categories: any = new Set();
+
+  schemes.forEach((scheme: any) => {
+    const item = scheme;
+    const provider = 'SchemeFinder';
+    // creating the provider wise map
+    if (providerWise[provider]) {
+      providerWise[provider].push(item);
+    } else {
+      providerWise[provider] = [item];
+    }
+  });
+
+  const catalog = {};
+  if (query) {
+    catalog['descriptor'] = { name: `Catalog for ${query}` };
+  } else {
+    catalog['descriptor'] = {}
+  }
+
+  // adding providers
+  catalog['providers'] = Object.keys(providerWise).map((key) => {
+    const provider = {
+      id: 'p1',
+      descriptor: {
+        name: 'SchemeFinder',
+        short_desc: 'A Scheme Discovery and Application Service helps users discover',
+        long_desc: 'The provider helps users discover and apply for various government schemes',
+        images: [
+          {
+            url: 'https://image_url'
+          }
+        ]
+      },
+      categories: [
+        {
+          id: 'c1',
+          descriptor: {
+            code: 'Agriculture-Rural-Development',
+            name: 'Agriculture Rural Development'
+          }
+        }
+      ],
+      fulfillments: [
+        {
+          id: 'f1',
+          type: 'Direct Benefit Transfer (DBT)'
+        }
+      ],
+      items: providerWise[key].map((item: any, index: number) => {
+        return {
+          id: `i${index + 1}`,
+          descriptor: {
+            name: item.title || '',
+            short_desc: item.description || '',
+            long_desc: item.description || ''
+          },
+          tags: [
+            {
+              display: true,
+              descriptor: {
+                code: 'scheme-details',
+                name: 'Scheme Details'
+              },
+              list: [
+                {
+                  descriptor: {
+                    code: 'agri_domain',
+                    name: 'Agricultural Domain'
+                  },
+                  value: item.domain || '',
+                  display: true
+                },
+                {
+                  descriptor: {
+                    code: 'scope',
+                    name: 'Scope'
+                  },
+                  value: item.scope || '',
+                  display: true
+                },
+                {
+                  descriptor: {
+                    code: 'scheme_id',
+                    name: 'Scheme ID'
+                  },
+                  value: item.scheme_id || '',
+                  display: true
+                },
+                {
+                  descriptor: {
+                    code: 'scheme-intro',
+                    name: 'Scheme Introduction'
+                  },
+                  value: item.scheme_intro || '',
+                  display: true
+                },
+                {
+                  descriptor: {
+                    code: 'scheme-benefits',
+                    name: 'Scheme Benefits'
+                  },
+                  value: item.scheme_benefits || '',
+                  display: true
+                },
+                {
+                  descriptor: {
+                    code: 'scheme-eligibility',
+                    name: 'Scheme Eligibility'
+                  },
+                  value: item.scheme_eligibility || '',
+                  display: true
+                },
+                {
+                  descriptor: {
+                    code: 'scheme-support',
+                    name: 'Scheme Support'
+                  },
+                  value: item.scheme_support || '',
+                  display: true
+                },
+                {
+                  descriptor: {
+                    code: 'scheme-misc',
+                    name: 'Additional Information'
+                  },
+                  value: item.scheme_misc || '',
+                  display: true
+                },
+                {
+                  descriptor: {
+                    code: 'scheme-application',
+                    name: 'Scheme Application'
+                  },
+                  value: item.scheme_application || '',
+                  display: true
+                },
+                {
+                  descriptor: {
+                    code: 'faq-url',
+                    name: 'FAQ URL'
+                  },
+                  value: item.faq_url || '',
+                  display: true
+                }
+              ]
+            }
+          ],
+          category_ids: ['c1'],
+          fulfillment_ids: ['f1']
+        };
+      })
+    };
+    return provider;
+  });
+
+  return catalog;
 };
 
 
