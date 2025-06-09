@@ -610,17 +610,17 @@ export const IcarCatalogGenerator = (
           id: `${content.id}`,
           descriptor: {
             name: content.title,
-            short_desc: content.description.slice(0, 30) + '...',
-            long_desc: content.description,
+            short_desc: content?.description?.slice(0, 30) + '...',
+            long_desc: content?.description,
             media: [
               {
                 mimetype: content.mimetype ? content.mimetype : "video/mp4",
-                url: encodeURI(content.url.trim())
+                url: encodeURI(content?.url?.trim())
               }
             ],
             images: [
               {
-                url: encodeURI(content.icon.trim())
+                url: encodeURI(content?.icon?.trim())
               },
             ],
           },

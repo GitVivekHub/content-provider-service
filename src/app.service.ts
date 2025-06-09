@@ -315,7 +315,10 @@ export class AppService {
       };
       return courseData;
     } catch (err) {
-      throw new InternalServerErrorException(err);
+      throw new InternalServerErrorException(err.message, {
+        cause: err
+      });
+      
     }
   }
 
