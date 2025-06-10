@@ -1814,9 +1814,16 @@ export class HasuraService {
 
 
   async findIcarContent(searchQuery?: string) {
+    let contentArgs = '';
+if (!searchQuery) {
+  contentArgs = '(limit: 10)';
+} else {
+  // Remove closing `)` and add limit
+  contentArgs = searchQuery.replace(/\)\s*$/, '') + ', limit: 10)';
+}
     const query = `query MyQuery {
       ${this.nameSpace} {
-        Content${searchQuery || ''}{
+        Content${contentArgs} {
           branch
           contentType
           content_id
@@ -1858,6 +1865,7 @@ export class HasuraService {
         }
       }
     }`;
+    console.log("query", query);
     try {
       const response = await this.queryDb(query);
       return response;
