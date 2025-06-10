@@ -285,7 +285,7 @@ export class AppService {
           whereClause += `, scheme_id: {_eq: "${schemeCode}"}`;
         }
         
-        whereClause += '})';
+        whereClause += '}, ';
         searchQuery = whereClause;
       }
 
