@@ -552,12 +552,8 @@ export const IcarCatalogGenerator2 = (
   return catalog;
 }
 
-export const IcarCatalogGenerator = (
-  apiData: any,
-  query: string,
-) => {
-  const courses: ReadonlyArray<{ node: any }> =
-    apiData;
+export const IcarCatalogGenerator = (apiData: any, query: string) => {
+  const courses: ReadonlyArray<{ node: any }> = apiData;
   const providerWise = {};
   let categories: any = new Set();
 
@@ -575,20 +571,19 @@ export const IcarCatalogGenerator = (
   categories = [];
 
   const catalog = {};
-  catalog['descriptor'] = { name: `Catalog for ${query}` };
+  catalog["descriptor"] = { name: `Catalog for ${query}` };
   // adding providers
-  catalog['providers'] = Object.keys(providerWise).map((provider: string) => {
-
-    const providerObj: components['schemas']['Provider'] = {
-      id: provider,
+  catalog["providers"] = Object.keys(providerWise).map((provider: string) => {
+    const providerObj: components["schemas"]["Provider"] = {
+      id: provider == "null" ? "2030" : provider,
       descriptor: {
-        name: 'Icar',
+        name: "Icar",
         //   images: [
         //     {
         //         "url": "https://agri_acad.example.org/logo.png"
         //     }
         // ],
-        short_desc: "Icar Academic aggregator"
+        short_desc: "Icar Academic aggregator",
       },
 
       // categories: providerWise[provider].map((content: any) => {
@@ -607,20 +602,26 @@ export const IcarCatalogGenerator = (
         const average = averageRating(content);
 
         const providerItem = {
-          id: `${content.id}`,
+          id: content.id == "null" ? "2030" : content.id?.toString(),
           descriptor: {
-            name: content.title,
-            short_desc: content?.description?.slice(0, 30) + '...',
-            long_desc: content?.description,
+            name: content?.title ?? "",
+            short_desc: content?.description?.slice(0, 30) + "...",
+            long_desc: content?.description ?? "",
             media: [
               {
                 mimetype: content.mimetype ? content.mimetype : "video/mp4",
-                url: encodeURI(content?.url?.trim())
-              }
+                url:
+                  encodeURI(content?.url?.trim()) == "undefined"
+                    ? "https://icar.tekdinext.com/assets/school_logo-5f321ef5.png"
+                    : encodeURI(content?.url?.trim()),
+              },
             ],
             images: [
               {
-                url: encodeURI(content?.icon?.trim())
+                url:
+                  encodeURI(content?.url?.trim()) == "undefined"
+                    ? "https://icar.tekdinext.com/assets/school_logo-5f321ef5.png"
+                    : encodeURI(content?.url?.trim()),
               },
             ],
           },
@@ -685,7 +686,7 @@ export const IcarCatalogGenerator = (
           // ],
         };
         if (averageRating(content)) {
-          providerItem['rating'] = averageRating(content).toString()
+          providerItem["rating"] = averageRating(content).toString();
         }
         return providerItem;
       }),
@@ -694,7 +695,7 @@ export const IcarCatalogGenerator = (
   });
 
   return catalog;
-}
+};
 
 
 
