@@ -271,23 +271,20 @@ export class AppService {
     try {
       // Construct the query string
       let searchQuery = '';      
-      // Add where clause for knowledge-advisory:agrinet:vistaar domain
-      if (requestDomain === "knowledge-advisory:agrinet:vistaar") {
-        let whereClause = ' (where:';
-        
-        // Add category code filter if available
-        if (categoryCode) {
-          whereClause += `{ usecase: {_eq: "${categoryCode}"}`;
-        }
-        
-        // Add scheme code filter if available
-        if (schemeCode) {
-          whereClause += `, scheme_id: {_eq: "${schemeCode}"}`;
-        }
-        
-        whereClause += '}, ';
-        searchQuery = whereClause;
+      let whereClause = ' (where:';
+      
+      // Add category code filter if available
+      if (categoryCode) {
+        whereClause += `{ usecase: {_eq: "${categoryCode}"}`;
       }
+      
+      // Add scheme code filter if available
+      if (schemeCode) {
+        whereClause += `, scheme_id: {_eq: "${schemeCode}"}`;
+      }
+      
+      whereClause += '}, ';
+      searchQuery = whereClause;
 
       const resp = await this.hasuraService.findIcarContent(searchQuery);
       const icarResponse: any = resp.data.icar_.Content;
