@@ -36,6 +36,18 @@ export class AppService {
   private base_url = process.env.BASE_URL;
   private namespace = process.env.NAMESPACE;
 
+  private otpStore: Map<string, { otp: string; timestamp: number }> = new Map();
+  private readonly OTP_VALIDITY_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  private tempOTPStore = {
+    otp: null,
+    identifier: null,
+    timestamp: null
+  };
+
+  // 5 minutes in milliseconds
+  private readonly OTP_EXPIRY_TIME = 5 * 60 * 1000;
+
   getHello(): string {
     return "Icar-network Backend is running!!";
   }
@@ -624,6 +636,352 @@ export class AppService {
     };
     const resp = ratingDto;
     return resp;
+  }
+
+  async sendOTP(identifier: string, type: string = "OrderId"): Promise<any> {
+    try {
+      // Generate a 4-digit OTP
+      const otp = String(Math.floor(1000 + Math.random() * 9000));
+      
+      // Store OTP temporarily with current timestamp
+      this.tempOTPStore = {
+        otp,
+        identifier,
+        timestamp: Date.now()
+      };
+
+      // Log the OTP to console with a visual indicator
+      console.log('\x1b[32m%s\x1b[0m', `🔐 OTP for ${type} ${identifier}: ${otp}`); // Green colored output
+      console.log('OTP_GENERATION', `Generated OTP for ${type} ${identifier}: ${otp}`);
+      console.log('OTP will expire in 5 minutes');
+
+      return {
+        status: "OK",
+        d: {
+          output: {
+            status: "True",
+            Message: "OTP sent successfully",
+            Rsponce: "True"
+          }
+        }
+      };
+    } catch (error) {
+      console.log('OTP_GENERATION', error);
+      return {
+        status: "NOT_OK",
+        d: {
+          output: {
+            status: "False",
+            Message: "Failed to generate OTP",
+            Rsponce: "False"
+          }
+        }
+      };
+    }
+  }
+
+  private validateOTP(identifier: string, inputOtp: string): boolean {
+    const storedData = this.tempOTPStore;
+    
+    if (!storedData || !storedData.otp) {
+      console.log('No OTP found for validation');
+      return false;
+    }
+
+    // Calculate time elapsed since OTP generation
+    const timeElapsed = Date.now() - storedData.timestamp;
+    const isExpired = timeElapsed > this.OTP_EXPIRY_TIME;
+
+    if (isExpired) {
+      console.log(`OTP expired. Time elapsed: ${timeElapsed/1000} seconds`);
+      // Clear expired OTP
+      this.tempOTPStore = {
+        otp: null,
+        identifier: null,
+        timestamp: null
+      };
+      return false;
+    }
+
+    const isValid = storedData.identifier === identifier && storedData.otp === inputOtp;
+    console.log(`OTP validation result: ${isValid}, Time remaining: ${(this.OTP_EXPIRY_TIME - timeElapsed)/1000} seconds`);
+
+    if (isValid) {
+      // Clear OTP after successful validation
+      this.tempOTPStore = {
+        otp: null,
+        identifier: null,
+        timestamp: null
+      };
+    }
+
+    return isValid;
+  }
+
+  async handleStatus(body: any) {
+    try {
+      // Create response context
+      const responseContext = {
+        domain: body.context.domain || "knowledge-advisory:agrinet:vistaar",
+        location: {
+          country: {
+            name: "India",
+            code: "IND"
+          }
+        },
+        action: "on_status",
+        version: body.context.version || "1.1.0",
+        bap_id: body.context.bap_id,
+        bap_uri: body.context.bap_uri,
+        bpp_id: body.context.bpp_id,
+        bpp_uri: body.context.bpp_uri,
+        message_id: body.context.message_id,
+        transaction_id: body.context.transaction_id,
+        timestamp: new Date().toISOString(),
+        ttl: "PT10M"
+      };
+
+      // Get the order ID
+      const orderId = body.message?.order?.order_id;
+
+      if (!orderId) {
+        return {
+          context: responseContext,
+          message: {
+            order: {
+              id: 'error',
+              tags: [
+                {
+                  display: true,
+                  descriptor: {
+                    name: "Error",
+                    code: "missing_order_id",
+                    short_desc: "Please provide a valid order ID"
+                  }
+                }
+              ]
+            }
+          }
+        };
+      }
+
+      // Check if this is an OTP validation request (second status call)
+      const isOtpValidation = /^\d{4}$/.test(orderId);
+
+      if (isOtpValidation) {
+        try {
+          // Validate the OTP
+          const storedData = this.tempOTPStore;
+          
+          // Log validation attempt
+          console.log('Validating OTP:', {
+            inputOTP: orderId,
+            storedOTP: storedData?.otp,
+            storedIdentifier: storedData?.identifier,
+            currentTimestamp: new Date().toISOString(),
+            storedTimestamp: storedData?.timestamp ? new Date(storedData.timestamp).toISOString() : null
+          });
+
+          const isValid = storedData && 
+                         storedData.otp === orderId &&
+                         (Date.now() - storedData.timestamp) < this.OTP_EXPIRY_TIME;
+          
+          if (!isValid) {
+            return {
+              context: responseContext,
+              message: {
+                order: {
+                  id: orderId,
+                  tags: [
+                    {
+                      display: true,
+                      descriptor: {
+                        name: "Error",
+                        code: "invalid_otp",
+                        short_desc: "Invalid or expired OTP. Please try again."
+                      }
+                    }
+                  ]
+                }
+              }
+            };
+          }
+
+          // Clear OTP after successful validation
+          this.tempOTPStore = {
+            otp: null,
+            identifier: null,
+            timestamp: null
+          };
+
+          // Return success response with scheme status
+          return {
+            context: responseContext,
+            message: {
+              order: {
+                id: orderId,
+                provider: {
+                  id: "PM KISAAn",
+                  descriptor: {
+                    name: "PM KISAN",
+                    short_desc: "Pradhan Mantri Kisan Samman Nidhi"
+                  }
+                },
+                items: [
+                  {
+                    id: "SchemeId",
+                    descriptor: {
+                      name: "PM KISAN Scheme",
+                      short_desc: "Direct Benefit Transfer Scheme"
+                    }
+                  }
+                ],
+                fulfillments: [
+                  {
+                    customer: {
+                      person: {
+                        name: "Test Farmer"
+                      },
+                      contact: {
+                        phone: "8130XXXXXX"
+                      }
+                    },
+                    state: {
+                      descriptor: {
+                        name: "Scheme Status",
+                        code: "scheme-status",
+                        short_desc: "Pending Sanction",
+                        long_desc: "Your application is under process",
+                        additional_desc: {
+                          url: "",
+                          content_type: "text/plain"
+                        }
+                      },
+                      updated_at: new Date().toISOString(),
+                      updated_by: "system"
+                    }
+                  }
+                ]
+              }
+            }
+          };
+        } catch (error) {
+          console.log('OTP_VALIDATION', error);
+          return {
+            context: responseContext,
+            message: {
+              order: {
+                id: orderId,
+                tags: [
+                  {
+                    display: true,
+                    descriptor: {
+                      name: "Error",
+                      code: "otp_validation_failed",
+                      short_desc: "Failed to validate OTP. Please try again."
+                    }
+                  }
+                ]
+              }
+            }
+          };
+        }
+      }
+
+      // First call - validate order ID and generate OTP
+      try {
+        // Validate mobile number format (10 digits)
+        const isValidMobile = /^[6-9]\d{9}$/.test(orderId);
+        
+        if (!isValidMobile) {
+          return {
+            context: responseContext,
+            message: {
+              order: {
+                id: orderId,
+                tags: [
+                  {
+                    display: true,
+                    descriptor: {
+                      name: "Error",
+                      code: "invalid_mobile",
+                      short_desc: "Please provide a valid 10-digit mobile number"
+                    }
+                  }
+                ]
+              }
+            }
+          };
+        }
+
+        // Generate and store OTP
+        const otpResponse = await this.sendOTP(orderId); // Using mobile number as identifier
+        
+        if (otpResponse.status === "OK") {
+          return {
+            context: responseContext,
+            message: {
+              order: {
+                id: orderId,
+                tags: [
+                  {
+                    display: true,
+                    descriptor: {
+                      name: "Otp Status",
+                      code: "otp_status",
+                      short_desc: "Request for OTP is sent. Please enter the OTP when received and Submit"
+                    }
+                  }
+                ]
+              }
+            }
+          };
+        } else {
+          return {
+            context: responseContext,
+            message: {
+              order: {
+                id: orderId,
+                tags: [
+                  {
+                    display: true,
+                    descriptor: {
+                      name: "Error",
+                      code: "otp_error",
+                      short_desc: "Failed to generate OTP. Please try again later."
+                    }
+                  }
+                ]
+              }
+            }
+          };
+        }
+      } catch (error) {
+        console.log('ORDER_STATUS', error);
+        return {
+          context: responseContext,
+          message: {
+            order: {
+              id: orderId,
+              tags: [
+                {
+                  display: true,
+                  descriptor: {
+                    name: "Error",
+                    code: "processing_error",
+                    short_desc: "Failed to process status request. Please try again later."
+                  }
+                }
+              ]
+            }
+          }
+        };
+      }
+    } catch (err) {
+      throw new InternalServerErrorException(err.message, {
+        cause: err
+      });
+    }
   }
 
   generateFeedbackUrl(): string {
