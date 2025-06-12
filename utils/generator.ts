@@ -1169,6 +1169,14 @@ export const PmKisanIcarGenerator = (
               list: [
                 {
                   descriptor: {
+                    code: 'title',
+                    name: 'Title'
+                  },
+                  value: item.title || '',
+                  display: true
+                },
+                {
+                  descriptor: {
                     code: 'agri_domain',
                     name: 'Agricultural Domain'
                   },

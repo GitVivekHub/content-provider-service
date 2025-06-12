@@ -282,21 +282,28 @@ export class AppService {
 
     try {
       // Construct the query string
+      // Construct the query string
       let searchQuery = '';      
-      let whereClause = ' (where:';
-      
-      // Add category code filter if available
-      if (categoryCode) {
-        whereClause += `{ usecase: {_eq: "${categoryCode}"}`;
-      }
-      
-      // Add scheme code filter if available
-      if (schemeCode) {
-        whereClause += `, scheme_id: {_eq: "${schemeCode}"}`;
-      }
-      
-      whereClause += '}, ';
-      searchQuery = whereClause;
+      const filters = [];
+
+    // Add category code filter if it's not empty
+    if (categoryCode && categoryCode.trim() !== '') {
+      filters.push(`usecase: {_eq: "${categoryCode}"}`);
+    }
+
+    // Add scheme code filter if it's not empty
+    if (schemeCode && schemeCode.trim() !== '') {
+      filters.push(`scheme_id: {_eq: "${schemeCode}"}`);
+    }
+
+    // Construct the where clause if any filters are present
+    if (filters.length > 0) {
+      searchQuery = `(where: { ${filters.join(', ')} }, `;
+    } else {
+      searchQuery = ''; // or handle case where no filters are applied
+    }
+
+
 
       const resp = await this.hasuraService.findIcarContent(searchQuery);
       const icarResponse: any = resp.data.icar_.Content;
@@ -309,7 +316,7 @@ export class AppService {
       }
       // Use different catalog generator based on domain
       let catalog;
-      if (requestDomain === "knowledge-advisory:agrinet:vistaar") {
+      if (categoryCode && categoryCode === "schemes-agri") {
         catalog = PmKisanIcarGenerator(icarResponse, query);
       } else {
         catalog = IcarCatalogGenerator(icarResponse, query);
