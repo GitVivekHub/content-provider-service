@@ -21,6 +21,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as fs from "fs";
 import { HasuraService } from "./services/hasura/hasura.service";
 import { AuthService } from "./auth/auth.service";
+import axios from "axios";
 const file = fs.readFileSync("./course.json", "utf8");
 const courseData = JSON.parse(file);
 
@@ -42,7 +43,7 @@ export class AppService {
   private tempOTPStore = {
     otp: null,
     identifier: null,
-    timestamp: null
+    timestamp: null,
   };
 
   // 5 minutes in milliseconds
@@ -111,7 +112,7 @@ export class AppService {
     try {
       const resp = await this.hasuraService.findContent(query);
       const flnResponse: any = resp.data.fln_content;
-      console.log("flnResponse", flnResponse)
+      console.log("flnResponse", flnResponse);
       for (let item of flnResponse) {
         if (item.image) {
           if (!this.isValidUrl(item.image)) {
@@ -283,27 +284,25 @@ export class AppService {
     try {
       // Construct the query string
       // Construct the query string
-      let searchQuery = '';      
+      let searchQuery = "";
       const filters = [];
 
-    // Add category code filter if it's not empty
-    if (categoryCode && categoryCode.trim() !== '') {
-      filters.push(`usecase: {_eq: "${categoryCode}"}`);
-    }
+      // Add category code filter if it's not empty
+      if (categoryCode && categoryCode.trim() !== "") {
+        filters.push(`usecase: {_eq: "${categoryCode}"}`);
+      }
 
-    // Add scheme code filter if it's not empty
-    if (schemeCode && schemeCode.trim() !== '') {
-      filters.push(`scheme_id: {_eq: "${schemeCode}"}`);
-    }
+      // Add scheme code filter if it's not empty
+      if (schemeCode && schemeCode.trim() !== "") {
+        filters.push(`scheme_id: {_eq: "${schemeCode}"}`);
+      }
 
-    // Construct the where clause if any filters are present
-    if (filters.length > 0) {
-      searchQuery = `(where: { ${filters.join(', ')} }, `;
-    } else {
-      searchQuery = ''; // or handle case where no filters are applied
-    }
-
-
+      // Construct the where clause if any filters are present
+      if (filters.length > 0) {
+        searchQuery = `(where: { ${filters.join(", ")} }, `;
+      } else {
+        searchQuery = ""; // or handle case where no filters are applied
+      }
 
       const resp = await this.hasuraService.findIcarContent(searchQuery);
       const icarResponse: any = resp.data.icar_.Content;
@@ -332,10 +331,111 @@ export class AppService {
       return courseData;
     } catch (err) {
       throw new InternalServerErrorException(err.message, {
-        cause: err
+        cause: err,
       });
-      
     }
+  }
+
+  async searchForIntentQuery(body) {
+    let query =
+      body?.message?.intent?.item?.descriptor?.name || "farming practices";
+
+    try {
+      const response = await axios.post(
+        "http://3.6.146.174:8882/indexes/oan-index/search",
+        {
+          q: query,
+          limit: 5,
+        }
+      );
+
+      const mappedData = this.mapVectorDbData(body?.context, response.data);
+
+      return mappedData;
+    } catch (error) {
+      console.error("Error making Axios request:", error.message);
+      throw new Error("Failed to fetch data from the search endpoint");
+    }
+  }
+
+  async mapVectorDbData(context, inputData) {
+    return {
+      context,
+      message: {
+        catalog: {
+          descriptor: {
+            name: inputData.query || "Farming Practices",
+          },
+          providers: [
+            {
+              id: "19a02a67-d2f0-4ea7-b7e1-b2cf4fa57f56",
+              descriptor: {
+                name: "Agri Acad",
+                short_desc: "Agri Academic aggregator",
+                images: [
+                  {
+                    url: "https://agri_acad.example.org/logo.png",
+                  },
+                ],
+              },
+              items: inputData.hits.map((hit) => ({
+                id: hit.doc_id,
+                descriptor: {
+                  name: hit.name,
+                  short_desc: hit.source,
+                  long_desc: hit.text,
+                },
+                tags: [
+                  {
+                    descriptor: {
+                      name: "Document Type",
+                      code: "DOC_TYPE",
+                    },
+                    list: [
+                      {
+                        descriptor: {
+                          name: "Type",
+                          code: "TYPE",
+                        },
+                        value: hit.type,
+                      },
+                    ],
+                  },
+                  {
+                    descriptor: {
+                      name: "Source",
+                      code: "SOURCE",
+                    },
+                    list: [
+                      {
+                        descriptor: {
+                          name: "Source",
+                          code: "SRC",
+                        },
+                        value: hit.source,
+                      },
+                    ],
+                  },
+                  {
+                    descriptor: {
+                      name: "Highlights",
+                      code: "HIGHLIGHTS",
+                    },
+                    list: hit._highlights.map((highlight) => ({
+                      descriptor: {
+                        name: "Highlight Text",
+                        code: "H_TEXT",
+                      },
+                      value: highlight.text,
+                    })),
+                  },
+                ],
+              })),
+            },
+          ],
+        },
+      },
+    };
   }
 
   async handleSelect(selectDto: any) {
@@ -646,18 +746,24 @@ export class AppService {
     try {
       // Generate a 4-digit OTP
       const otp = String(Math.floor(1000 + Math.random() * 9000));
-      
+
       // Store OTP temporarily with current timestamp
       this.tempOTPStore = {
         otp,
         identifier,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       // Log the OTP to console with a visual indicator
-      console.log('\x1b[32m%s\x1b[0m', `🔐 OTP for ${type} ${identifier}: ${otp}`); // Green colored output
-      console.log('OTP_GENERATION', `Generated OTP for ${type} ${identifier}: ${otp}`);
-      console.log('OTP will expire in 5 minutes');
+      console.log(
+        "\x1b[32m%s\x1b[0m",
+        `🔐 OTP for ${type} ${identifier}: ${otp}`
+      ); // Green colored output
+      console.log(
+        "OTP_GENERATION",
+        `Generated OTP for ${type} ${identifier}: ${otp}`
+      );
+      console.log("OTP will expire in 5 minutes");
 
       return {
         status: "OK",
@@ -665,30 +771,30 @@ export class AppService {
           output: {
             status: "True",
             Message: "OTP sent successfully",
-            Rsponce: "True"
-          }
-        }
+            Rsponce: "True",
+          },
+        },
       };
     } catch (error) {
-      console.log('OTP_GENERATION', error);
+      console.log("OTP_GENERATION", error);
       return {
         status: "NOT_OK",
         d: {
           output: {
             status: "False",
             Message: "Failed to generate OTP",
-            Rsponce: "False"
-          }
-        }
+            Rsponce: "False",
+          },
+        },
       };
     }
   }
 
   private validateOTP(identifier: string, inputOtp: string): boolean {
     const storedData = this.tempOTPStore;
-    
+
     if (!storedData || !storedData.otp) {
-      console.log('No OTP found for validation');
+      console.log("No OTP found for validation");
       return false;
     }
 
@@ -697,25 +803,30 @@ export class AppService {
     const isExpired = timeElapsed > this.OTP_EXPIRY_TIME;
 
     if (isExpired) {
-      console.log(`OTP expired. Time elapsed: ${timeElapsed/1000} seconds`);
+      console.log(`OTP expired. Time elapsed: ${timeElapsed / 1000} seconds`);
       // Clear expired OTP
       this.tempOTPStore = {
         otp: null,
         identifier: null,
-        timestamp: null
+        timestamp: null,
       };
       return false;
     }
 
-    const isValid = storedData.identifier === identifier && storedData.otp === inputOtp;
-    console.log(`OTP validation result: ${isValid}, Time remaining: ${(this.OTP_EXPIRY_TIME - timeElapsed)/1000} seconds`);
+    const isValid =
+      storedData.identifier === identifier && storedData.otp === inputOtp;
+    console.log(
+      `OTP validation result: ${isValid}, Time remaining: ${
+        (this.OTP_EXPIRY_TIME - timeElapsed) / 1000
+      } seconds`
+    );
 
     if (isValid) {
       // Clear OTP after successful validation
       this.tempOTPStore = {
         otp: null,
         identifier: null,
-        timestamp: null
+        timestamp: null,
       };
     }
 
@@ -730,8 +841,8 @@ export class AppService {
         location: {
           country: {
             name: "India",
-            code: "IND"
-          }
+            code: "IND",
+          },
         },
         action: "on_status",
         version: body.context.version || "1.1.0",
@@ -742,7 +853,7 @@ export class AppService {
         message_id: body.context.message_id,
         transaction_id: body.context.transaction_id,
         timestamp: new Date().toISOString(),
-        ttl: "PT10M"
+        ttl: "PT10M",
       };
 
       // Get the order ID
@@ -753,19 +864,19 @@ export class AppService {
           context: responseContext,
           message: {
             order: {
-              id: 'error',
+              id: "error",
               tags: [
                 {
                   display: true,
                   descriptor: {
                     name: "Error",
                     code: "missing_order_id",
-                    short_desc: "Please provide a valid order ID"
-                  }
-                }
-              ]
-            }
-          }
+                    short_desc: "Please provide a valid order ID",
+                  },
+                },
+              ],
+            },
+          },
         };
       }
 
@@ -776,20 +887,23 @@ export class AppService {
         try {
           // Validate the OTP
           const storedData = this.tempOTPStore;
-          
+
           // Log validation attempt
-          console.log('Validating OTP:', {
+          console.log("Validating OTP:", {
             inputOTP: orderId,
             storedOTP: storedData?.otp,
             storedIdentifier: storedData?.identifier,
             currentTimestamp: new Date().toISOString(),
-            storedTimestamp: storedData?.timestamp ? new Date(storedData.timestamp).toISOString() : null
+            storedTimestamp: storedData?.timestamp
+              ? new Date(storedData.timestamp).toISOString()
+              : null,
           });
 
-          const isValid = storedData && 
-                         storedData.otp === orderId &&
-                         (Date.now() - storedData.timestamp) < this.OTP_EXPIRY_TIME;
-          
+          const isValid =
+            storedData &&
+            storedData.otp === orderId &&
+            Date.now() - storedData.timestamp < this.OTP_EXPIRY_TIME;
+
           if (!isValid) {
             return {
               context: responseContext,
@@ -802,12 +916,12 @@ export class AppService {
                       descriptor: {
                         name: "Error",
                         code: "invalid_otp",
-                        short_desc: "Invalid or expired OTP. Please try again."
-                      }
-                    }
-                  ]
-                }
-              }
+                        short_desc: "Invalid or expired OTP. Please try again.",
+                      },
+                    },
+                  ],
+                },
+              },
             };
           }
 
@@ -815,7 +929,7 @@ export class AppService {
           this.tempOTPStore = {
             otp: null,
             identifier: null,
-            timestamp: null
+            timestamp: null,
           };
 
           // Return success response with scheme status
@@ -828,27 +942,27 @@ export class AppService {
                   id: "PM KISAAn",
                   descriptor: {
                     name: "PM KISAN",
-                    short_desc: "Pradhan Mantri Kisan Samman Nidhi"
-                  }
+                    short_desc: "Pradhan Mantri Kisan Samman Nidhi",
+                  },
                 },
                 items: [
                   {
                     id: "SchemeId",
                     descriptor: {
                       name: "PM KISAN Scheme",
-                      short_desc: "Direct Benefit Transfer Scheme"
-                    }
-                  }
+                      short_desc: "Direct Benefit Transfer Scheme",
+                    },
+                  },
                 ],
                 fulfillments: [
                   {
                     customer: {
                       person: {
-                        name: "Test Farmer"
+                        name: "Test Farmer",
                       },
                       contact: {
-                        phone: "8130XXXXXX"
-                      }
+                        phone: "8130XXXXXX",
+                      },
                     },
                     state: {
                       descriptor: {
@@ -858,19 +972,19 @@ export class AppService {
                         long_desc: "Your application is under process",
                         additional_desc: {
                           url: "",
-                          content_type: "text/plain"
-                        }
+                          content_type: "text/plain",
+                        },
                       },
                       updated_at: new Date().toISOString(),
-                      updated_by: "system"
-                    }
-                  }
-                ]
-              }
-            }
+                      updated_by: "system",
+                    },
+                  },
+                ],
+              },
+            },
           };
         } catch (error) {
-          console.log('OTP_VALIDATION', error);
+          console.log("OTP_VALIDATION", error);
           return {
             context: responseContext,
             message: {
@@ -882,12 +996,12 @@ export class AppService {
                     descriptor: {
                       name: "Error",
                       code: "otp_validation_failed",
-                      short_desc: "Failed to validate OTP. Please try again."
-                    }
-                  }
-                ]
-              }
-            }
+                      short_desc: "Failed to validate OTP. Please try again.",
+                    },
+                  },
+                ],
+              },
+            },
           };
         }
       }
@@ -896,7 +1010,7 @@ export class AppService {
       try {
         // Validate mobile number format (10 digits)
         const isValidMobile = /^[6-9]\d{9}$/.test(orderId);
-        
+
         if (!isValidMobile) {
           return {
             context: responseContext,
@@ -909,18 +1023,19 @@ export class AppService {
                     descriptor: {
                       name: "Error",
                       code: "invalid_mobile",
-                      short_desc: "Please provide a valid 10-digit mobile number"
-                    }
-                  }
-                ]
-              }
-            }
+                      short_desc:
+                        "Please provide a valid 10-digit mobile number",
+                    },
+                  },
+                ],
+              },
+            },
           };
         }
 
         // Generate and store OTP
         const otpResponse = await this.sendOTP(orderId); // Using mobile number as identifier
-        
+
         if (otpResponse.status === "OK") {
           return {
             context: responseContext,
@@ -933,12 +1048,13 @@ export class AppService {
                     descriptor: {
                       name: "Otp Status",
                       code: "otp_status",
-                      short_desc: "Request for OTP is sent. Please enter the OTP when received and Submit"
-                    }
-                  }
-                ]
-              }
-            }
+                      short_desc:
+                        "Request for OTP is sent. Please enter the OTP when received and Submit",
+                    },
+                  },
+                ],
+              },
+            },
           };
         } else {
           return {
@@ -952,16 +1068,17 @@ export class AppService {
                     descriptor: {
                       name: "Error",
                       code: "otp_error",
-                      short_desc: "Failed to generate OTP. Please try again later."
-                    }
-                  }
-                ]
-              }
-            }
+                      short_desc:
+                        "Failed to generate OTP. Please try again later.",
+                    },
+                  },
+                ],
+              },
+            },
           };
         }
       } catch (error) {
-        console.log('ORDER_STATUS', error);
+        console.log("ORDER_STATUS", error);
         return {
           context: responseContext,
           message: {
@@ -973,17 +1090,18 @@ export class AppService {
                   descriptor: {
                     name: "Error",
                     code: "processing_error",
-                    short_desc: "Failed to process status request. Please try again later."
-                  }
-                }
-              ]
-            }
-          }
+                    short_desc:
+                      "Failed to process status request. Please try again later.",
+                  },
+                },
+              ],
+            },
+          },
         };
       }
     } catch (err) {
       throw new InternalServerErrorException(err.message, {
-        cause: err
+        cause: err,
       });
     }
   }
@@ -995,14 +1113,14 @@ export class AppService {
   }
 
   async handleSubmit(description, id) {
-    console.log("description", description)
-    console.log("id", id)
+    console.log("description", description);
+    console.log("id", id);
     try {
       const courseData = await this.hasuraService.SubmitFeedback(
         description,
         id
       );
-      console.log("courseData", courseData)
+      console.log("courseData", courseData);
       return { message: "feedback submitted Successfully" };
     } catch (error) {
       return error;
@@ -1017,5 +1135,5 @@ export class AppService {
     } catch (error) {
       return false;
     }
-  };
+  }
 }
