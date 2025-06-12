@@ -349,6 +349,8 @@ export class AppService {
         }
       );
 
+      body.context.action = "on_search";
+
       const mappedData = this.mapVectorDbData(body?.context, response.data);
 
       return mappedData;
