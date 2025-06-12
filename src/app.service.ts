@@ -31,7 +31,7 @@ export class AppService {
     private readonly httpService: HttpService,
     private readonly hasuraService: HasuraService,
     private readonly authService: AuthService
-  ) {}
+  ) { }
 
   private nameSpace = process.env.HASURA_NAMESPACE;
   private base_url = process.env.BASE_URL;
@@ -315,11 +315,7 @@ export class AppService {
       }
       // Use different catalog generator based on domain
       let catalog;
-      if (categoryCode && categoryCode === "schemes-agri") {
-        catalog = PmKisanIcarGenerator(icarResponse, query);
-      } else {
-        catalog = IcarCatalogGenerator(icarResponse, query);
-      }
+      catalog = IcarCatalogGenerator(icarResponse, query);
 
       body.context.action = "on_search";
       const courseData: any = {
@@ -818,8 +814,7 @@ export class AppService {
     const isValid =
       storedData.identifier === identifier && storedData.otp === inputOtp;
     console.log(
-      `OTP validation result: ${isValid}, Time remaining: ${
-        (this.OTP_EXPIRY_TIME - timeElapsed) / 1000
+      `OTP validation result: ${isValid}, Time remaining: ${(this.OTP_EXPIRY_TIME - timeElapsed) / 1000
       } seconds`
     );
 
@@ -1136,6 +1131,106 @@ export class AppService {
       return true;
     } catch (error) {
       return false;
+    }
+  }
+  async handlePmKisanSearch(body: {
+    context: components["schemas"]["Context"];
+    message: { intent: components["schemas"]["Intent"] };
+  }) {
+    const intent: any = body.message.intent;
+
+    // destructuring the intent
+    const provider = intent?.provider?.descriptor?.name;
+    const query = intent?.item?.descriptor?.name;
+    const tagGroup = intent?.item?.tags;
+    const categoryCode = intent?.category?.descriptor?.code;
+    const schemeCode = intent?.item?.descriptor?.name;
+    const requestDomain = body.context.domain;
+
+    const flattenedTags: any = {};
+    if (tagGroup) {
+      (tagGroup[0].list as any[])?.forEach((tag) => {
+        flattenedTags[tag.name] = tag.value;
+      });
+    }
+    const domain = flattenedTags?.domain !== "" ? flattenedTags?.domain : null;
+    const theme = flattenedTags?.theme !== "" ? flattenedTags?.theme : null;
+    const goal = flattenedTags?.goal !== "" ? flattenedTags?.goal : null;
+    const competency =
+      flattenedTags?.competency !== "" ? flattenedTags?.competency : null;
+    const language =
+      flattenedTags?.language !== "" ? flattenedTags?.language : null;
+    const contentType =
+      flattenedTags?.contentType !== "" ? flattenedTags?.contentType : null;
+
+    let obj = {};
+    if (flattenedTags.domain) {
+      obj["domain"] = flattenedTags.domain;
+    }
+    if (flattenedTags?.theme) {
+      obj["theme"] = flattenedTags?.theme;
+    }
+    if (flattenedTags?.goal) {
+      obj["goal"] = flattenedTags?.goal;
+    }
+    if (flattenedTags?.competency) {
+      obj["competency"] = flattenedTags?.competency;
+    }
+    if (flattenedTags?.language) {
+      obj["language"] = flattenedTags?.language;
+    }
+    if (flattenedTags?.contentType) {
+      obj["contentType"] = flattenedTags?.contentType;
+    }
+
+    try {
+      // Construct the query string
+      // Construct the query string
+      let searchQuery = "";
+      const filters = [];
+
+      // Add category code filter if it's not empty
+      if (categoryCode && categoryCode.trim() !== "") {
+        filters.push(`usecase: {_eq: "${categoryCode}"}`);
+      }
+
+      // Add scheme code filter if it's not empty
+      if (schemeCode && schemeCode.trim() !== "") {
+        filters.push(`scheme_id: {_eq: "${schemeCode}"}`);
+      }
+
+      // Construct the where clause if any filters are present
+      if (filters.length > 0) {
+        searchQuery = `(where: { ${filters.join(", ")} }, `;
+      } else {
+        searchQuery = ""; // or handle case where no filters are applied
+      }
+
+      const resp = await this.hasuraService.findIcarContent(searchQuery);
+      const icarResponse: any = resp.data.icar_.Content;
+      for (let item of icarResponse) {
+        if (item.icon) {
+          if (!this.isValidUrl(item.icon)) {
+            item.icon = await this.hasuraService.getImageUrl(item.icon);
+          }
+        }
+      }
+      let catalog;
+      catalog = PmKisanIcarGenerator(icarResponse, query);
+
+
+      body.context.action = "on_search";
+      const courseData: any = {
+        context: body.context,
+        message: {
+          catalog: catalog,
+        },
+      };
+      return courseData;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message, {
+        cause: err,
+      });
     }
   }
 }
