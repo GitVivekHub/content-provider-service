@@ -31,7 +31,7 @@ export class AppService {
     private readonly httpService: HttpService,
     private readonly hasuraService: HasuraService,
     private readonly authService: AuthService
-  ) { }
+  ) {}
 
   private nameSpace = process.env.HASURA_NAMESPACE;
   private base_url = process.env.BASE_URL;
@@ -342,6 +342,14 @@ export class AppService {
         {
           q: query,
           limit: 5,
+          filter: "type:document",
+          searchMethod: "HYBRID",
+          hybridParameters: {
+            retrievalMethod: "disjunction",
+            rankingMethod: "rrf",
+            alpha: 0.5,
+            rrfK: 60,
+          },
         }
       );
 
@@ -814,7 +822,8 @@ export class AppService {
     const isValid =
       storedData.identifier === identifier && storedData.otp === inputOtp;
     console.log(
-      `OTP validation result: ${isValid}, Time remaining: ${(this.OTP_EXPIRY_TIME - timeElapsed) / 1000
+      `OTP validation result: ${isValid}, Time remaining: ${
+        (this.OTP_EXPIRY_TIME - timeElapsed) / 1000
       } seconds`
     );
 
@@ -1217,7 +1226,6 @@ export class AppService {
       }
       let catalog;
       catalog = PmKisanIcarGenerator(icarResponse, query);
-
 
       body.context.action = "on_search";
       const courseData: any = {
