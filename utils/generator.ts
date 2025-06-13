@@ -1204,7 +1204,7 @@ export const PmKisanIcarGenerator = (
                     code: 'scheme-intro',
                     name: 'Scheme Introduction'
                   },
-                  value: item.scheme_intro || '',
+                  value: item.scheme_intro?.summary || '',
                   display: true
                 },
                 {
@@ -1212,7 +1212,7 @@ export const PmKisanIcarGenerator = (
                     code: 'scheme-benefits',
                     name: 'Scheme Benefits'
                   },
-                  value: item.scheme_benefits || '',
+                  value: item.scheme_benefits?.summary || '',
                   display: true
                 },
                 {
@@ -1220,7 +1220,7 @@ export const PmKisanIcarGenerator = (
                     code: 'scheme-eligibility',
                     name: 'Scheme Eligibility'
                   },
-                  value: item.scheme_eligibility || '',
+                  value: item.scheme_eligibility?.summary || '',
                   display: true
                 },
                 {
@@ -1228,7 +1228,7 @@ export const PmKisanIcarGenerator = (
                     code: 'scheme-support',
                     name: 'Scheme Support'
                   },
-                  value: item.scheme_support || '',
+                  value: item.scheme_support?.summary || '',
                   display: true
                 },
                 {
@@ -1236,7 +1236,7 @@ export const PmKisanIcarGenerator = (
                     code: 'scheme-misc',
                     name: 'Additional Information'
                   },
-                  value: item.scheme_misc || '',
+                  value: item.scheme_misc?.summary || '',
                   display: true
                 },
                 {
@@ -1244,7 +1244,7 @@ export const PmKisanIcarGenerator = (
                     code: 'scheme-application',
                     name: 'Scheme Application'
                   },
-                  value: item.scheme_application || '',
+                  value: item.scheme_application?.summary || '',
                   display: true
                 },
                 {
