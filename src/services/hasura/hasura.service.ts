@@ -1819,7 +1819,7 @@ if (!searchQuery) {
   contentArgs = '(limit: 10)';
 } else {
   // Remove closing `)` and add limit
-  contentArgs = searchQuery.replace(/\)\s*$/, '') + ', limit: 10)';
+  contentArgs = searchQuery.replace(/\)\s*$/, '') + ', limit: 100)';
 }
     const query = `query MyQuery {
       ${this.nameSpace} {

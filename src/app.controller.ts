@@ -22,7 +22,7 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly authService: AuthService
-  ) {}
+  ) { }
 
   @Get()
   getHello(): string {
@@ -69,8 +69,14 @@ export class AppController {
       body?.message?.intent?.category?.descriptor?.name == "knowledge-advisory"
     ) {
       return this.appService.searchForIntentQuery(body);
+
+    } else if (body?.message?.intent?.category?.descriptor?.code == "schemes-agri" || body?.message?.intent?.category?.descriptor?.name == "schemes-agri") {
+      console.log("Inside pm kisan search");
+      return this.appService.handlePmKisanSearch(body);
+    } else if (body?.message?.intent?.category?.descriptor?.code == "icar-schemes" || body?.message?.intent?.category?.descriptor?.name == "icar-schemes") {
+      console.log("Inside Icar search");
+      return this.appService.handleSearch(body);
     }
-    return this.appService.handleSearch(body);
   }
 
   @Post("mobility/select")
