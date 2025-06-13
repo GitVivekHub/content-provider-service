@@ -1096,178 +1096,116 @@ const isValidUrl = (str: string) => {
   }
 };
 
-export const PmKisanIcarGenerator = (
-  apiData: any,
-  query: string,
-) => {
+export const PmKisanIcarGenerator = (apiData: any, query: string) => {
   const schemes: ReadonlyArray<{ node: any }> = apiData;
-  const providerWise = {};
-  let categories: any = new Set();
+  const providerWise: Record<string, any[]> = {};
+  const defaultProvider = 'SchemeFinder';
 
+  // Create provider-wise mapping
   schemes.forEach((scheme: any) => {
-    const item = scheme;
-    const provider = 'SchemeFinder';
-    // creating the provider wise map
+    const provider = defaultProvider;
     if (providerWise[provider]) {
-      providerWise[provider].push(item);
+      providerWise[provider].push(scheme);
     } else {
-      providerWise[provider] = [item];
+      providerWise[provider] = [scheme];
     }
   });
 
-  const catalog = {};
-  if (query) {
-    catalog['descriptor'] = { name: `Catalog for ${query}` };
-  } else {
-    catalog['descriptor'] = {}
-  }
-
-  // adding providers
-  catalog['providers'] = Object.keys(providerWise).map((key) => {
-    const provider = {
-      id: 'p1',
-      descriptor: {
-        name: 'SchemeFinder',
-        short_desc: 'A Scheme Discovery and Application Service helps users discover',
-        long_desc: 'The provider helps users discover and apply for various government schemes',
-        images: [
-          {
-            url: 'https://image_url'
-          }
-        ]
-      },
-      categories: [
-        {
-          id: 'c1',
-          descriptor: {
-            code: 'Agriculture-Rural-Development',
-            name: 'Agriculture Rural Development'
-          }
-        }
-      ],
-      fulfillments: [
-        {
-          id: 'f1',
-          type: 'Direct Benefit Transfer (DBT)'
-        }
-      ],
-      items: providerWise[key].map((item: any, index: number) => {
-        return {
-          id: `i${index + 1}`,
-          descriptor: {
-            name: item.title || '',
-            short_desc: item.description || '',
-            long_desc: item.description || ''
-          },
-          tags: [
-            {
-              display: true,
-              descriptor: {
-                code: 'scheme-details',
-                name: 'Scheme Details'
+  // Catalog descriptor
+  const catalog: any = {
+    descriptor: query ? { name: `Catalog for ${query}` } : {},
+    providers: Object.keys(providerWise).map((provider: string) => {
+      return {
+        descriptor: {
+          name: 'SchemeFinder',
+          short_desc: 'A Scheme Discovery and Application Service helps users discover',
+        },
+        items: providerWise[provider].map((item: any) => {
+          return {
+            id: item.content_id || '',
+            descriptor: {
+              name: item?.title ?? '',
+              short_desc: (item?.description || '').slice(0, 30) + '...',
+              long_desc: item?.description ?? '',
+            },
+            tags: [
+              {
+                display: true,
+                descriptor: {
+                  code: 'scheme-details',
+                  name: 'Scheme Details',
+                },
+                list: [
+                  {
+                    descriptor: { code: 'title', name: 'Title' },
+                    value: item.title || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'agri_domain', name: 'Agricultural Domain' },
+                    value: item.agri_domain || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'scope', name: 'Scope' },
+                    value: item.scope || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'scheme_id', name: 'Scheme ID' },
+                    value: item.scheme_id || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'scheme-intro', name: 'Scheme Introduction' },
+                    value: item.scheme_intro?.summary || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'scheme-benefits', name: 'Scheme Benefits' },
+                    value: item.scheme_benefits?.summary || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'scheme-eligibility', name: 'Scheme Eligibility' },
+                    value: item.scheme_eligibility?.summary || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'scheme-support', name: 'Scheme Support' },
+                    value: item.scheme_support?.summary || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'scheme-misc', name: 'Additional Information' },
+                    value: item.scheme_misc?.summary || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'scheme-application', name: 'Scheme Application' },
+                    value: item.scheme_application?.summary || '',
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'faq-url', name: 'FAQ URL' },
+                    value: item.faq_url || '',
+                    display: true,
+                  },
+                ],
               },
-              list: [
-                {
-                  descriptor: {
-                    code: 'title',
-                    name: 'Title'
-                  },
-                  value: item.title || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'agri_domain',
-                    name: 'Agricultural Domain'
-                  },
-                  value: item.domain || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'scope',
-                    name: 'Scope'
-                  },
-                  value: item.scope || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'scheme_id',
-                    name: 'Scheme ID'
-                  },
-                  value: item.scheme_id || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'scheme-intro',
-                    name: 'Scheme Introduction'
-                  },
-                  value: item.scheme_intro?.summary || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'scheme-benefits',
-                    name: 'Scheme Benefits'
-                  },
-                  value: item.scheme_benefits?.summary || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'scheme-eligibility',
-                    name: 'Scheme Eligibility'
-                  },
-                  value: item.scheme_eligibility?.summary || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'scheme-support',
-                    name: 'Scheme Support'
-                  },
-                  value: item.scheme_support?.summary || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'scheme-misc',
-                    name: 'Additional Information'
-                  },
-                  value: item.scheme_misc?.summary || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'scheme-application',
-                    name: 'Scheme Application'
-                  },
-                  value: item.scheme_application?.summary || '',
-                  display: true
-                },
-                {
-                  descriptor: {
-                    code: 'faq-url',
-                    name: 'FAQ URL'
-                  },
-                  value: item.faq_url || '',
-                  display: true
-                }
-              ]
-            }
-          ],
-          category_ids: ['c1'],
-          fulfillment_ids: ['f1']
-        };
-      })
-    };
-    return provider;
-  });
+            ],
+          };
+        }),
+      };
+    }),
+  };
 
   return catalog;
 };
+
+
+
+
 
 
 
