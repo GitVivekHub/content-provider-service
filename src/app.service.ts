@@ -843,7 +843,7 @@ export class AppService {
     try {
       // Create response context
       const responseContext = {
-        domain: body.context.domain || "knowledge-advisory:agrinet:vistaar",
+        domain: body.context.domain,
         location: {
           country: {
             name: "India",
@@ -863,7 +863,7 @@ export class AppService {
       };
 
       // Get the order ID
-      const orderId = body.message?.order?.order_id;
+      const orderId = body.message?.order_id;
 
       if (!orderId) {
         return {
@@ -918,7 +918,7 @@ export class AppService {
                   id: orderId,
                   tags: [
                     {
-                      display: true,
+                      display: false,
                       descriptor: {
                         name: "Error",
                         code: "invalid_otp",
