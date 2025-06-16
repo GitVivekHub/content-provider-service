@@ -88,7 +88,12 @@ export class AppController {
   @Post("mobility/init")
   initCourse1(@Body() body: any) {
     console.log("init api calling");
+    if(body?.message?.order){
+      console.log("Inside pmkisan init...");
+      return this.appService.handlePmkisanInit(body);
+    }else{
     return this.appService.handleInit(body);
+    }
   }
 
   @Post("mobility/confirm")

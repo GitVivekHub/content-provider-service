@@ -31,7 +31,7 @@ export class AppService {
     private readonly httpService: HttpService,
     private readonly hasuraService: HasuraService,
     private readonly authService: AuthService
-  ) {}
+  ) { }
 
   private nameSpace = process.env.HASURA_NAMESPACE;
   private base_url = process.env.BASE_URL;
@@ -822,8 +822,7 @@ export class AppService {
     const isValid =
       storedData.identifier === identifier && storedData.otp === inputOtp;
     console.log(
-      `OTP validation result: ${isValid}, Time remaining: ${
-        (this.OTP_EXPIRY_TIME - timeElapsed) / 1000
+      `OTP validation result: ${isValid}, Time remaining: ${(this.OTP_EXPIRY_TIME - timeElapsed) / 1000
       } seconds`
     );
 
@@ -843,22 +842,7 @@ export class AppService {
     try {
       // Create response context
       const responseContext = {
-        domain: body.context.domain,
-        location: {
-          country: {
-            name: "India",
-            code: "IND",
-          },
-        },
-        action: "on_status",
-        version: body.context.version || "1.1.0",
-        bap_id: body.context.bap_id,
-        bap_uri: body.context.bap_uri,
-        bpp_id: body.context.bpp_id,
-        bpp_uri: body.context.bpp_uri,
-        message_id: body.context.message_id,
-        transaction_id: body.context.transaction_id,
-        timestamp: new Date().toISOString(),
+        context: {...body.context, action: "on_status", timestamp: new Date().toISOString()},
         ttl: "PT10M",
       };
 
@@ -967,7 +951,7 @@ export class AppService {
                         name: "Test Farmer",
                       },
                       contact: {
-                        phone: "8130XXXXXX",
+                        phone: "XXXXXXXXXX",
                       },
                     },
                     state: {
@@ -1010,100 +994,6 @@ export class AppService {
             },
           };
         }
-      }
-
-      // First call - validate order ID and generate OTP
-      try {
-        // Validate mobile number format (10 digits)
-        const isValidMobile = /^[6-9]\d{9}$/.test(orderId);
-
-        if (!isValidMobile) {
-          return {
-            context: responseContext,
-            message: {
-              order: {
-                id: orderId,
-                tags: [
-                  {
-                    display: true,
-                    descriptor: {
-                      name: "Error",
-                      code: "invalid_mobile",
-                      short_desc:
-                        "Please provide a valid 10-digit mobile number",
-                    },
-                  },
-                ],
-              },
-            },
-          };
-        }
-
-        // Generate and store OTP
-        const otpResponse = await this.sendOTP(orderId); // Using mobile number as identifier
-
-        if (otpResponse.status === "OK") {
-          return {
-            context: responseContext,
-            message: {
-              order: {
-                id: orderId,
-                tags: [
-                  {
-                    display: true,
-                    descriptor: {
-                      name: "Otp Status",
-                      code: "otp_status",
-                      short_desc:
-                        "Request for OTP is sent. Please enter the OTP when received and Submit",
-                    },
-                  },
-                ],
-              },
-            },
-          };
-        } else {
-          return {
-            context: responseContext,
-            message: {
-              order: {
-                id: orderId,
-                tags: [
-                  {
-                    display: true,
-                    descriptor: {
-                      name: "Error",
-                      code: "otp_error",
-                      short_desc:
-                        "Failed to generate OTP. Please try again later.",
-                    },
-                  },
-                ],
-              },
-            },
-          };
-        }
-      } catch (error) {
-        console.log("ORDER_STATUS", error);
-        return {
-          context: responseContext,
-          message: {
-            order: {
-              id: orderId,
-              tags: [
-                {
-                  display: true,
-                  descriptor: {
-                    name: "Error",
-                    code: "processing_error",
-                    short_desc:
-                      "Failed to process status request. Please try again later.",
-                  },
-                },
-              ],
-            },
-          },
-        };
       }
     } catch (err) {
       throw new InternalServerErrorException(err.message, {
@@ -1239,6 +1129,108 @@ export class AppService {
       throw new InternalServerErrorException(err.message, {
         cause: err,
       });
+    }
+  }
+  async handlePmkisanInit(body: any) {
+    // Extract phone number from the request
+    const phoneNumber = body?.message?.order?.id;
+    // Basic sanitation: check if phone number is a 10-digit string starting with 6-9
+    const isValidPhone = /^[6-9]\d{9}$/.test(phoneNumber);
+    if (!isValidPhone) {
+      return {
+        responses: [
+          {
+            context: body.context,
+            message: {
+              order: {
+                id: phoneNumber,
+                tags: [
+                  {
+                    display: true,
+                    descriptor: {
+                      name: "Error",
+                      code: "invalid_mobile",
+                      short_desc: "Please provide a valid 10-digit mobile number"
+                    }
+                  }
+                ],
+                type: "DEFAULT"
+              }
+            }
+          }
+        ]
+      };
+    }
+    // Build the response object as per requirements
+    const context = body.context || {};
+    const now = new Date().toISOString();
+
+    try {
+      // Generate and store OTP
+      const otpResponse = await this.sendOTP(phoneNumber); // Using mobile number as identifier
+
+      if (otpResponse.status === "OK") {
+        return {
+          context: {...context, action: "on_init", timestamp: now},
+          message: {
+            order: {
+              id: phoneNumber,
+              tags: [
+                {
+                  display: true,
+                  descriptor: {
+                    name: "Otp Status",
+                    code: "otp_status",
+                    short_desc:
+                      "Request for OTP is sent. Please enter the OTP when received and Submit",
+                  },
+                },
+              ],
+            },
+          },
+        };
+      } else {
+        return {
+          context: {...context, action: "on_init", timestamp: now},
+          message: {
+            order: {
+              id: phoneNumber,
+              tags: [
+                {
+                  display: true,
+                  descriptor: {
+                    name: "Error",
+                    code: "otp_error",
+                    short_desc:
+                      "Failed to generate OTP. Please try again later.",
+                  },
+                },
+              ],
+            },
+          },
+        };
+      }
+    } catch (error) {
+      console.log("ORDER_STATUS", error);
+      return {
+        context: {...context, action: "on_init", timestamp: now},
+        message: {
+          order: {
+            id: phoneNumber,
+            tags: [
+              {
+                display: true,
+                descriptor: {
+                  name: "Error",
+                  code: "processing_error",
+                  short_desc:
+                    "Failed to process status request. Please try again later.",
+                },
+              },
+            ],
+          },
+        },
+      };
     }
   }
 }
