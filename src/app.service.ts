@@ -332,25 +332,118 @@ export class AppService {
     }
   }
 
+  // async searchForIntentQuery(body) {
+  //   let query =
+  //     body?.message?.intent?.item?.descriptor?.name || "farming practices";
+
+  //   try {
+  //     const response = await axios.post(
+  //       "http://3.6.146.174:8882/indexes/oan-index/search",
+  //       {
+  //         q: query,
+  //         limit: 5,
+  //         filter: "type:document",
+  //         searchMethod: "HYBRID",
+  //         hybridParameters: {
+  //           retrievalMethod: "disjunction",
+  //           rankingMethod: "rrf",
+  //           alpha: 0.5,
+  //           rrfK: 60,
+  //         },
+  //       }
+  //     );
+
+  //     body.context.action = "on_search";
+
+  //     const mappedData = this.mapVectorDbData(body?.context, response.data);
+
+  //     return mappedData;
+  //   } catch (error) {
+  //     console.error("Error making Axios request:", error.message);
+  //     throw new Error("Failed to fetch data from the search endpoint");
+  //   }
+  // }
+
   async searchForIntentQuery(body) {
-    let query =
-      body?.message?.intent?.item?.descriptor?.name || "farming practices";
+    // Default values
+    const defaultQuery = "farming practices";
+    const defaultLimit = 5;
+    const defaultFilter = "type:document";
+    const defaultSearchMethod = "HYBRID";
+    const defaultHybridParams = {
+      retrievalMethod: "disjunction",
+      rankingMethod: "rrf",
+      alpha: 0.5,
+      rrfK: 60,
+    };
+
+    const query = body?.message?.intent?.item?.descriptor?.name || defaultQuery;
+
+    let limit = defaultLimit;
+    let filter = defaultFilter;
+    let searchMethod = defaultSearchMethod;
+    let hybridParams = { ...defaultHybridParams };
+
+    const tags = body?.message?.intent?.item?.fulfillment?.tags || [];
+
+    for (const tag of tags) {
+      const code = tag.descriptor?.code;
+
+      if (code === "searchParam") {
+        for (const param of tag.list || []) {
+          const paramCode = param.descriptor?.code;
+          const value = param.value;
+
+          if (paramCode === "limit" && !isNaN(parseInt(value))) {
+            limit = parseInt(value);
+          }
+
+          if (paramCode === "filter_string") {
+            filter = value;
+          }
+
+          if (paramCode === "search_method") {
+            searchMethod = value.toUpperCase(); // normalize casing
+          }
+        }
+      }
+
+      if (code === "hybrid_parameters") {
+        for (const param of tag.list || []) {
+          const paramCode = param.descriptor?.code;
+          const value = param.value;
+
+          if (paramCode === "retrievalMethod") {
+            hybridParams.retrievalMethod = value;
+          }
+
+          if (paramCode === "rankingMethod") {
+            hybridParams.rankingMethod = value;
+          }
+
+          if (paramCode === "alpha" && !isNaN(parseFloat(value))) {
+            hybridParams.alpha = parseFloat(value);
+          }
+
+          if (paramCode === "rrfK" && !isNaN(parseInt(value))) {
+            hybridParams.rrfK = parseInt(value);
+          }
+        }
+      }
+    }
+
+    const payload = {
+      q: query,
+      limit,
+      filter,
+      searchMethod,
+      hybridParameters: hybridParams,
+    };
 
     try {
       const response = await axios.post(
         "http://3.6.146.174:8882/indexes/oan-index/search",
-        {
-          q: query,
-          limit: 5,
-          filter: "type:document",
-          searchMethod: "HYBRID",
-          hybridParameters: {
-            retrievalMethod: "disjunction",
-            rankingMethod: "rrf",
-            alpha: 0.5,
-            rrfK: 60,
-          },
-        }
+        payload
       );
 
       body.context.action = "on_search";
