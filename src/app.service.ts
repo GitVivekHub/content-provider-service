@@ -934,17 +934,13 @@ export class AppService {
   async handleStatus(body: any) {
     try {
       // Create response context
-      const responseContext = {
-        context: {...body.context, action: "on_status", timestamp: new Date().toISOString()},
-        ttl: "PT10M",
-      };
 
       // Get the order ID
       const orderId = body.message?.order_id;
 
       if (!orderId) {
         return {
-          context: responseContext,
+          context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
           message: {
             order: {
               id: "error",
@@ -989,7 +985,7 @@ export class AppService {
 
           if (!isValid) {
             return {
-              context: responseContext,
+              context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
               message: {
                 order: {
                   id: orderId,
@@ -1017,7 +1013,7 @@ export class AppService {
 
           // Return success response with scheme status
           return {
-            context: responseContext,
+            context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
             message: {
               order: {
                 id: orderId,
@@ -1069,7 +1065,7 @@ export class AppService {
         } catch (error) {
           console.log("OTP_VALIDATION", error);
           return {
-            context: responseContext,
+            context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
             message: {
               order: {
                 id: orderId,
