@@ -16,10 +16,15 @@ import {
   PmKisanIcarGenerator,
 } from "utils/generator";
 import { v4 as uuidv4 } from "uuid";
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import { encrypt, decrypt, getUniqueKey, decryptRequest } from './utils/encryption';
-import { LoggerService } from './services/logger/logger.service';
+import { ConfigService } from "@nestjs/config";
+import axios from "axios";
+import {
+  encrypt,
+  decrypt,
+  getUniqueKey,
+  decryptRequest,
+} from "./utils/encryption";
+import { LoggerService } from "./services/logger/logger.service";
 
 // getting course data
 import * as fs from "fs";
@@ -35,7 +40,7 @@ export class AppService {
     private readonly hasuraService: HasuraService,
     private readonly authService: AuthService,
     private readonly logger: LoggerService
-  ) { }
+  ) {}
 
   private nameSpace = process.env.HASURA_NAMESPACE;
   private base_url = process.env.BASE_URL;
@@ -338,24 +343,85 @@ export class AppService {
   }
 
   async searchForIntentQuery(body) {
-    let query =
-      body?.message?.intent?.item?.descriptor?.name || "farming practices";
+    // Default values
+    const defaultQuery = "farming practices";
+    const defaultLimit = 5;
+    const defaultFilter = "type:document";
+    const defaultSearchMethod = "HYBRID";
+    const defaultHybridParams = {
+      retrievalMethod: "disjunction",
+      rankingMethod: "rrf",
+      alpha: 0.5,
+      rrfK: 60,
+    };
+
+    const query = body?.message?.intent?.item?.descriptor?.name || defaultQuery;
+
+    let limit = defaultLimit;
+    let filter = defaultFilter;
+    let searchMethod = defaultSearchMethod;
+    let hybridParams = { ...defaultHybridParams };
+
+    const tags = body?.message?.intent?.item?.fulfillment?.tags || [];
+
+    for (const tag of tags) {
+      const code = tag.descriptor?.code;
+
+      if (code === "searchParam") {
+        for (const param of tag.list || []) {
+          const paramCode = param.descriptor?.code;
+          const value = param.value;
+
+          if (paramCode === "limit" && !isNaN(parseInt(value))) {
+            limit = parseInt(value);
+          }
+
+          if (paramCode === "filter_string") {
+            filter = value;
+          }
+
+          if (paramCode === "search_method") {
+            searchMethod = value.toUpperCase(); // normalize casing
+          }
+        }
+      }
+
+      if (code === "hybrid_parameters") {
+        for (const param of tag.list || []) {
+          const paramCode = param.descriptor?.code;
+          const value = param.value;
+
+          if (paramCode === "retrievalMethod") {
+            hybridParams.retrievalMethod = value;
+          }
+
+          if (paramCode === "rankingMethod") {
+            hybridParams.rankingMethod = value;
+          }
+
+          if (paramCode === "alpha" && !isNaN(parseFloat(value))) {
+            hybridParams.alpha = parseFloat(value);
+          }
+
+          if (paramCode === "rrfK" && !isNaN(parseInt(value))) {
+            hybridParams.rrfK = parseInt(value);
+          }
+        }
+      }
+    }
+
+    const payload = {
+      q: query,
+      limit,
+      filter,
+      searchMethod,
+      hybridParameters: hybridParams,
+    };
 
     try {
       const response = await axios.post(
         "http://3.6.146.174:8882/indexes/oan-index/search",
-        {
-          q: query,
-          limit: 5,
-          filter: "type:document",
-          searchMethod: "HYBRID",
-          hybridParameters: {
-            retrievalMethod: "disjunction",
-            rankingMethod: "rrf",
-            alpha: 0.5,
-            rrfK: 60,
-          },
-        }
+        payload
       );
 
       body.context.action = "on_search";
@@ -760,20 +826,20 @@ export class AppService {
       let requestData = JSON.stringify({
         Types: type,
         Values: mobileNumber,
-        Token: process.env.PM_KISSAN_TOKEN
+        Token: process.env.PM_KISSAN_TOKEN,
       });
-      
+
       console.log("Request data: ", requestData);
-      
+
       // Encrypt the request data
       let encrypted_text = await encrypt(requestData, key);
       console.log("encrypted text without @: ", encrypted_text);
-      
+
       // Format the request data as expected by PM Kisan service
       let data = {
-        "EncryptedRequest": encrypted_text + '@' + key
+        EncryptedRequest: encrypted_text + "@" + key,
       };
-      
+
       console.log("(in sendOTP)the data in the data var is as: ", data);
 
       let config = {
@@ -791,10 +857,12 @@ export class AppService {
 
       if (response.status >= 200 && response.status < 300) {
         response = await response.data;
-        
+
         // Extract the encrypted response and key
-        const [encryptedResponse, responseKey] = (response.d.output || '').split('@');
-        
+        const [encryptedResponse, responseKey] = (
+          response.d.output || ""
+        ).split("@");
+
         if (!encryptedResponse) {
           console.error("No encrypted response received");
           return {
@@ -806,20 +874,24 @@ export class AppService {
             },
           };
         }
-        
+
         // Use the response key for decryption
-        let decryptedData: any = await decryptRequest(encryptedResponse, responseKey || key);
+        let decryptedData: any = await decryptRequest(
+          encryptedResponse,
+          responseKey || key
+        );
         console.log("Response from decryptedData(sendOTP)", decryptedData);
-        
+
         try {
           const parsedData = JSON.parse(decryptedData);
           response.d.output = parsedData;
-          response["status"] = response.d.output.Rsponce !== "False" ? "OK" : "NOT_OK";
+          response["status"] =
+            response.d.output.Rsponce !== "False" ? "OK" : "NOT_OK";
         } catch (e) {
           console.error("Error parsing decrypted data:", e);
           response["status"] = "NOT_OK";
         }
-        
+
         return response;
       } else {
         return {
@@ -832,7 +904,11 @@ export class AppService {
         };
       }
     } catch (error) {
-      console.error("Error in sendOTP:", error.message, error.response?.data || error);
+      console.error(
+        "Error in sendOTP:",
+        error.message,
+        error.response?.data || error
+      );
       return {
         d: {
           output: {
@@ -854,11 +930,11 @@ export class AppService {
       console.log("Request data: ", requestData);
       let key = getUniqueKey();
       let encrypted_text = await encrypt(requestData, key); //without @
-      
+
       console.log("encrypted text without @: ", encrypted_text);
-      
+
       let data = {
-        "EncryptedRequest": `${encrypted_text}@${key}`,
+        EncryptedRequest: `${encrypted_text}@${key}`,
       };
       console.log("(inside verifyOTP)the data in the data var is : ", data);
       let config = {
@@ -875,12 +951,9 @@ export class AppService {
       console.log("verifyOTP", response.status);
       if (response.status >= 200 && response.status < 300) {
         response = await response.data;
-        let decryptedData: any = await decryptRequest(
-          response.d.output,
-          key
-        );
-        console.log("Response of VerifyOTP",response);
-        console.log("Response from decryptedData(verifyOTP)",decryptedData);
+        let decryptedData: any = await decryptRequest(response.d.output, key);
+        console.log("Response of VerifyOTP", response);
+        console.log("Response from decryptedData(verifyOTP)", decryptedData);
         response["status"] =
           response.d.output.Rsponce != "False" ? "OK" : "NOT_OK";
         return response;
@@ -914,22 +987,27 @@ export class AppService {
 
       if (!orderId) {
         return {
-          context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
+          context: {
+            ...body.context,
+            action: "on_status",
+            timestamp: new Date().toISOString(),
+            ttl: "PT10M",
+          },
           message: {
             order: {
-              id: 'error',
+              id: "error",
               tags: [
                 {
                   display: true,
                   descriptor: {
                     name: "Error",
                     code: "missing_order_id",
-                    short_desc: "Please provide a valid order ID"
-                  }
-                }
-              ]
-            }
-          }
+                    short_desc: "Please provide a valid order ID",
+                  },
+                },
+              ],
+            },
+          },
         };
       }
 
@@ -960,7 +1038,12 @@ export class AppService {
 
           if (verifyResponse.status !== "OK") {
             return {
-              context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
+              context: {
+                ...body.context,
+                action: "on_status",
+                timestamp: new Date().toISOString(),
+                ttl: "PT10M",
+              },
               message: {
                 order: {
                   id: orderId,
@@ -989,7 +1072,12 @@ export class AppService {
 
           // Return success response with scheme status
           return {
-            context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
+            context: {
+              ...body.context,
+              action: "on_status",
+              timestamp: new Date().toISOString(),
+              ttl: "PT10M",
+            },
             message: {
               order: {
                 id: orderId,
@@ -998,17 +1086,17 @@ export class AppService {
                   id: "provider_id",
                   descriptor: {
                     name: "Provider Name",
-                    short_desc: "Provider Description"
-                  }
+                    short_desc: "Provider Description",
+                  },
                 },
                 items: [
                   {
                     id: "item_id",
                     descriptor: {
                       name: "Service Name",
-                      short_desc: "Service Description"
-                    }
-                  }
+                      short_desc: "Service Description",
+                    },
+                  },
                 ],
                 fulfillments: [
                   {
@@ -1025,20 +1113,25 @@ export class AppService {
                         name: "Status",
                         code: "status_code",
                         short_desc: "Current status of the service",
-                        long_desc: "Detailed status description"
+                        long_desc: "Detailed status description",
                       },
                       updated_at: new Date().toISOString(),
-                      updated_by: "system"
-                    }
-                  }
-                ]
-              }
-            }
+                      updated_by: "system",
+                    },
+                  },
+                ],
+              },
+            },
           };
         } catch (error) {
           console.error("Error in OTP validation:", error);
           return {
-            context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
+            context: {
+              ...body.context,
+              action: "on_status",
+              timestamp: new Date().toISOString(),
+              ttl: "PT10M",
+            },
             message: {
               order: {
                 id: orderId,
@@ -1048,19 +1141,19 @@ export class AppService {
                     descriptor: {
                       name: "Error",
                       code: "otp_validation_failed",
-                      short_desc: "Failed to validate OTP. Please try again."
-                    }
-                  }
-                ]
-              }
-            }
+                      short_desc: "Failed to validate OTP. Please try again.",
+                    },
+                  },
+                ],
+              },
+            },
           };
         }
       }
     } catch (err) {
       console.error("Error in handleStatus:", err);
       throw new InternalServerErrorException(err.message, {
-        cause: err
+        cause: err,
       });
     }
   }
@@ -1196,11 +1289,16 @@ export class AppService {
   }
   async handlePmkisanInit(body: any) {
     // Extract phone number from the correct path in the payload
-    const phoneNumber = body?.message?.order?.fulfillments?.[0]?.customer?.contact?.phone;
-    
+    const phoneNumber =
+      body?.message?.order?.fulfillments?.[0]?.customer?.contact?.phone;
+
     if (!phoneNumber) {
       return {
-        context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
+        context: {
+          ...body.context,
+          action: "on_init",
+          timestamp: new Date().toISOString(),
+        },
         message: {
           order: {
             provider: body?.message?.order?.provider,
@@ -1213,14 +1311,14 @@ export class AppService {
                     descriptor: {
                       name: "Error",
                       code: "missing_phone",
-                      short_desc: "Phone number is required for OTP generation"
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        }
+                      short_desc: "Phone number is required for OTP generation",
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
       };
     }
 
@@ -1266,7 +1364,11 @@ export class AppService {
         };
 
         return {
-          context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
+          context: {
+            ...body.context,
+            action: "on_init",
+            timestamp: new Date().toISOString(),
+          },
           message: {
             order: {
               provider: body?.message?.order?.provider,
@@ -1279,18 +1381,23 @@ export class AppService {
                       descriptor: {
                         name: "Otp Status",
                         code: "otp_status",
-                        short_desc: "Request for OTP is sent. Please enter the OTP when received and Submit"
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          }
+                        short_desc:
+                          "Request for OTP is sent. Please enter the OTP when received and Submit",
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
         };
       } else {
         return {
-          context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
+          context: {
+            ...body.context,
+            action: "on_init",
+            timestamp: new Date().toISOString(),
+          },
           message: {
             order: {
               provider: body?.message?.order?.provider,
@@ -1303,20 +1410,25 @@ export class AppService {
                       descriptor: {
                         name: "Error",
                         code: "otp_error",
-                        short_desc: "Failed to generate OTP. Please try again later."
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          }
+                        short_desc:
+                          "Failed to generate OTP. Please try again later.",
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
         };
       }
     } catch (error) {
       console.log("ORDER_STATUS", error);
       return {
-        context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
+        context: {
+          ...body.context,
+          action: "on_init",
+          timestamp: new Date().toISOString(),
+        },
         message: {
           order: {
             provider: body?.message?.order?.provider,
@@ -1329,14 +1441,15 @@ export class AppService {
                     descriptor: {
                       name: "Error",
                       code: "processing_error",
-                      short_desc: "Failed to process request. Please try again later."
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        }
+                      short_desc:
+                        "Failed to process request. Please try again later.",
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
       };
     }
   }
