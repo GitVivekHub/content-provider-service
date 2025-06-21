@@ -16,12 +16,15 @@ import {
   PmKisanIcarGenerator,
 } from "utils/generator";
 import { v4 as uuidv4 } from "uuid";
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import { encrypt, decrypt, getUniqueKey, decryptRequest } from './utils/encryption';
+import { LoggerService } from './services/logger/logger.service';
 
 // getting course data
 import * as fs from "fs";
 import { HasuraService } from "./services/hasura/hasura.service";
 import { AuthService } from "./auth/auth.service";
-import axios from "axios";
 const file = fs.readFileSync("./course.json", "utf8");
 const courseData = JSON.parse(file);
 
@@ -30,7 +33,8 @@ export class AppService {
   constructor(
     private readonly httpService: HttpService,
     private readonly hasuraService: HasuraService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly logger: LoggerService
   ) { }
 
   private nameSpace = process.env.HASURA_NAMESPACE;
@@ -43,6 +47,7 @@ export class AppService {
   private tempOTPStore = {
     otp: null,
     identifier: null,
+    mobileNumber: null,
     timestamp: null,
   };
 
@@ -332,118 +337,25 @@ export class AppService {
     }
   }
 
-  // async searchForIntentQuery(body) {
-  //   let query =
-  //     body?.message?.intent?.item?.descriptor?.name || "farming practices";
-
-  //   try {
-  //     const response = await axios.post(
-  //       "http://3.6.146.174:8882/indexes/oan-index/search",
-  //       {
-  //         q: query,
-  //         limit: 5,
-  //         filter: "type:document",
-  //         searchMethod: "HYBRID",
-  //         hybridParameters: {
-  //           retrievalMethod: "disjunction",
-  //           rankingMethod: "rrf",
-  //           alpha: 0.5,
-  //           rrfK: 60,
-  //         },
-  //       }
-  //     );
-
-  //     body.context.action = "on_search";
-
-  //     const mappedData = this.mapVectorDbData(body?.context, response.data);
-
-  //     return mappedData;
-  //   } catch (error) {
-  //     console.error("Error making Axios request:", error.message);
-  //     throw new Error("Failed to fetch data from the search endpoint");
-  //   }
-  // }
-
   async searchForIntentQuery(body) {
-    // Default values
-    const defaultQuery = "farming practices";
-    const defaultLimit = 5;
-    const defaultFilter = "type:document";
-    const defaultSearchMethod = "HYBRID";
-    const defaultHybridParams = {
-      retrievalMethod: "disjunction",
-      rankingMethod: "rrf",
-      alpha: 0.5,
-      rrfK: 60,
-    };
-
-    const query = body?.message?.intent?.item?.descriptor?.name || defaultQuery;
-
-    let limit = defaultLimit;
-    let filter = defaultFilter;
-    let searchMethod = defaultSearchMethod;
-    let hybridParams = { ...defaultHybridParams };
-
-    const tags = body?.message?.intent?.item?.fulfillment?.tags || [];
-
-    for (const tag of tags) {
-      const code = tag.descriptor?.code;
-
-      if (code === "searchParam") {
-        for (const param of tag.list || []) {
-          const paramCode = param.descriptor?.code;
-          const value = param.value;
-
-          if (paramCode === "limit" && !isNaN(parseInt(value))) {
-            limit = parseInt(value);
-          }
-
-          if (paramCode === "filter_string") {
-            filter = value;
-          }
-
-          if (paramCode === "search_method") {
-            searchMethod = value.toUpperCase(); // normalize casing
-          }
-        }
-      }
-
-      if (code === "hybrid_parameters") {
-        for (const param of tag.list || []) {
-          const paramCode = param.descriptor?.code;
-          const value = param.value;
-
-          if (paramCode === "retrievalMethod") {
-            hybridParams.retrievalMethod = value;
-          }
-
-          if (paramCode === "rankingMethod") {
-            hybridParams.rankingMethod = value;
-          }
-
-          if (paramCode === "alpha" && !isNaN(parseFloat(value))) {
-            hybridParams.alpha = parseFloat(value);
-          }
-
-          if (paramCode === "rrfK" && !isNaN(parseInt(value))) {
-            hybridParams.rrfK = parseInt(value);
-          }
-        }
-      }
-    }
-
-    const payload = {
-      q: query,
-      limit,
-      filter,
-      searchMethod,
-      hybridParameters: hybridParams,
-    };
+    let query =
+      body?.message?.intent?.item?.descriptor?.name || "farming practices";
 
     try {
       const response = await axios.post(
         "http://3.6.146.174:8882/indexes/oan-index/search",
-        payload
+        {
+          q: query,
+          limit: 5,
+          filter: "type:document",
+          searchMethod: "HYBRID",
+          hybridParameters: {
+            retrievalMethod: "disjunction",
+            rankingMethod: "rrf",
+            alpha: 0.5,
+            rrfK: 60,
+          },
+        }
       );
 
       body.context.action = "on_search";
@@ -841,100 +753,162 @@ export class AppService {
     return resp;
   }
 
-  async sendOTP(identifier: string, type: string = "OrderId"): Promise<any> {
+  async sendOTP(mobileNumber: string, type: string = "Ben_id"): Promise<any> {
     try {
-      // Generate a 4-digit OTP
-      const otp = String(Math.floor(1000 + Math.random() * 9000));
-
-      // Store OTP temporarily with current timestamp
-      this.tempOTPStore = {
-        otp,
-        identifier,
-        timestamp: Date.now(),
+      let key = getUniqueKey();
+      // Create the request data as a JSON string
+      let requestData = JSON.stringify({
+        Types: type,
+        Values: mobileNumber,
+        Token: process.env.PM_KISSAN_TOKEN
+      });
+      
+      console.log("Request data: ", requestData);
+      
+      // Encrypt the request data
+      let encrypted_text = await encrypt(requestData, key);
+      console.log("encrypted text without @: ", encrypted_text);
+      
+      // Format the request data as expected by PM Kisan service
+      let data = {
+        "EncryptedRequest": encrypted_text + '@' + key
       };
+      
+      console.log("(in sendOTP)the data in the data var is as: ", data);
 
-      // Log the OTP to console with a visual indicator
-      console.log(
-        "\x1b[32m%s\x1b[0m",
-        `🔐 OTP for ${type} ${identifier}: ${otp}`
-      ); // Green colored output
-      console.log(
-        "OTP_GENERATION",
-        `Generated OTP for ${type} ${identifier}: ${otp}`
-      );
-      console.log("OTP will expire in 5 minutes");
-
-      return {
-        status: "OK",
-        d: {
-          output: {
-            status: "True",
-            Message: "OTP sent successfully",
-            Rsponce: "True",
-          },
+      let config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `${process.env.PM_KISAN_BASE_OTP_URL}/ChatbotOTP`,
+        headers: {
+          "Content-Type": "application/json",
         },
+        data: data,
       };
+
+      let response: any = await axios.request(config);
+      console.log("sendOTP", response.status);
+
+      if (response.status >= 200 && response.status < 300) {
+        response = await response.data;
+        
+        // Extract the encrypted response and key
+        const [encryptedResponse, responseKey] = (response.d.output || '').split('@');
+        
+        if (!encryptedResponse) {
+          console.error("No encrypted response received");
+          return {
+            d: {
+              output: {
+                status: "False",
+                Message: "Invalid response format",
+              },
+            },
+          };
+        }
+        
+        // Use the response key for decryption
+        let decryptedData: any = await decryptRequest(encryptedResponse, responseKey || key);
+        console.log("Response from decryptedData(sendOTP)", decryptedData);
+        
+        try {
+          const parsedData = JSON.parse(decryptedData);
+          response.d.output = parsedData;
+          response["status"] = response.d.output.Rsponce !== "False" ? "OK" : "NOT_OK";
+        } catch (e) {
+          console.error("Error parsing decrypted data:", e);
+          response["status"] = "NOT_OK";
+        }
+        
+        return response;
+      } else {
+        return {
+          d: {
+            output: {
+              status: "False",
+              Message: "Try again",
+            },
+          },
+        };
+      }
     } catch (error) {
-      console.log("OTP_GENERATION", error);
+      console.error("Error in sendOTP:", error.message, error.response?.data || error);
       return {
-        status: "NOT_OK",
         d: {
           output: {
             status: "False",
-            Message: "Failed to generate OTP",
-            Rsponce: "False",
+            Message: "Try again",
           },
         },
       };
     }
   }
 
-  private validateOTP(identifier: string, inputOtp: string): boolean {
-    const storedData = this.tempOTPStore;
-
-    if (!storedData || !storedData.otp) {
-      console.log("No OTP found for validation");
-      return false;
-    }
-
-    // Calculate time elapsed since OTP generation
-    const timeElapsed = Date.now() - storedData.timestamp;
-    const isExpired = timeElapsed > this.OTP_EXPIRY_TIME;
-
-    if (isExpired) {
-      console.log(`OTP expired. Time elapsed: ${timeElapsed / 1000} seconds`);
-      // Clear expired OTP
-      this.tempOTPStore = {
-        otp: null,
-        identifier: null,
-        timestamp: null,
+  async verifyOTP(
+    mobileNumber: string,
+    otp: string,
+    type: string = "Ben_id"
+  ): Promise<any> {
+    try {
+      let requestData = `{\"Types\":\"${type}\",\"Values\":\"${mobileNumber}\",\"OTP\":\"${otp}\",\"Token\":\"${process.env.PM_KISSAN_TOKEN}\"}`;
+      console.log("Request data: ", requestData);
+      let key = getUniqueKey();
+      let encrypted_text = await encrypt(requestData, key); //without @
+      
+      console.log("encrypted text without @: ", encrypted_text);
+      
+      let data = {
+        "EncryptedRequest": `${encrypted_text}@${key}`,
       };
-      return false;
-    }
+      console.log("(inside verifyOTP)the data in the data var is : ", data);
+      let config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `${process.env.PM_KISAN_BASE_OTP_URL}/ChatbotOTPVerified`,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: data,
+      };
 
-    const isValid =
-      storedData.identifier === identifier && storedData.otp === inputOtp;
-    console.log(
-      `OTP validation result: ${isValid}, Time remaining: ${(this.OTP_EXPIRY_TIME - timeElapsed) / 1000
-      } seconds`
-    );
-
-    if (isValid) {
-      // Clear OTP after successful validation
-      this.tempOTPStore = {
-        otp: null,
-        identifier: null,
-        timestamp: null,
+      let response: any = await axios.request(config);
+      console.log("verifyOTP", response.status);
+      if (response.status >= 200 && response.status < 300) {
+        response = await response.data;
+        let decryptedData: any = await decryptRequest(
+          response.d.output,
+          key
+        );
+        console.log("Response of VerifyOTP",response);
+        console.log("Response from decryptedData(verifyOTP)",decryptedData);
+        response["status"] =
+          response.d.output.Rsponce != "False" ? "OK" : "NOT_OK";
+        return response;
+      } else {
+        return {
+          d: {
+            output: {
+              status: "False",
+              Message: "Try again",
+            },
+          },
+        };
+      }
+    } catch (error) {
+      console.error("Error in verifyOTP:", error);
+      return {
+        d: {
+          output: {
+            status: "False",
+            Message: "Try again",
+          },
+        },
       };
     }
-
-    return isValid;
   }
 
   async handleStatus(body: any) {
     try {
-      // Create response context
-
       // Get the order ID
       const orderId = body.message?.order_id;
 
@@ -943,47 +917,48 @@ export class AppService {
           context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
           message: {
             order: {
-              id: "error",
+              id: 'error',
               tags: [
                 {
                   display: true,
                   descriptor: {
                     name: "Error",
                     code: "missing_order_id",
-                    short_desc: "Please provide a valid order ID",
-                  },
-                },
-              ],
-            },
-          },
+                    short_desc: "Please provide a valid order ID"
+                  }
+                }
+              ]
+            }
+          }
         };
       }
 
       // Check if this is an OTP validation request (second status call)
-      const isOtpValidation = /^\d{4}$/.test(orderId);
+      const isOtpValidation = /^\d{4,6}$/.test(orderId);
 
       if (isOtpValidation) {
         try {
-          // Validate the OTP
+          // Get the stored data for OTP validation
           const storedData = this.tempOTPStore;
 
-          // Log validation attempt
-          console.log("Validating OTP:", {
-            inputOTP: orderId,
-            storedOTP: storedData?.otp,
-            storedIdentifier: storedData?.identifier,
-            currentTimestamp: new Date().toISOString(),
-            storedTimestamp: storedData?.timestamp
-              ? new Date(storedData.timestamp).toISOString()
-              : null,
-          });
+          // // Log validation attempt
+          // console.log("Validating OTP:", {
+          //   inputOTP: orderId,
+          //   storedOTP: storedData?.otp,
+          //   storedIdentifier: storedData?.identifier,
+          //   currentTimestamp: new Date().toISOString(),
+          //   storedTimestamp: storedData?.timestamp
+          //     ? new Date(storedData.timestamp).toISOString()
+          //     : null,
+          // });
 
-          const isValid =
-            storedData &&
-            storedData.otp === orderId &&
-            Date.now() - storedData.timestamp < this.OTP_EXPIRY_TIME;
+          // Verify OTP using the verifyOTP function
+          const verifyResponse = await this.verifyOTP(
+            storedData?.mobileNumber,
+            orderId
+          );
 
-          if (!isValid) {
+          if (verifyResponse.status !== "OK") {
             return {
               context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
               message: {
@@ -1008,6 +983,7 @@ export class AppService {
           this.tempOTPStore = {
             otp: null,
             identifier: null,
+            mobileNumber: null,
             timestamp: null,
           };
 
@@ -1017,21 +993,22 @@ export class AppService {
             message: {
               order: {
                 id: orderId,
+                state: "COMPLETED",
                 provider: {
-                  id: "PM KISAAn",
+                  id: "provider_id",
                   descriptor: {
-                    name: "PM KISAN",
-                    short_desc: "Pradhan Mantri Kisan Samman Nidhi",
-                  },
+                    name: "Provider Name",
+                    short_desc: "Provider Description"
+                  }
                 },
                 items: [
                   {
-                    id: "SchemeId",
+                    id: "item_id",
                     descriptor: {
-                      name: "PM KISAN Scheme",
-                      short_desc: "Direct Benefit Transfer Scheme",
-                    },
-                  },
+                      name: "Service Name",
+                      short_desc: "Service Description"
+                    }
+                  }
                 ],
                 fulfillments: [
                   {
@@ -1045,25 +1022,21 @@ export class AppService {
                     },
                     state: {
                       descriptor: {
-                        name: "Scheme Status",
-                        code: "scheme-status",
-                        short_desc: "Pending Sanction",
-                        long_desc: "Your application is under process",
-                        additional_desc: {
-                          url: "",
-                          content_type: "text/plain",
-                        },
+                        name: "Status",
+                        code: "status_code",
+                        short_desc: "Current status of the service",
+                        long_desc: "Detailed status description"
                       },
                       updated_at: new Date().toISOString(),
-                      updated_by: "system",
-                    },
-                  },
-                ],
-              },
-            },
+                      updated_by: "system"
+                    }
+                  }
+                ]
+              }
+            }
           };
         } catch (error) {
-          console.log("OTP_VALIDATION", error);
+          console.error("Error in OTP validation:", error);
           return {
             context: {...body.context, action: "on_status", timestamp: new Date().toISOString(),ttl: "PT10M"},
             message: {
@@ -1075,18 +1048,19 @@ export class AppService {
                     descriptor: {
                       name: "Error",
                       code: "otp_validation_failed",
-                      short_desc: "Failed to validate OTP. Please try again.",
-                    },
-                  },
-                ],
-              },
-            },
+                      short_desc: "Failed to validate OTP. Please try again."
+                    }
+                  }
+                ]
+              }
+            }
           };
         }
       }
     } catch (err) {
+      console.error("Error in handleStatus:", err);
       throw new InternalServerErrorException(err.message, {
-        cause: err,
+        cause: err
       });
     }
   }
@@ -1221,104 +1195,148 @@ export class AppService {
     }
   }
   async handlePmkisanInit(body: any) {
-    // Extract phone number from the request
-    const phoneNumber = body?.message?.order?.id;
-    // Basic sanitation: check if phone number is a 10-digit string starting with 6-9
-    const isValidPhone = /^[6-9]\d{9}$/.test(phoneNumber);
-    if (!isValidPhone) {
+    // Extract phone number from the correct path in the payload
+    const phoneNumber = body?.message?.order?.fulfillments?.[0]?.customer?.contact?.phone;
+    
+    if (!phoneNumber) {
       return {
-        responses: [
-          {
-            context: body.context,
-            message: {
-              order: {
-                id: phoneNumber,
+        context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
+        message: {
+          order: {
+            provider: body?.message?.order?.provider,
+            items: [
+              {
+                id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
                 tags: [
                   {
                     display: true,
                     descriptor: {
                       name: "Error",
-                      code: "invalid_mobile",
-                      short_desc: "Please provide a valid 10-digit mobile number"
+                      code: "missing_phone",
+                      short_desc: "Phone number is required for OTP generation"
                     }
                   }
-                ],
-                type: "DEFAULT"
+                ]
               }
-            }
+            ]
           }
-        ]
+        }
       };
     }
-    // Build the response object as per requirements
-    const context = body.context || {};
-    const now = new Date().toISOString();
+
+    // Basic validation: check if phone number is a 10-digit string starting with 6-9
+    // const isValidPhone = /^[6-9]\d{9}$/.test(phoneNumber);
+    // if (!isValidPhone) {
+    //   return {
+    //     context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
+    //     message: {
+    //       order: {
+    //         provider: body?.message?.order?.provider,
+    //         items: [
+    //           {
+    //             id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
+    //             tags: [
+    //               {
+    //                 display: true,
+    //                 descriptor: {
+    //                   name: "Error",
+    //                   code: "invalid_mobile",
+    //                   short_desc: "Please provide a valid 10-digit mobile number"
+    //                 }
+    //               }
+    //             ]
+    //           }
+    //         ]
+    //       }
+    //     }
+    //   };
+    // }
 
     try {
       // Generate and store OTP
-      const otpResponse = await this.sendOTP(phoneNumber); // Using mobile number as identifier
+      const otpResponse = await this.sendOTP(phoneNumber);
 
       if (otpResponse.status === "OK") {
+        // Store mobile number for later OTP verification
+        this.tempOTPStore = {
+          otp: null,
+          identifier: phoneNumber,
+          mobileNumber: phoneNumber,
+          timestamp: new Date().toISOString(),
+        };
+
         return {
-          context: {...context, action: "on_init", timestamp: now},
+          context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
           message: {
             order: {
-              id: phoneNumber,
-              tags: [
+              provider: body?.message?.order?.provider,
+              items: [
                 {
-                  display: true,
-                  descriptor: {
-                    name: "Otp Status",
-                    code: "otp_status",
-                    short_desc:
-                      "Request for OTP is sent. Please enter the OTP when received and Submit",
-                  },
-                },
-              ],
-            },
-          },
+                  id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
+                  tags: [
+                    {
+                      display: true,
+                      descriptor: {
+                        name: "Otp Status",
+                        code: "otp_status",
+                        short_desc: "Request for OTP is sent. Please enter the OTP when received and Submit"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
         };
       } else {
         return {
-          context: {...context, action: "on_init", timestamp: now},
+          context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
           message: {
             order: {
-              id: phoneNumber,
-              tags: [
+              provider: body?.message?.order?.provider,
+              items: [
                 {
-                  display: true,
-                  descriptor: {
-                    name: "Error",
-                    code: "otp_error",
-                    short_desc:
-                      "Failed to generate OTP. Please try again later.",
-                  },
-                },
-              ],
-            },
-          },
+                  id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
+                  tags: [
+                    {
+                      display: true,
+                      descriptor: {
+                        name: "Error",
+                        code: "otp_error",
+                        short_desc: "Failed to generate OTP. Please try again later."
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
         };
       }
     } catch (error) {
       console.log("ORDER_STATUS", error);
       return {
-        context: {...context, action: "on_init", timestamp: now},
+        context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
         message: {
           order: {
-            id: phoneNumber,
-            tags: [
+            provider: body?.message?.order?.provider,
+            items: [
               {
-                display: true,
-                descriptor: {
-                  name: "Error",
-                  code: "processing_error",
-                  short_desc:
-                    "Failed to process status request. Please try again later.",
-                },
-              },
-            ],
-          },
-        },
+                id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
+                tags: [
+                  {
+                    display: true,
+                    descriptor: {
+                      name: "Error",
+                      code: "processing_error",
+                      short_desc: "Failed to process request. Please try again later."
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
       };
     }
   }

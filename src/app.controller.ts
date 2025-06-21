@@ -108,16 +108,16 @@ export class AppController {
     return this.appService.handleRating(body);
   }
 
-  @Post("mobility/status")
+  @Post('mobility/status')
   handleStatus(@Body() body: any) {
-    console.log("status api calling");
+    console.log("status api calling")
     return this.appService.handleStatus(body);
   }
 
-  @Get("feedback/:id")
-  @Render("feedback")
-  getFeedbackForm(@Param("id") id: string) {
-    return { id };
+  @Get('feedback/:id')
+  @Render('feedback') 
+  getFeedbackForm(@Param('id') id: string) {
+    return {id};
   }
 
   @Post("/submit-feedback/:id")
