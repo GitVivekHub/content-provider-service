@@ -16,15 +16,11 @@ import {
   PmKisanIcarGenerator,
 } from "utils/generator";
 import { v4 as uuidv4 } from "uuid";
-import { ConfigService } from "@nestjs/config";
-import axios from "axios";
-import {
-  encrypt,
-  decrypt,
-  getUniqueKey,
-  decryptRequest,
-} from "./utils/encryption";
-import { LoggerService } from "./services/logger/logger.service";
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import { encrypt, decrypt, getUniqueKey, decryptRequest } from './utils/encryption';
+import { LoggerService } from './services/logger/logger.service';
+import { format } from 'date-fns';
 
 // getting course data
 import * as fs from "fs";
@@ -33,14 +29,31 @@ import { AuthService } from "./auth/auth.service";
 const file = fs.readFileSync("./course.json", "utf8");
 const courseData = JSON.parse(file);
 
+// PM Kisan Portal Errors
+const PMKissanProtalErrors = {
+  "Income Tax Payee": {
+    "text": "{{farmer_name}}, you are an Income Tax Payee. Please contact your nearest CSC center for further assistance.",
+    "types": ["status", "payment", "installment"]
+  },
+  "Land Seeding, KYS": {
+    "text": "{{farmer_name}}, your land is under seeding/KYS process. Please wait for completion.",
+    "types": ["status", "payment", "installment"]
+  },
+  "No Errors": {
+    "text": "{{farmer_name}}, your {{latest_installment_paid}} installment has been processed successfully. Registration date: {{Reg_Date (DD-MM-YYYY)}}",
+    "types": ["status", "payment", "installment"]
+  }
+};
+
 @Injectable()
 export class AppService {
   constructor(
     private readonly httpService: HttpService,
     private readonly hasuraService: HasuraService,
     private readonly authService: AuthService,
-    private readonly logger: LoggerService
-  ) {}
+    private readonly logger: LoggerService,
+    private readonly configService: ConfigService
+  ) { }
 
   private nameSpace = process.env.HASURA_NAMESPACE;
   private base_url = process.env.BASE_URL;
@@ -851,7 +864,7 @@ export class AppService {
         },
         data: data,
       };
-
+      console.log(config);
       let response: any = await axios.request(config);
       console.log("sendOTP", response.status);
 
@@ -981,6 +994,8 @@ export class AppService {
   }
 
   async handleStatus(body: any) {
+    console.log("Input body:", JSON.stringify(body, null, 2));
+
     try {
       // Get the order ID
       const orderId = body.message?.order_id;
@@ -1013,22 +1028,32 @@ export class AppService {
 
       // Check if this is an OTP validation request (second status call)
       const isOtpValidation = /^\d{4,6}$/.test(orderId);
-
       if (isOtpValidation) {
         try {
           // Get the stored data for OTP validation
           const storedData = this.tempOTPStore;
 
-          // // Log validation attempt
-          // console.log("Validating OTP:", {
-          //   inputOTP: orderId,
-          //   storedOTP: storedData?.otp,
-          //   storedIdentifier: storedData?.identifier,
-          //   currentTimestamp: new Date().toISOString(),
-          //   storedTimestamp: storedData?.timestamp
-          //     ? new Date(storedData.timestamp).toISOString()
-          //     : null,
-          // });
+          if (!storedData?.mobileNumber) {
+            return {
+              context: { ...body.context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
+              message: {
+                order: {
+                  id: orderId,
+                  tags: [
+                    {
+                      display: true,
+                      descriptor: {
+                        name: "Error",
+                        code: "no_stored_data",
+                        short_desc: "No stored data found. Please restart the process.",
+                      },
+                    },
+                  ],
+                },
+              },
+            };
+          }
+
 
           // Verify OTP using the verifyOTP function
           const verifyResponse = await this.verifyOTP(
@@ -1062,6 +1087,8 @@ export class AppService {
             };
           }
 
+          console.log("✅ OTP validation successful!");
+
           // Clear OTP after successful validation
           this.tempOTPStore = {
             otp: null,
@@ -1070,61 +1097,125 @@ export class AppService {
             timestamp: null,
           };
 
-          // Return success response with scheme status
-          return {
-            context: {
-              ...body.context,
-              action: "on_status",
-              timestamp: new Date().toISOString(),
-              ttl: "PT10M",
-            },
-            message: {
-              order: {
-                id: orderId,
-                state: "COMPLETED",
-                provider: {
-                  id: "provider_id",
-                  descriptor: {
-                    name: "Provider Name",
-                    short_desc: "Provider Description",
-                  },
-                },
-                items: [
-                  {
-                    id: "item_id",
+          // Call fetchUserData after successful OTP verification
+          try {
+            // Create context for fetchUserData
+            const context = {
+              userAadhaarNumber: storedData?.identifier || storedData?.mobileNumber,
+              lastAadhaarDigits: "",
+              queryType: "status" // or appropriate query type
+            };
+
+
+            const userDataResponse = await this.fetchUserData(context, {});
+
+
+            // Return success response with user data
+            const successResponse = {
+              context: { ...body.context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
+              message: {
+                order: {
+                  id: orderId,
+                  state: "COMPLETED",
+                  provider: {
+                    id: "pm_kisan_provider",
                     descriptor: {
-                      name: "Service Name",
-                      short_desc: "Service Description",
+                      name: "PM Kisan Portal",
+                      short_desc: "PM Kisan Beneficiary Status Service",
                     },
                   },
-                ],
-                fulfillments: [
-                  {
-                    customer: {
-                      person: {
-                        name: "Test Farmer",
-                      },
-                      contact: {
-                        phone: "XXXXXXXXXX",
-                      },
-                    },
-                    state: {
+                  items: [
+                    {
+                      id: "pm_kisan_status",
                       descriptor: {
-                        name: "Status",
-                        code: "status_code",
-                        short_desc: "Current status of the service",
-                        long_desc: "Detailed status description",
+                        name: "Beneficiary Status",
+                        short_desc: "PM Kisan beneficiary details and payment status",
                       },
-                      updated_at: new Date().toISOString(),
-                      updated_by: "system",
+                    },
+                  ],
+                  fulfillments: [
+                    {
+                      customer: {
+                        person: {
+                          name: "Beneficiary",
+                        },
+                        contact: {
+                          phone: storedData?.mobileNumber || "XXXXXXXXXX",
+                        },
+                      },
+                      state: {
+                        descriptor: {
+                          name: "Status",
+                          code: "completed",
+                          short_desc: "OTP verified and user data retrieved",
+                          long_desc: userDataResponse,
+                        },
+                        updated_at: new Date().toISOString(),
+                      },
+                    },
+                  ],
+                },
+              },
+            };
+
+            return successResponse;
+
+          } catch (fetchError) {
+            console.error("❌ Error in fetchUserData:", fetchError);
+            console.error("❌ Error stack:", fetchError.stack);
+
+            // Return error response if fetchUserData fails
+            return {
+              context: { ...body.context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
+              message: {
+                order: {
+                  id: orderId,
+                  state: "FAILED",
+                  provider: {
+                    id: "pm_kisan_provider",
+                    descriptor: {
+                      name: "PM Kisan Portal",
+                      short_desc: "PM Kisan Beneficiary Status Service",
                     },
                   },
-                ],
+                  items: [
+                    {
+                      id: "pm_kisan_status",
+                      descriptor: {
+                        name: "Beneficiary Status",
+                        short_desc: "Failed to retrieve beneficiary data",
+                      },
+                    },
+                  ],
+                  fulfillments: [
+                    {
+                      customer: {
+                        person: {
+                          name: "Beneficiary",
+                        },
+                        contact: {
+                          phone: storedData?.mobileNumber || "XXXXXXXXXX",
+                        },
+                      },
+                      state: {
+                        descriptor: {
+                          name: "Error",
+                          code: "fetch_user_data_failed",
+                          short_desc: "Failed to retrieve beneficiary data",
+                          long_desc: fetchError.message || "An error occurred while fetching user data",
+                        },
+                        updated_at: new Date().toISOString(),
+                        updated_by: "system",
+                      },
+                    },
+                  ],
+                },
               },
-            },
-          };
+            };
+          }
         } catch (error) {
-          console.error("Error in OTP validation:", error);
+          console.error("❌ Error in OTP validation:", error);
+          console.error("❌ Error stack:", error.stack);
           return {
             context: {
               ...body.context,
@@ -1149,9 +1240,14 @@ export class AppService {
             },
           };
         }
+      } else {
+
       }
+
     } catch (err) {
-      console.error("Error in handleStatus:", err);
+      console.error("❌ Error in handleStatus:", err);
+      console.error("❌ Error message:", err.message);
+      console.error("❌ Error stack:", err.stack);
       throw new InternalServerErrorException(err.message, {
         cause: err,
       });
@@ -1451,6 +1547,263 @@ export class AppService {
           },
         },
       };
+    }
+  }
+
+  // Utility functions
+  private titleCase(str: string): string {
+    if (!str) return '';
+    return str.toLowerCase().split(' ').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  }
+
+  private addOrdinalSuffix(num: number): string {
+    if (num === 0) return 'No';
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) {
+      return num + "st";
+    }
+    if (j === 2 && k !== 12) {
+      return num + "nd";
+    }
+    if (j === 3 && k !== 13) {
+      return num + "rd";
+    }
+    return num + "th";
+  }
+
+  private AADHAAR_GREETING_MESSAGE(
+    BeneficiaryName: string,
+    FatherName: string,
+    DOB: string,
+    Address: string,
+    DateOfRegistration: string,
+    LatestInstallmentPaid: number,
+    Reg_No: string,
+    StateName: string,
+    DistrictName: string,
+    SubDistrictName: string,
+    VillageName: string,
+    eKYC_Status: string
+  ): string {
+    return `Beneficiary Name - ${BeneficiaryName}
+Beneficiary Location - ${StateName}, ${DistrictName}, ${SubDistrictName}, ${VillageName}
+Registration Number - ${Reg_No}
+Registration Date - ${format(new Date(DateOfRegistration), 'M/d/yyyy h:mm:ss a')}
+Last Installment Status - ${LatestInstallmentPaid == 0 ? "No" : this.addOrdinalSuffix(LatestInstallmentPaid)} Installment payment done
+eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
+  }
+
+  // Mock userService for demonstration - replace with actual service
+  private async getUserData(userIdentifier: string, type: string): Promise<any> {
+    // This is a mock implementation - replace with actual userService call
+    return {
+      d: {
+        output: {
+          Message: "User details retrieved successfully",
+          BeneficiaryName: "John Doe",
+          FatherName: "Father Name",
+          DOB: "1990-01-01",
+          Address: "Sample Address",
+          DateOfRegistration: "2023-01-01",
+          LatestInstallmentPaid: 2,
+          Reg_No: "REG123456",
+          StateName: "Sample State",
+          DistrictName: "Sample District",
+          SubDistrictName: "Sample Sub District",
+          VillageName: "Sample Village",
+          eKYC_Status: "Y"
+        }
+      }
+    };
+  }
+
+  async fetchUserData(context: any, event: any): Promise<string> {
+    this.logger.log("Fetch user data");
+    this.logger.log("Current queryType:", context.queryType);
+    const userIdentifier = `${context.userAadhaarNumber}${context.lastAadhaarDigits}`;
+    let res;
+    let type = "Mobile";
+
+    if (/^[6-9]\d{9}$/.test(userIdentifier)) {
+      type = "Mobile";
+      res = await this.getUserData(userIdentifier, "Mobile");
+    } else if (
+      userIdentifier.length == 14 &&
+      /^[6-9]\d{9}$/.test(userIdentifier.substring(0, 10))
+    ) {
+      type = "MobileAadhar";
+      res = await this.getUserData(userIdentifier, "MobileAadhar");
+    } else if (userIdentifier.length == 12 && /^\d+$/.test(userIdentifier)) {
+      type = "Aadhar";
+      res = await this.getUserData(userIdentifier, "Aadhar");
+    } else if (userIdentifier.length == 11) {
+      type = "Ben_id";
+      res = await this.getUserData(userIdentifier, "Ben_id");
+    } else {
+      return Promise.reject(
+        new Error(
+          "Please enter a valid Beneficiary ID/Aadhaar Number/Phone number"
+        )
+      );
+    }
+
+    if (res.d.output.Message == "Unable to get user details") {
+      return Promise.reject(new Error(res.d.output.Message));
+    }
+
+    let userDetails = this.AADHAAR_GREETING_MESSAGE(
+      this.titleCase(res.d.output["BeneficiaryName"]),
+      this.titleCase(res.d.output["FatherName"]),
+      res.d.output["DOB"],
+      res.d.output["Address"],
+      res.d.output["DateOfRegistration"],
+      res.d.output["LatestInstallmentPaid"],
+      res.d.output["Reg_No"],
+      this.titleCase(res.d.output["StateName"]),
+      this.titleCase(res.d.output["DistrictName"]),
+      this.titleCase(res.d.output["SubDistrictName"]),
+      this.titleCase(res.d.output["VillageName"]),
+      res.d.output["eKYC_Status"]
+    );
+
+    this.logger.log("ChatbotBeneficiaryStatus");
+    this.logger.log("using...", userIdentifier, type);
+    let userErrors = [];
+
+    try {
+      var token = getUniqueKey();
+      let requestData = `{\"Types\":\"${type}\",\"Values\":\"${userIdentifier}\",\"Token\":\"${process.env.PM_KISSAN_TOKEN}\"}`;
+
+      let encrypted_text = await encrypt(requestData, token);
+      let data = {
+        "EncryptedRequest": `${encrypted_text}@${token}`
+      };
+
+      let config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `${process.env.PM_KISAN_BASE_URL}/ChatbotBeneficiaryStatus`,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: data,
+      };
+
+      this.logger.log("In fetchUserData:", JSON.stringify(config));
+      let errors: any = await axios.request(config);
+      errors = await errors.data;
+      this.logger.log("related issues", JSON.stringify(errors));
+
+      let decryptedData: any = await decryptRequest(
+        errors.d.output,
+        token
+      );
+
+      // Mock response for demonstration - replace with actual decrypted data
+      errors = {
+        "Rsponce": "True",
+        "Message": "Beneficiary Status Found",
+        "Markeddead": "",
+        "NameCorrection": "",
+        "IncomeTaxPayee": "Income Tax Payee",
+        "Not_Landowner": "Land Seeding, KYS",
+        "Internal_stopped": "",
+        "Benefit_Surrender": "",
+        "Institutional_Landholder": "",
+        "Former_Constitutional_PostHolder": "",
+        "Constitutional_PositionHolder": "",
+        "EmployeesofStateCentral": "",
+        "Superannuated_Retired_Pensioner": "",
+        "Registered_Professional": "",
+        "NRI": "",
+        "Beneficiary_doesnot_belongsto_ourstate": "",
+        "LandOwnershipnotbelong": "",
+        "alreadyreceivebenefit": "",
+        "farmerlandless": "",
+        "landuse_otherthan_agri": "",
+        "UntraceableBeneficiary": "",
+        "Underage": "",
+        "LandOwnerAfter": "",
+        "FTOnotprocessedAadhaarNotAuthenticated": "",
+        "FTOnotprocessedAadharisnotseeded": "",
+        "FTOnotprocessedBeneficiaryisunderrevalidationwithPFMS": "",
+        "UIDNEVERENABLEFORDBT": "",
+        "UIDisDisableforDBT": "",
+        "UIDisCANCELLEDBYUIDAI": "",
+        "Paymentfailurereason": "",
+        "NPCI_Seeding_Status": "NPCI Seeded",
+        "eKYC_Status": "Done"
+      };
+
+      this.logger.log("Response from FetchUserdata: ", JSON.stringify(errors));
+
+      if (errors.Rsponce == "True") {
+        const queryType = typeof context.queryType === 'object'
+          ? context.queryType.class
+          : context.queryType;
+
+        Object.entries(errors).forEach(([key, value]) => {
+          if (key != "Rsponce" && key != "Message") {
+            if (
+              value &&
+              PMKissanProtalErrors[`${value}`] &&
+              PMKissanProtalErrors[`${value}`]["types"].indexOf(
+                queryType
+              ) != -1
+            ) {
+              this.logger.log(`ERRORVALUE: ${key} ${value}`);
+              userErrors.push(
+                PMKissanProtalErrors[`${value}`]["text"].replace(
+                  "{{farmer_name}}",
+                  this.titleCase(res.d.output["BeneficiaryName"])
+                )
+              );
+            }
+          }
+        });
+      }
+
+      if (!userErrors.length) {
+        userErrors.push(
+          PMKissanProtalErrors["No Errors"]["text"]
+            .replace(
+              "{{farmer_name}}",
+              this.titleCase(res.d.output["BeneficiaryName"])
+            )
+            .replace(
+              "{{latest_installment_paid}}",
+              res.d.output["LatestInstallmentPaid"]
+            )
+            .replace(
+              "{{Reg_Date (DD-MM-YYYY)}}",
+              format(new Date(res.d.output["DateOfRegistration"]), "dd-MM-yyyy")
+            )
+        );
+      }
+    } catch (error) {
+      this.logger.error("ChatbotBeneficiaryStatus error", error);
+    }
+
+    return `=== PM KISAN BENEFICIARY STATUS ===\n\n${userDetails}\n\n=== PAYMENT STATUS & ISSUES ===\n\n${userErrors.join("\n")}`;
+  }
+
+  async wadhwaniClassifier(context: any): Promise<any> {
+    this.logger.log("Wadhwani Classifierrr");
+    try {
+      // Mock implementation - replace with actual aiToolsService call
+      let response: any = {
+        error: null,
+        data: "Mock response from Wadhwani classifier"
+      };
+
+      if (response.error)
+        throw new Error(`${response.error}, please try again.`);
+      return response;
+    } catch (error) {
+      return Promise.reject(error);
     }
   }
 }
