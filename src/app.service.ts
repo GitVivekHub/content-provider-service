@@ -312,12 +312,12 @@ export class AppService {
 
       // Add category code filter if it's not empty
       if (categoryCode && categoryCode.trim() !== "") {
-        filters.push(`usecase: {_eq: "${categoryCode}"}`);
+        filters.push(`usecase: {_ilike: "${categoryCode}"}`);
       }
 
       // Add scheme code filter if it's not empty
       if (schemeCode && schemeCode.trim() !== "") {
-        filters.push(`scheme_id: {_eq: "${schemeCode}"}`);
+        filters.push(`scheme_id: {_ilike: "${schemeCode}"}`);
       }
 
       // Construct the where clause if any filters are present
@@ -834,6 +834,25 @@ export class AppService {
 
   async sendOTP(mobileNumber: string, type: string = "Ben_id"): Promise<any> {
     try {
+      // Auto-detect the type if not provided
+      // let detectedType = type;
+      // if (!detectedType) {
+      //   if (/^[6-9]\d{9}$/.test(mobileNumber)) {
+      //     detectedType = "Mobile";
+      //   } else if (mobileNumber.length == 14 && /^[6-9]\d{9}$/.test(mobileNumber.substring(0, 10))) {
+      //     detectedType = "MobileAadhar";
+      //   } else if (mobileNumber.length == 12 && /^\d+$/.test(mobileNumber)) {
+      //     detectedType = "Aadhar";
+      //   } else if (mobileNumber.length == 11) {
+      //     detectedType = "Ben_id";
+      //   } else {
+      //     // Default to Ben_id if format doesn't match any known pattern
+      //     detectedType = "Ben_id";
+      //   }
+      // }
+
+
+
       let key = getUniqueKey();
       // Create the request data as a JSON string
       let requestData = JSON.stringify({
@@ -863,6 +882,7 @@ export class AppService {
           "Content-Type": "application/json",
         },
         data: data,
+        timeout: 10000, // 10 second timeout
       };
       console.log(config);
       let response: any = await axios.request(config);
@@ -922,6 +942,28 @@ export class AppService {
         error.message,
         error.response?.data || error
       );
+
+      /*
+      // Check for network-related errors
+      if (error.code === 'ECONNREFUSED' || 
+          error.code === 'ENOTFOUND' || 
+          error.code === 'ETIMEDOUT' ||
+          error.code === 'ECONNABORTED' ||
+          error.message.includes('Network Error') ||
+          error.message.includes('timeout') ||
+          error.message.includes('connect') ||
+          error.message.includes('ENOTFOUND')) {
+        console.log("Network connectivity issue detected - not sending OTP");
+        return {
+          d: {
+            output: {
+              status: "False",
+              Message: "Network connectivity issue detected. Please check your internet connection and try again.",
+            },
+          },
+        };
+      }
+      */
       return {
         d: {
           output: {
@@ -936,10 +978,33 @@ export class AppService {
   async verifyOTP(
     mobileNumber: string,
     otp: string,
-    type: string = "Ben_id"
+    type?: string
   ): Promise<any> {
     try {
-      let requestData = `{\"Types\":\"${type}\",\"Values\":\"${mobileNumber}\",\"OTP\":\"${otp}\",\"Token\":\"${process.env.PM_KISSAN_TOKEN}\"}`;
+      // Auto-detect the type if not provided
+      let detectedType = type;
+      if (!detectedType) {
+        // Comment out other cases and keep only Ben_id
+        // if (/^[6-9]\d{9}$/.test(mobileNumber)) {
+        //   detectedType = "Mobile";
+        // } else if (mobileNumber.length == 14 && /^[6-9]\d{9}$/.test(mobileNumber.substring(0, 10))) {
+        //   detectedType = "MobileAadhar";
+        // } else if (mobileNumber.length == 12 && /^\d+$/.test(mobileNumber)) {
+        //   detectedType = "Aadhar";
+        // } else if (mobileNumber.length == 11) {
+        //   detectedType = "Ben_id";
+        // } else {
+        //   // Default to Ben_id if format doesn't match any known pattern
+        //   detectedType = "Ben_id";
+        // }
+
+        // Always use Ben_id
+        detectedType = "Ben_id";
+      }
+
+      console.log(`Detected type for verification ${mobileNumber}: ${detectedType}`);
+
+      let requestData = `{\"Types\":\"${detectedType}\",\"Values\":\"${mobileNumber}\",\"OTP\":\"${otp}\",\"Token\":\"${process.env.PM_KISSAN_TOKEN}\"}`;
       console.log("Request data: ", requestData);
       let key = getUniqueKey();
       let encrypted_text = await encrypt(requestData, key); //without @
@@ -997,261 +1062,191 @@ export class AppService {
     console.log("Input body:", JSON.stringify(body, null, 2));
 
     try {
-      // Get the order ID
       const orderId = body.message?.order_id;
 
       if (!orderId) {
-        return {
-          context: {
-            ...body.context,
-            action: "on_status",
-            timestamp: new Date().toISOString(),
-            ttl: "PT10M",
-          },
-          message: {
-            order: {
-              id: "error",
-              tags: [
-                {
-                  display: true,
-                  descriptor: {
-                    name: "Error",
-                    code: "missing_order_id",
-                    short_desc: "Please provide a valid order ID",
-                  },
-                },
-              ],
-            },
-          },
-        };
+        return this.createStatusErrorResponse(body.context, "missing_order_id", "Please provide a valid order ID");
       }
 
-      // Check if this is an OTP validation request (second status call)
+      // Check if this is an OTP validation request
       const isOtpValidation = /^\d{4,6}$/.test(orderId);
       if (isOtpValidation) {
-        try {
-          // Get the stored data for OTP validation
-          const storedData = this.tempOTPStore;
-
-          if (!storedData?.mobileNumber) {
-            return {
-              context: { ...body.context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
-              message: {
-                order: {
-                  id: orderId,
-                  tags: [
-                    {
-                      display: true,
-                      descriptor: {
-                        name: "Error",
-                        code: "no_stored_data",
-                        short_desc: "No stored data found. Please restart the process.",
-                      },
-                    },
-                  ],
-                },
-              },
-            };
-          }
-
-
-          // Verify OTP using the verifyOTP function
-          const verifyResponse = await this.verifyOTP(
-            storedData?.mobileNumber,
-            orderId
-          );
-
-          if (verifyResponse.status !== "OK") {
-            return {
-              context: {
-                ...body.context,
-                action: "on_status",
-                timestamp: new Date().toISOString(),
-                ttl: "PT10M",
-              },
-              message: {
-                order: {
-                  id: orderId,
-                  tags: [
-                    {
-                      display: false,
-                      descriptor: {
-                        name: "Error",
-                        code: "invalid_otp",
-                        short_desc: "Invalid or expired OTP. Please try again.",
-                      },
-                    },
-                  ],
-                },
-              },
-            };
-          }
-
-          console.log("✅ OTP validation successful!");
-
-          // Clear OTP after successful validation
-          this.tempOTPStore = {
-            otp: null,
-            identifier: null,
-            mobileNumber: null,
-            timestamp: null,
-          };
-
-          // Call fetchUserData after successful OTP verification
-          try {
-            // Create context for fetchUserData
-            const context = {
-              userAadhaarNumber: storedData?.identifier || storedData?.mobileNumber,
-              lastAadhaarDigits: "",
-              queryType: "status" // or appropriate query type
-            };
-
-
-            const userDataResponse = await this.fetchUserData(context, {});
-
-
-            // Return success response with user data
-            const successResponse = {
-              context: { ...body.context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
-              message: {
-                order: {
-                  id: orderId,
-                  state: "COMPLETED",
-                  provider: {
-                    id: "pm_kisan_provider",
-                    descriptor: {
-                      name: "PM Kisan Portal",
-                      short_desc: "PM Kisan Beneficiary Status Service",
-                    },
-                  },
-                  items: [
-                    {
-                      id: "pm_kisan_status",
-                      descriptor: {
-                        name: "Beneficiary Status",
-                        short_desc: "PM Kisan beneficiary details and payment status",
-                      },
-                    },
-                  ],
-                  fulfillments: [
-                    {
-                      customer: {
-                        person: {
-                          name: "Beneficiary",
-                        },
-                        contact: {
-                          phone: storedData?.mobileNumber || "XXXXXXXXXX",
-                        },
-                      },
-                      state: {
-                        descriptor: {
-                          name: "Status",
-                          code: "completed",
-                          short_desc: "OTP verified and user data retrieved",
-                          long_desc: userDataResponse,
-                        },
-                        updated_at: new Date().toISOString(),
-                      },
-                    },
-                  ],
-                },
-              },
-            };
-
-            return successResponse;
-
-          } catch (fetchError) {
-            console.error("❌ Error in fetchUserData:", fetchError);
-            console.error("❌ Error stack:", fetchError.stack);
-
-            // Return error response if fetchUserData fails
-            return {
-              context: { ...body.context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
-              message: {
-                order: {
-                  id: orderId,
-                  state: "FAILED",
-                  provider: {
-                    id: "pm_kisan_provider",
-                    descriptor: {
-                      name: "PM Kisan Portal",
-                      short_desc: "PM Kisan Beneficiary Status Service",
-                    },
-                  },
-                  items: [
-                    {
-                      id: "pm_kisan_status",
-                      descriptor: {
-                        name: "Beneficiary Status",
-                        short_desc: "Failed to retrieve beneficiary data",
-                      },
-                    },
-                  ],
-                  fulfillments: [
-                    {
-                      customer: {
-                        person: {
-                          name: "Beneficiary",
-                        },
-                        contact: {
-                          phone: storedData?.mobileNumber || "XXXXXXXXXX",
-                        },
-                      },
-                      state: {
-                        descriptor: {
-                          name: "Error",
-                          code: "fetch_user_data_failed",
-                          short_desc: "Failed to retrieve beneficiary data",
-                          long_desc: fetchError.message || "An error occurred while fetching user data",
-                        },
-                        updated_at: new Date().toISOString(),
-                        updated_by: "system",
-                      },
-                    },
-                  ],
-                },
-              },
-            };
-          }
-        } catch (error) {
-          console.error("❌ Error in OTP validation:", error);
-          console.error("❌ Error stack:", error.stack);
-          return {
-            context: {
-              ...body.context,
-              action: "on_status",
-              timestamp: new Date().toISOString(),
-              ttl: "PT10M",
-            },
-            message: {
-              order: {
-                id: orderId,
-                tags: [
-                  {
-                    display: true,
-                    descriptor: {
-                      name: "Error",
-                      code: "otp_validation_failed",
-                      short_desc: "Failed to validate OTP. Please try again.",
-                    },
-                  },
-                ],
-              },
-            },
-          };
-        }
-      } else {
-
+        return await this.handleOtpValidation(body, orderId);
       }
+
+      // Handle other status requests if needed
+      return this.createStatusErrorResponse(body.context, "invalid_request", "Invalid status request");
 
     } catch (err) {
       console.error("❌ Error in handleStatus:", err);
       console.error("❌ Error message:", err.message);
       console.error("❌ Error stack:", err.stack);
-      throw new InternalServerErrorException(err.message, {
-        cause: err,
-      });
+      throw new InternalServerErrorException(err.message, { cause: err });
     }
+  }
+
+  private async handleOtpValidation(body: any, orderId: string) {
+    try {
+      const storedData = this.tempOTPStore;
+
+      if (!storedData?.mobileNumber) {
+        return this.createStatusErrorResponse(
+          body.context,
+          "no_stored_data",
+          "No stored data found. Please restart the process."
+        );
+      }
+
+      // Verify OTP
+      const verifyResponse = await this.verifyOTP(storedData.mobileNumber, orderId);
+
+      if (verifyResponse.status !== "OK") {
+        return this.createStatusErrorResponse(
+          body.context,
+          "invalid_otp",
+          "Invalid or expired OTP. Please try again."
+        );
+      }
+
+      console.log("✅ OTP validation successful!");
+
+      // Clear OTP after successful validation
+      this.clearTempOTPStore();
+
+      // Fetch user data after successful OTP verification
+      try {
+        const context = {
+          userAadhaarNumber: storedData.identifier || storedData.mobileNumber,
+          lastAadhaarDigits: "",
+          queryType: "status"
+        };
+
+        const userDataResponse = await this.fetchUserData(context, {});
+        return this.createSuccessResponse(body.context, orderId, storedData.mobileNumber, userDataResponse);
+
+      } catch (fetchError) {
+        console.error("❌ Error in fetchUserData:", fetchError);
+        return this.createFetchErrorResponse(body.context, orderId, storedData.mobileNumber, fetchError);
+      }
+
+    } catch (error) {
+      console.error("❌ Error in OTP validation:", error);
+      return this.createStatusErrorResponse(
+        body.context,
+        "otp_validation_failed",
+        "Failed to validate OTP. Please try again."
+      );
+    }
+  }
+
+  private clearTempOTPStore() {
+    this.tempOTPStore = {
+      otp: null,
+      identifier: null,
+      mobileNumber: null,
+      timestamp: null,
+    };
+  }
+
+  private createStatusErrorResponse(context: any, code: string, message: string) {
+    return {
+      context: { ...context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
+      message: {
+        order: {
+          id: "error",
+          tags: [{
+            display: true,
+            descriptor: {
+              name: "Error",
+              code: code,
+              short_desc: message,
+            },
+          }],
+        },
+      },
+    };
+  }
+
+  private createSuccessResponse(context: any, orderId: string, mobileNumber: string, userDataResponse: string) {
+    return {
+      context: { ...context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
+      message: {
+        order: {
+          id: orderId,
+          state: "COMPLETED",
+          provider: {
+            id: "pm_kisan_provider",
+            descriptor: {
+              name: "PM Kisan Portal",
+              short_desc: "PM Kisan Beneficiary Status Service",
+            },
+          },
+          items: [{
+            id: "pm_kisan_status",
+            descriptor: {
+              name: "Beneficiary Status",
+              short_desc: "PM Kisan beneficiary details and payment status",
+            },
+          }],
+          fulfillments: [{
+            customer: {
+              person: { name: "Beneficiary" },
+              contact: { phone: mobileNumber || "XXXXXXXXXX" },
+            },
+            state: {
+              descriptor: {
+                name: "Status",
+                code: "completed",
+                short_desc: "OTP verified and user data retrieved",
+                long_desc: userDataResponse,
+              },
+              updated_at: new Date().toISOString(),
+            },
+          }],
+        },
+      },
+    };
+  }
+
+  private createFetchErrorResponse(context: any, orderId: string, mobileNumber: string, fetchError: any) {
+    return {
+      context: { ...context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
+      message: {
+        order: {
+          id: orderId,
+          state: "FAILED",
+          provider: {
+            id: "pm_kisan_provider",
+            descriptor: {
+              name: "PM Kisan Portal",
+              short_desc: "PM Kisan Beneficiary Status Service",
+            },
+          },
+          items: [{
+            id: "pm_kisan_status",
+            descriptor: {
+              name: "Beneficiary Status",
+              short_desc: "Failed to retrieve beneficiary data",
+            },
+          }],
+          fulfillments: [{
+            customer: {
+              person: { name: "Beneficiary" },
+              contact: { phone: mobileNumber || "XXXXXXXXXX" },
+            },
+            state: {
+              descriptor: {
+                name: "Error",
+                code: "fetch_user_data_failed",
+                short_desc: "Failed to retrieve beneficiary data",
+                long_desc: fetchError.message || "An error occurred while fetching user data",
+              },
+              updated_at: new Date().toISOString(),
+            },
+          }],
+        },
+      },
+    };
   }
 
   generateFeedbackUrl(): string {
@@ -1294,8 +1289,8 @@ export class AppService {
     const provider = intent?.provider?.descriptor?.name;
     const query = intent?.item?.descriptor?.name;
     const tagGroup = intent?.item?.tags;
-    const categoryCode = intent?.category?.descriptor?.code;
-    const schemeCode = intent?.item?.descriptor?.name;
+    const categoryCode = intent?.category?.descriptor?.code.toLowerCase();
+    const schemeCode = intent?.item?.descriptor?.name.toLowerCase();
     const requestDomain = body.context.domain;
 
     const flattenedTags: any = {};
@@ -1342,12 +1337,12 @@ export class AppService {
 
       // Add category code filter if it's not empty
       if (categoryCode && categoryCode.trim() !== "") {
-        filters.push(`usecase: {_eq: "${categoryCode}"}`);
+        filters.push(`usecase: {_ilike: "${categoryCode}"}`);
       }
 
       // Add scheme code filter if it's not empty
       if (schemeCode && schemeCode.trim() !== "") {
-        filters.push(`scheme_id: {_eq: "${schemeCode}"}`);
+        filters.push(`scheme_id: {_ilike: "${schemeCode}"}`);
       }
 
       // Construct the where clause if any filters are present
@@ -1384,170 +1379,111 @@ export class AppService {
     }
   }
   async handlePmkisanInit(body: any) {
-    // Extract phone number from the correct path in the payload
-    const phoneNumber =
-      body?.message?.order?.fulfillments?.[0]?.customer?.contact?.phone;
+    // Extract registration number from customer tags
+    const customerTags = body?.message?.order?.fulfillments?.[0]?.customer?.person?.tags;
+    let registrationNumber = this.extractRegistrationNumber(customerTags);
 
-    if (!phoneNumber) {
-      return {
-        context: {
-          ...body.context,
-          action: "on_init",
-          timestamp: new Date().toISOString(),
-        },
-        message: {
-          order: {
-            provider: body?.message?.order?.provider,
-            items: [
-              {
-                id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
-                tags: [
-                  {
-                    display: true,
-                    descriptor: {
-                      name: "Error",
-                      code: "missing_phone",
-                      short_desc: "Phone number is required for OTP generation",
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-        },
-      };
+    // Validate registration number
+    if (!registrationNumber) {
+      return this.createErrorResponse(body.context, "missing_registration", "Valid registration number is required for OTP generation");
     }
 
-    // Basic validation: check if phone number is a 10-digit string starting with 6-9
-    // const isValidPhone = /^[6-9]\d{9}$/.test(phoneNumber);
-    // if (!isValidPhone) {
-    //   return {
-    //     context: {...body.context, action: "on_init", timestamp: new Date().toISOString()},
-    //     message: {
-    //       order: {
-    //         provider: body?.message?.order?.provider,
-    //         items: [
-    //           {
-    //             id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
-    //             tags: [
-    //               {
-    //                 display: true,
-    //                 descriptor: {
-    //                   name: "Error",
-    //                   code: "invalid_mobile",
-    //                   short_desc: "Please provide a valid 10-digit mobile number"
-    //                 }
-    //               }
-    //             ]
-    //           }
-    //         ]
-    //       }
-    //     }
-    //   };
-    // }
+    // Sanitize and validate mobile number
+    const phone = body?.message?.order?.fulfillments?.[0]?.customer?.contact?.phone;
+    const isValidPhone = typeof phone === "string" && /^[6-9]\d{9}$/.test(phone);
 
     try {
-      // Generate and store OTP
-      const otpResponse = await this.sendOTP(phoneNumber);
+      // Generate and store OTP using registration number
+      const otpResponse = await this.sendOTP(registrationNumber);
 
       if (otpResponse.status === "OK") {
-        // Store mobile number for later OTP verification
+        // Store registration number for later OTP verification
         this.tempOTPStore = {
           otp: null,
-          identifier: phoneNumber,
-          mobileNumber: phoneNumber,
+          identifier: registrationNumber,
+          mobileNumber: registrationNumber,
           timestamp: new Date().toISOString(),
         };
-
+   // Build status message
+      let otpMessage = "Request for OTP is sent. Please enter the OTP when received and Submit.";
+      if (!isValidPhone) {
+        otpMessage += " However, the provided contact phone number is invalid and will not be used.";
+      }
         return {
-          context: {
-            ...body.context,
-            action: "on_init",
-            timestamp: new Date().toISOString(),
-          },
+          context: { ...body.context, action: "on_init", timestamp: new Date().toISOString() },
           message: {
             order: {
-              provider: body?.message?.order?.provider,
-              items: [
-                {
-                  id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
-                  tags: [
-                    {
-                      display: true,
-                      descriptor: {
-                        name: "Otp Status",
-                        code: "otp_status",
-                        short_desc:
-                          "Request for OTP is sent. Please enter the OTP when received and Submit",
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-          },
+              provider: { id: "NA" },
+              items: [{
+                id: "NA",
+                tags: [{
+                  display: true,
+                  descriptor: {
+                    name: "Otp Status",
+                    code: "otp_status",
+                    short_desc: otpMessage
+                  }
+                }]
+              }],
+              type: "DEFAULT"
+            }
+          }
         };
       } else {
-        return {
-          context: {
-            ...body.context,
-            action: "on_init",
-            timestamp: new Date().toISOString(),
-          },
-          message: {
-            order: {
-              provider: body?.message?.order?.provider,
-              items: [
-                {
-                  id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
-                  tags: [
-                    {
-                      display: true,
-                      descriptor: {
-                        name: "Error",
-                        code: "otp_error",
-                        short_desc:
-                          "Failed to generate OTP. Please try again later.",
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-          },
-        };
+        return this.createErrorResponse(
+          body.context,
+          "otp_error",
+          otpResponse.d?.output?.Message || "Failed to generate OTP. Please try again later."
+        );
       }
     } catch (error) {
       console.log("ORDER_STATUS", error);
-      return {
-        context: {
-          ...body.context,
-          action: "on_init",
-          timestamp: new Date().toISOString(),
-        },
-        message: {
-          order: {
-            provider: body?.message?.order?.provider,
-            items: [
-              {
-                id: body?.message?.order?.items?.[0]?.id || "pmkissan011",
-                tags: [
-                  {
-                    display: true,
-                    descriptor: {
-                      name: "Error",
-                      code: "processing_error",
-                      short_desc:
-                        "Failed to process request. Please try again later.",
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-        },
-      };
+      return this.createErrorResponse(body.context, "processing_error", "Failed to process request. Please try again later.");
     }
+  }
+
+  private extractRegistrationNumber(customerTags: any[]): string | null {
+    if (!customerTags || !Array.isArray(customerTags)) {
+      return null;
+    }
+
+    for (const tag of customerTags) {
+      if (tag.descriptor?.code === "reg-details" && tag.list && Array.isArray(tag.list)) {
+        for (const item of tag.list) {
+          if (item.descriptor?.code === "reg-number") {
+            const regNumber = String(item.value).trim();
+            // Validate: should not be empty and should be alphanumeric
+            if (regNumber && regNumber.length > 0 && /^[A-Z0-9]+$/i.test(regNumber)) {
+              return regNumber;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private createErrorResponse(context: any, code: string, message: string) {
+    return {
+      context: { ...context, action: "on_init", timestamp: new Date().toISOString() },
+      message: {
+        order: {
+          provider: { id: "NA" },
+          items: [{
+            id: "NA",
+            tags: [{
+              display: true,
+              descriptor: {
+                name: "Error",
+                code: code,
+                short_desc: message
+              }
+            }]
+          }],
+          type: "DEFAULT"
+        }
+      }
+    };
   }
 
   // Utility functions
@@ -1596,28 +1532,97 @@ Last Installment Status - ${LatestInstallmentPaid == 0 ? "No" : this.addOrdinalS
 eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
   }
 
-  // Mock userService for demonstration - replace with actual service
-  private async getUserData(userIdentifier: string, type: string): Promise<any> {
-    // This is a mock implementation - replace with actual userService call
-    return {
-      d: {
-        output: {
-          Message: "User details retrieved successfully",
-          BeneficiaryName: "John Doe",
-          FatherName: "Father Name",
-          DOB: "1990-01-01",
-          Address: "Sample Address",
-          DateOfRegistration: "2023-01-01",
-          LatestInstallmentPaid: 2,
-          Reg_No: "REG123456",
-          StateName: "Sample State",
-          DistrictName: "Sample District",
-          SubDistrictName: "Sample Sub District",
-          VillageName: "Sample Village",
-          eKYC_Status: "Y"
+  async getUserData(
+    mobileNumber: string,
+    type: string = "Ben_id"
+  ): Promise<any> {
+    let res: any;
+    try {
+      const requestData = `{\"Types\":\"${type}\",\"Values\":\"${mobileNumber}\",\"Token\":\"${process.env.PM_KISSAN_TOKEN}\"}`;
+      console.log("Request data: ", requestData);
+      let key = getUniqueKey();
+      let encrypted_text = await encrypt(requestData, key);
+      console.log("encrypted text without @: ", encrypted_text);
+
+      let data = {
+        "EncryptedRequest": `${encrypted_text}@${key}`,
+      };
+
+      let config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `${process.env.PM_KISAN_BASE_URL}/ChatbotUserDetails`,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: data,
+        timeout: 60000, // 10 second timeout
+      };
+
+      console.log("getUserData config:", config);
+      res = await axios.request(config);
+      this.logger.log("getUserData response status:", res.status);
+
+      if (res.status >= 200 && res.status < 300) {
+        res = await res.data;
+        console.log("getUserData raw response:", res);
+
+        if (res.d && res.d.output) {
+          let decryptedData: any = await decryptRequest(
+            res.d.output,
+            key
+          );
+          console.log("Response of getUserData", res);
+          console.log("decrypted data(from getUserData): ", decryptedData);
+
+          try {
+            res.d.output = JSON.parse(decryptedData);
+            res["status"] = res.d.output.Rsponce != "False" ? "OK" : "NOT_OK";
+          } catch (parseError) {
+            console.error("Error parsing decrypted data:", parseError);
+            res.d.output = {
+              Rsponce: "False",
+              Message: "Error parsing response"
+            };
+            res["status"] = "NOT_OK";
+          }
+        } else {
+          console.error("Invalid response structure:", res);
+          res = {
+            d: {
+              output: {
+                Rsponce: "False",
+                Message: "Invalid response structure",
+              },
+            },
+            status: "NOT_OK"
+          };
         }
+      } else {
+        console.error("getUserData HTTP error:", res.status);
+        res = {
+          d: {
+            output: {
+              Rsponce: "False",
+              Message: "HTTP request failed",
+            },
+          },
+          status: "NOT_OK"
+        };
       }
-    };
+    } catch (error) {
+      console.error("getUserData error:", error.message);
+      res = {
+        d: {
+          output: {
+            Rsponce: "False",
+            Message: "Unable to get user details",
+          },
+        },
+        status: "NOT_OK"
+      };
+    }
+    return res;
   }
 
   async fetchUserData(context: any, event: any): Promise<string> {
@@ -1625,33 +1630,38 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
     this.logger.log("Current queryType:", context.queryType);
     const userIdentifier = `${context.userAadhaarNumber}${context.lastAadhaarDigits}`;
     let res;
-    let type = "Mobile";
+    let type = "Ben_id";
 
-    if (/^[6-9]\d{9}$/.test(userIdentifier)) {
-      type = "Mobile";
-      res = await this.getUserData(userIdentifier, "Mobile");
-    } else if (
-      userIdentifier.length == 14 &&
-      /^[6-9]\d{9}$/.test(userIdentifier.substring(0, 10))
-    ) {
-      type = "MobileAadhar";
-      res = await this.getUserData(userIdentifier, "MobileAadhar");
-    } else if (userIdentifier.length == 12 && /^\d+$/.test(userIdentifier)) {
-      type = "Aadhar";
-      res = await this.getUserData(userIdentifier, "Aadhar");
-    } else if (userIdentifier.length == 11) {
-      type = "Ben_id";
-      res = await this.getUserData(userIdentifier, "Ben_id");
-    } else {
-      return Promise.reject(
-        new Error(
-          "Please enter a valid Beneficiary ID/Aadhaar Number/Phone number"
-        )
-      );
-    }
+    // Comment out other cases and keep only Ben_id
+    // if (/^[6-9]\d{9}$/.test(userIdentifier)) {
+    //   type = "Mobile";
+    //   res = await this.getUserData(userIdentifier, "Mobile");
+    // } else if (
+    //   userIdentifier.length == 14 &&
+    //   /^[6-9]\d{9}$/.test(userIdentifier.substring(0, 10))
+    // ) {
+    //   type = "MobileAadhar";
+    //   res = await this.getUserData(userIdentifier, "MobileAadhar");
+    // } else if (userIdentifier.length == 12 && /^\d+$/.test(userIdentifier)) {
+    //   type = "Aadhar";
+    //   res = await this.getUserData(userIdentifier, "Aadhar");
+    // } else if (userIdentifier.length == 11) {
+    //   type = "Ben_id";
+    //   res = await this.getUserData(userIdentifier, "Ben_id");
+    // } else {
+    //   return Promise.reject(
+    //     new Error(
+    //       "Please enter a valid Beneficiary ID/Aadhaar Number/Phone number"
+    //     )
+    //   );
+    // }
+
+    // Always use Ben_id
+    res = await this.getUserData(userIdentifier, "Ben_id");
 
     if (res.d.output.Message == "Unable to get user details") {
-      return Promise.reject(new Error(res.d.output.Message));
+      // Instead of throwing an error, return a formatted error message
+      return `=== PM KISAN BENEFICIARY STATUS ===\n\nError: Unable to retrieve beneficiary details. Please check your registration number and try again.\n\n=== PAYMENT STATUS & ISSUES ===\n\nNo payment information available due to retrieval error.`;
     }
 
     let userDetails = this.AADHAAR_GREETING_MESSAGE(
@@ -1702,41 +1712,18 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
         token
       );
 
-      // Mock response for demonstration - replace with actual decrypted data
-      errors = {
-        "Rsponce": "True",
-        "Message": "Beneficiary Status Found",
-        "Markeddead": "",
-        "NameCorrection": "",
-        "IncomeTaxPayee": "Income Tax Payee",
-        "Not_Landowner": "Land Seeding, KYS",
-        "Internal_stopped": "",
-        "Benefit_Surrender": "",
-        "Institutional_Landholder": "",
-        "Former_Constitutional_PostHolder": "",
-        "Constitutional_PositionHolder": "",
-        "EmployeesofStateCentral": "",
-        "Superannuated_Retired_Pensioner": "",
-        "Registered_Professional": "",
-        "NRI": "",
-        "Beneficiary_doesnot_belongsto_ourstate": "",
-        "LandOwnershipnotbelong": "",
-        "alreadyreceivebenefit": "",
-        "farmerlandless": "",
-        "landuse_otherthan_agri": "",
-        "UntraceableBeneficiary": "",
-        "Underage": "",
-        "LandOwnerAfter": "",
-        "FTOnotprocessedAadhaarNotAuthenticated": "",
-        "FTOnotprocessedAadharisnotseeded": "",
-        "FTOnotprocessedBeneficiaryisunderrevalidationwithPFMS": "",
-        "UIDNEVERENABLEFORDBT": "",
-        "UIDisDisableforDBT": "",
-        "UIDisCANCELLEDBYUIDAI": "",
-        "Paymentfailurereason": "",
-        "NPCI_Seeding_Status": "NPCI Seeded",
-        "eKYC_Status": "Done"
-      };
+      // Parse the decrypted data to get the actual API response
+      try {
+        errors = JSON.parse(decryptedData);
+        this.logger.log("Decrypted API response:", JSON.stringify(errors));
+      } catch (parseError) {
+        this.logger.error("Error parsing decrypted data:", parseError);
+        // Fallback to original response if parsing fails
+        errors = {
+          "Rsponce": "False",
+          "Message": "Error parsing API response"
+        };
+      }
 
       this.logger.log("Response from FetchUserdata: ", JSON.stringify(errors));
 
@@ -1788,22 +1775,5 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
     }
 
     return `=== PM KISAN BENEFICIARY STATUS ===\n\n${userDetails}\n\n=== PAYMENT STATUS & ISSUES ===\n\n${userErrors.join("\n")}`;
-  }
-
-  async wadhwaniClassifier(context: any): Promise<any> {
-    this.logger.log("Wadhwani Classifierrr");
-    try {
-      // Mock implementation - replace with actual aiToolsService call
-      let response: any = {
-        error: null,
-        data: "Mock response from Wadhwani classifier"
-      };
-
-      if (response.error)
-        throw new Error(`${response.error}, please try again.`);
-      return response;
-    } catch (error) {
-      return Promise.reject(error);
-    }
   }
 }
