@@ -1092,8 +1092,8 @@ export class AppService {
       if (!storedData?.mobileNumber) {
         return this.createStatusErrorResponse(
           body.context,
-          "no_stored_data",
-          "No stored data found. Please restart the process."
+          "invalid_otp",
+          "The OTP you entered is either incorrect, expired, or already used. Please request a new OTP and try again."
         );
       }
 
