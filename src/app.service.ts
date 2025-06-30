@@ -1167,6 +1167,16 @@ export class AppService {
     };
   }
 
+  private extractBeneficiaryName(userDataResponse: string): string {
+    // Extract beneficiary name from the response string
+    const beneficiaryNameMatch = userDataResponse.match(/Beneficiary Name - (.+)/);
+    if (beneficiaryNameMatch && beneficiaryNameMatch[1]) {
+      return beneficiaryNameMatch[1].trim();
+    }
+    // Fallback to a default name if extraction fails
+    return "Beneficiary";
+  }
+
   private createSuccessResponse(context: any, orderId: string, mobileNumber: string, userDataResponse: string) {
     return {
       context: { ...context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
@@ -1190,7 +1200,7 @@ export class AppService {
           }],
           fulfillments: [{
             customer: {
-              person: { name: "Beneficiary" },
+              person: { name: this.extractBeneficiaryName(userDataResponse) },
               contact: { phone: mobileNumber || "XXXXXXXXXX" },
             },
             state: {
@@ -1406,9 +1416,9 @@ export class AppService {
         };
    // Build status message
       let otpMessage = "Request for OTP is sent. Please enter the OTP when received and Submit.";
-      if (!isValidPhone) {
-        otpMessage += " However, the provided contact phone number is invalid and will not be used.";
-      }
+      // if (!isValidPhone) {
+      //   otpMessage += " However, the provided contact phone number is invalid and will not be used.";
+      // }
         return {
           context: { ...body.context, action: "on_init", timestamp: new Date().toISOString() },
           message: {
@@ -1573,7 +1583,7 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
             key
           );
           console.log("Response of getUserData", res);
-          console.log("decrypted data(from getUserData): ", decryptedData);
+          //console.log("decrypted data(from getUserData): ", decryptedData);
 
           try {
             res.d.output = JSON.parse(decryptedData);
