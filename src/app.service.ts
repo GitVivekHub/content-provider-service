@@ -1032,8 +1032,16 @@ export class AppService {
         let decryptedData: any = await decryptRequest(response.d.output, key);
         console.log("Response of VerifyOTP", response);
         console.log("Response from decryptedData(verifyOTP)", decryptedData);
-        response["status"] =
-          response.d.output.Rsponce != "False" ? "OK" : "NOT_OK";
+        
+        try {
+          const parsedDecryptedData = JSON.parse(decryptedData);
+          response.d.output = parsedDecryptedData;
+          response["status"] = parsedDecryptedData.Rsponce === "True" ? "OK" : "NOT_OK";
+        } catch (e) {
+          console.error("Error parsing decrypted data:", e);
+          response["status"] = "NOT_OK";
+        }
+        
         return response;
       } else {
         return {
