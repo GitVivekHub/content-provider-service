@@ -100,14 +100,34 @@ export class AppController {
   @Post("mobility/init")
   async initCourse1(@Body() body: any) {
     console.log("init api calling");
-    if (body?.message?.order?.provider?.id?.toLowerCase() == 'schemes-agri' && body?.message?.order?.items?.[0]?.id?.toLowerCase() == 'pmfby') {
+    if (
+      body?.message?.order?.provider?.id?.toLowerCase() == "schemes-agri" &&
+      body?.message?.order?.items?.[0]?.id?.toLowerCase() == "pmfby"
+    ) {
       console.log("INSIDE PMFBY INIT...");
       return this.appService.handlePmfbyInit(body);
-    }else if (body?.message?.order) {
+    } else if (body?.message?.order?.provider?.id === "shc-discovery") {
+      try {
+        // Fetch soil health data
+
+        let soilHeallthCardResponse =
+          await this.appService.fetchAndMapSoilHealthCard(body);
+
+        // Pass the first item to handleStatusForSHC for mapping
+        return await this.appService.handleStatusForSHC(
+          soilHeallthCardResponse,
+          body
+        );
+      } catch (error) {
+        throw new HttpException(
+          `Failed to process soil health card: ${error.message}`,
+          error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
+    } else if (body?.message?.order) {
       console.log("Inside pmkisan init...");
       return this.appService.handlePmkisanInit(body);
-    }
-    else {
+    } else {
       return this.appService.handleInit(body);
     }
   }
@@ -131,9 +151,9 @@ export class AppController {
     return this.appService.handleStatus(body);
   }
 
-  @Get('feedback/:id')
-  @Render('feedback')
-  getFeedbackForm(@Param('id') id: string) {
+  @Get("feedback/:id")
+  @Render("feedback")
+  getFeedbackForm(@Param("id") id: string) {
     return { id };
   }
 
