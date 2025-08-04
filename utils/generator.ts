@@ -1202,6 +1202,120 @@ export const PmKisanIcarGenerator = (apiData: any, query: string) => {
 
   return catalog;
 };
+export const pmfbyGenerator = (apiData: any, query: string) => {
+  console.log("apiData", apiData)
+  const policies: any[] = apiData;
+  const providerWise: Record<string, any[]> = {};
+  const defaultProvider = 'SchemeFinder';
+
+  // Group all under one provider
+  providerWise[defaultProvider] = policies;
+
+  const catalog: any = {
+    descriptor: query ? { name: `Details of Schemes/${query}` } : {},
+    providers: Object.keys(providerWise).map((provider: string) => {
+      return {
+        descriptor: {
+          name: 'SchemeFinder',
+          short_desc: 'PMFBY Policy Listing via SchemeFinder',
+        },
+        items: providerWise[provider].map((policy: any, index: number) => {
+          return {
+            id: policy.policyID || `policy-${index}`,
+            descriptor: {
+              name: `Policy ID: ${policy.policyID}`,
+              short_desc: `${policy.insuranceCompanyName}`,
+              long_desc: `Policy for ${policy.relativeName} (${policy.relation}) from ${policy.districtName}, ${policy.stateName}`,
+            },
+            tags: [
+              {
+                descriptor: {
+                  code: 'inquiry-type',
+                  name: 'Inquiry Type'
+                },
+                value: 'policy_status',
+                display: true
+              },
+              {
+                display: true,
+                descriptor: {
+                  code: 'policy-details',
+                  name: 'Policy Details',
+                },
+                list: [
+                  {
+                    descriptor: { code: 'policy-id', name: 'Policy ID' },
+                    value: policy.policyID,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'state-id', name: 'State ID' },
+                    value: policy.stateID,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'state-name', name: 'State Name' },
+                    value: policy.stateName,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'district-id', name: 'District ID' },
+                    value: policy.districtID,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'district-name', name: 'District Name' },
+                    value: policy.districtName,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'insurance-company-id', name: 'Insurance Company ID' },
+                    value: policy.insuranceCompanyID,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'insurance-company-name', name: 'Insurance Company Name' },
+                    value: policy.insuranceCompanyName,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'mobile', name: 'Mobile Number' },
+                    value: policy.mobile,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'relative-name', name: 'Relative Name' },
+                    value: policy.relativeName,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'relation', name: 'Relation' },
+                    value: policy.relation,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'application-count', name: 'Application Count' },
+                    value: Array.isArray(policy.applicationList) ? policy.applicationList.length : 0,
+                    display: true,
+                  },
+                  // {
+                  //   descriptor: { code: 'application-list', name: 'Applications' },
+                  //   value: JSON.stringify(policy.applicationList),
+                  //   display: false,
+                  // },
+                ],
+              },
+            ],
+          };
+        }),
+      };
+    }),
+  };
+
+  return catalog;
+};
+
+
 
 
 
