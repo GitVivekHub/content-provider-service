@@ -16,13 +16,16 @@ import {
 import { AuthGuard } from "@nestjs/passport";
 import { AppService } from "./app.service";
 import { AuthService } from "./auth/auth.service";
+import { firstValueFrom } from "rxjs";
+import { HttpService } from "@nestjs/axios";
 
 @Controller("")
 export class AppController {
   constructor(
     private readonly appService: AppService,
-    private readonly authService: AuthService
-  ) { }
+    private readonly authService: AuthService,
+    private readonly httpService: HttpService
+  ) {}
 
   @Get()
   getHello(): string {
@@ -69,11 +72,20 @@ export class AppController {
       body?.message?.intent?.category?.descriptor?.name == "knowledge-advisory"
     ) {
       return this.appService.searchForIntentQuery(body);
-
-    } else if (body?.message?.intent?.category?.descriptor?.code.toLowerCase() == "schemes-agri" || body?.message?.intent?.category?.descriptor?.name.toLowerCase() == "schemes-agri") {
+    } else if (
+      body?.message?.intent?.category?.descriptor?.code.toLowerCase() ==
+        "schemes-agri" ||
+      body?.message?.intent?.category?.descriptor?.name.toLowerCase() ==
+        "schemes-agri"
+    ) {
       console.log("Inside pm kisan search");
       return this.appService.handlePmKisanSearch(body);
-    } else if (body?.message?.intent?.category?.descriptor?.code.toLowerCase() == "icar-schemes" || body?.message?.intent?.category?.descriptor?.name.toLowerCase() == "icar-schemes") {
+    } else if (
+      body?.message?.intent?.category?.descriptor?.code.toLowerCase() ==
+        "icar-schemes" ||
+      body?.message?.intent?.category?.descriptor?.name.toLowerCase() ==
+        "icar-schemes"
+    ) {
       console.log("Inside Icar search");
       return this.appService.handleSearch(body);
     }
@@ -86,13 +98,34 @@ export class AppController {
   }
 
   @Post("mobility/init")
-  initCourse1(@Body() body: any) {
+  async initCourse1(@Body() body: any) {
     console.log("init api calling");
-    if(body?.message?.order){
+    if (
+      body?.message?.order &&
+      body?.message?.order?.provider?.id !== "shc-discovery"
+    ) {
       console.log("Inside pmkisan init...");
       return this.appService.handlePmkisanInit(body);
-    }else{
-    return this.appService.handleInit(body);
+    } else if (body?.message?.order?.provider?.id === "shc-discovery") {
+      try {
+        // Fetch soil health data
+
+        let soilHeallthCardResponse =
+          await this.appService.fetchAndMapSoilHealthCard(body);
+
+        // Pass the first item to handleStatusForSHC for mapping
+        return await this.appService.handleStatusForSHC(
+          soilHeallthCardResponse,
+          body
+        );
+      } catch (error) {
+        throw new HttpException(
+          `Failed to process soil health card: ${error.message}`,
+          error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
+    } else {
+      return this.appService.handleInit(body);
     }
   }
 
@@ -108,16 +141,17 @@ export class AppController {
     return this.appService.handleRating(body);
   }
 
-  @Post('mobility/status')
-  handleStatus(@Body() body: any) {
-    console.log("status api calling")
+  @Post("mobility/status")
+  async handleStatus(@Body() body: any) {
+    console.log("status api calling");
+
     return this.appService.handleStatus(body);
   }
 
-  @Get('feedback/:id')
-  @Render('feedback') 
-  getFeedbackForm(@Param('id') id: string) {
-    return {id};
+  @Get("feedback/:id")
+  @Render("feedback")
+  getFeedbackForm(@Param("id") id: string) {
+    return { id };
   }
 
   @Post("/submit-feedback/:id")
