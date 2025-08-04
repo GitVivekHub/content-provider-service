@@ -88,11 +88,15 @@ export class AppController {
   @Post("mobility/init")
   initCourse1(@Body() body: any) {
     console.log("init api calling");
-    if(body?.message?.order){
+    if (body?.message?.order?.provider?.id?.toLowerCase() == 'schemes-agri' && body?.message?.order?.items?.[0]?.id?.toLowerCase() == 'pmfby') {
+      console.log("INSIDE PMFBY INIT...");
+      return this.appService.handlePmfbyInit(body);
+    }else if (body?.message?.order) {
       console.log("Inside pmkisan init...");
       return this.appService.handlePmkisanInit(body);
-    }else{
-    return this.appService.handleInit(body);
+    }
+    else {
+      return this.appService.handleInit(body);
     }
   }
 
@@ -115,9 +119,9 @@ export class AppController {
   }
 
   @Get('feedback/:id')
-  @Render('feedback') 
+  @Render('feedback')
   getFeedbackForm(@Param('id') id: string) {
-    return {id};
+    return { id };
   }
 
   @Post("/submit-feedback/:id")

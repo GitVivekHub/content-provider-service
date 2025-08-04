@@ -14,6 +14,7 @@ import {
   IcarCatalogGenerator,
   flnCatalogGenerator,
   PmKisanIcarGenerator,
+  pmfbyGenerator,
 } from "utils/generator";
 import { v4 as uuidv4 } from "uuid";
 import { ConfigService } from '@nestjs/config';
@@ -26,6 +27,7 @@ import { format } from 'date-fns';
 import * as fs from "fs";
 import { HasuraService } from "./services/hasura/hasura.service";
 import { AuthService } from "./auth/auth.service";
+import { PmfbyService } from "./services/pmfby/pmfby.service";
 const file = fs.readFileSync("./course.json", "utf8");
 const courseData = JSON.parse(file);
 
@@ -52,7 +54,8 @@ export class AppService {
     private readonly hasuraService: HasuraService,
     private readonly authService: AuthService,
     private readonly logger: LoggerService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly pmfbyService: PmfbyService
   ) { }
 
   private nameSpace = process.env.HASURA_NAMESPACE;
@@ -1032,7 +1035,7 @@ export class AppService {
         let decryptedData: any = await decryptRequest(response.d.output, key);
         console.log("Response of VerifyOTP", response);
         console.log("Response from decryptedData(verifyOTP)", decryptedData);
-        
+
         try {
           const parsedDecryptedData = JSON.parse(decryptedData);
           response.d.output = parsedDecryptedData;
@@ -1041,7 +1044,7 @@ export class AppService {
           console.error("Error parsing decrypted data:", e);
           response["status"] = "NOT_OK";
         }
-        
+
         return response;
       } else {
         return {
@@ -1422,11 +1425,11 @@ export class AppService {
           mobileNumber: registrationNumber,
           timestamp: new Date().toISOString(),
         };
-   // Build status message
-      let otpMessage = "Request for OTP is sent. Please enter the OTP when received and Submit.";
-      // if (!isValidPhone) {
-      //   otpMessage += " However, the provided contact phone number is invalid and will not be used.";
-      // }
+        // Build status message
+        let otpMessage = "Request for OTP is sent. Please enter the OTP when received and Submit.";
+        // if (!isValidPhone) {
+        //   otpMessage += " However, the provided contact phone number is invalid and will not be used.";
+        // }
         return {
           context: { ...body.context, action: "on_init", timestamp: new Date().toISOString() },
           message: {
@@ -1793,5 +1796,114 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
     }
 
     return `=== PM KISAN BENEFICIARY STATUS ===\n\n${userDetails}\n\n=== PAYMENT STATUS & ISSUES ===\n\n${userErrors.join("\n")}`;
+  }
+  public async handlePmfbyInit(body: any) {
+    const inquiryType = body?.message?.order?.fulfillments?.[0]?.customer?.person?.tags
+      ?.find(tag => tag?.descriptor?.code === 'inquiry_type')?.value;
+    const payload = body?.message?.order;
+
+    const tags = payload?.fulfillments?.[0]?.customer?.person?.tags || [];
+    const season = tags.find(tag => tag.descriptor?.code === "season")?.value;
+    const year = tags.find(tag => tag.descriptor?.code === "year")?.value;
+
+    const mobileNumber = payload?.fulfillments?.[0]?.customer?.contact?.phone;
+
+    if (!inquiryType || !season || !year) {
+      return {
+        context: {
+          ...body.context,
+          action: "on_init",
+          timestamp: new Date().toISOString()
+        },
+        message: {
+          order: {
+            provider: {
+              id: body?.message?.order?.provider?.id || "NA"
+            },
+            items: [
+              {
+                id: body?.message?.order?.items?.[0]?.id || "NA", 
+                tags: [
+                  {
+                    display: true,
+                    descriptor: {
+                      name: "Missing Input",
+                      code: "missing_input",
+                      short_desc: `${!inquiryType ? "inquiryType" : !season ? "season" : "year"} is required for PMFBY service`
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      };
+    }
+
+    //Get Farmer ID from mobile number
+    const farmerId = await this.pmfbyService.getFarmerId(mobileNumber);
+    console.log("Farmer ID:", farmerId);
+
+    if(!farmerId){
+      return {
+        context: { ...body.context, action: "on_init", timestamp: new Date().toISOString() },
+        message: {
+          order: {
+            provider: {
+              id: body?.message?.order?.provider?.id || "NA"
+            },
+            items: [
+              {
+              id: body?.message?.order?.items?.[0]?.id || "NA", 
+              tags: [{
+                display: true,
+                descriptor: {
+                  name: "Error",
+                  code: "farmer_id_not_found",
+                  short_desc: "Farmer ID not found for the provided mobile number"
+                }
+              }]
+            }],
+            type: "DEFAULT"
+          }
+        }
+      };
+    }
+
+    // Get PMFBY authentication token
+    const pmfbyToken = await this.pmfbyService.getPmfbyToken(mobileNumber);
+    let policyDetails;
+    if (inquiryType?.toLowerCase() === "policy_status") {
+      const seasonCode = season?.toLowerCase() === 'kharif'
+        ? '1'
+        : season?.toLowerCase() === 'rabi'
+          ? '2'
+          : season?.toLowerCase() === 'summer'
+            ? '3'
+            : '';
+      const formattedYear = year.toString().slice(-2);
+      policyDetails = await this.pmfbyService.getPolicyStatus(
+        farmerId,
+        seasonCode,
+        formattedYear,
+        pmfbyToken
+      );
+    }
+    /*
+     else if (inquiryType?.toLowerCase() === "claim_status") {
+
+      const claimDetails = await this.pmfbyService.getClaimStatus(
+        farmerId,
+        season,
+        year,
+        pmfbyToken
+      );
+    }
+    */
+    const mappedResponse = await pmfbyGenerator(policyDetails.data,"Policies");
+    return {
+      context: { ...body.context, action: "on_init", timestamp: new Date().toISOString() },
+      message: mappedResponse.catalog
+    };
   }
 }
