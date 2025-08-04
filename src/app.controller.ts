@@ -16,13 +16,16 @@ import {
 import { AuthGuard } from "@nestjs/passport";
 import { AppService } from "./app.service";
 import { AuthService } from "./auth/auth.service";
+import { firstValueFrom } from "rxjs";
+import { HttpService } from "@nestjs/axios";
 
 @Controller("")
 export class AppController {
   constructor(
     private readonly appService: AppService,
-    private readonly authService: AuthService
-  ) { }
+    private readonly authService: AuthService,
+    private readonly httpService: HttpService
+  ) {}
 
   @Get()
   getHello(): string {
@@ -69,11 +72,20 @@ export class AppController {
       body?.message?.intent?.category?.descriptor?.name == "knowledge-advisory"
     ) {
       return this.appService.searchForIntentQuery(body);
-
-    } else if (body?.message?.intent?.category?.descriptor?.code.toLowerCase() == "schemes-agri" || body?.message?.intent?.category?.descriptor?.name.toLowerCase() == "schemes-agri") {
+    } else if (
+      body?.message?.intent?.category?.descriptor?.code.toLowerCase() ==
+        "schemes-agri" ||
+      body?.message?.intent?.category?.descriptor?.name.toLowerCase() ==
+        "schemes-agri"
+    ) {
       console.log("Inside pm kisan search");
       return this.appService.handlePmKisanSearch(body);
-    } else if (body?.message?.intent?.category?.descriptor?.code.toLowerCase() == "icar-schemes" || body?.message?.intent?.category?.descriptor?.name.toLowerCase() == "icar-schemes") {
+    } else if (
+      body?.message?.intent?.category?.descriptor?.code.toLowerCase() ==
+        "icar-schemes" ||
+      body?.message?.intent?.category?.descriptor?.name.toLowerCase() ==
+        "icar-schemes"
+    ) {
       console.log("Inside Icar search");
       return this.appService.handleSearch(body);
     }
@@ -86,7 +98,7 @@ export class AppController {
   }
 
   @Post("mobility/init")
-  initCourse1(@Body() body: any) {
+  async initCourse1(@Body() body: any) {
     console.log("init api calling");
     if (body?.message?.order?.provider?.id?.toLowerCase() == 'schemes-agri' && body?.message?.order?.items?.[0]?.id?.toLowerCase() == 'pmfby') {
       console.log("INSIDE PMFBY INIT...");
@@ -112,9 +124,10 @@ export class AppController {
     return this.appService.handleRating(body);
   }
 
-  @Post('mobility/status')
-  handleStatus(@Body() body: any) {
-    console.log("status api calling")
+  @Post("mobility/status")
+  async handleStatus(@Body() body: any) {
+    console.log("status api calling");
+
     return this.appService.handleStatus(body);
   }
 

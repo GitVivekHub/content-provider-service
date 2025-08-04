@@ -17,11 +17,16 @@ import {
   pmfbyGenerator,
 } from "utils/generator";
 import { v4 as uuidv4 } from "uuid";
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import { encrypt, decrypt, getUniqueKey, decryptRequest } from './utils/encryption';
-import { LoggerService } from './services/logger/logger.service';
-import { format } from 'date-fns';
+import { ConfigService } from "@nestjs/config";
+import axios from "axios";
+import {
+  encrypt,
+  decrypt,
+  getUniqueKey,
+  decryptRequest,
+} from "./utils/encryption";
+import { LoggerService } from "./services/logger/logger.service";
+import { format } from "date-fns";
 
 // getting course data
 import * as fs from "fs";
@@ -34,17 +39,17 @@ const courseData = JSON.parse(file);
 // PM Kisan Portal Errors
 const PMKissanProtalErrors = {
   "Income Tax Payee": {
-    "text": "{{farmer_name}}, you are an Income Tax Payee. Please contact your nearest CSC center for further assistance.",
-    "types": ["status", "payment", "installment"]
+    text: "{{farmer_name}}, you are an Income Tax Payee. Please contact your nearest CSC center for further assistance.",
+    types: ["status", "payment", "installment"],
   },
   "Land Seeding, KYS": {
-    "text": "{{farmer_name}}, your land is under seeding/KYS process. Please wait for completion.",
-    "types": ["status", "payment", "installment"]
+    text: "{{farmer_name}}, your land is under seeding/KYS process. Please wait for completion.",
+    types: ["status", "payment", "installment"],
   },
   "No Errors": {
-    "text": "{{farmer_name}}, your {{latest_installment_paid}} installment has been processed successfully. Registration date: {{Reg_Date (DD-MM-YYYY)}}",
-    "types": ["status", "payment", "installment"]
-  }
+    text: "{{farmer_name}}, your {{latest_installment_paid}} installment has been processed successfully. Registration date: {{Reg_Date (DD-MM-YYYY)}}",
+    types: ["status", "payment", "installment"],
+  },
 };
 
 @Injectable()
@@ -854,8 +859,6 @@ export class AppService {
       //   }
       // }
 
-
-
       let key = getUniqueKey();
       // Create the request data as a JSON string
       let requestData = JSON.stringify({
@@ -1005,7 +1008,9 @@ export class AppService {
         detectedType = "Ben_id";
       }
 
-      console.log(`Detected type for verification ${mobileNumber}: ${detectedType}`);
+      console.log(
+        `Detected type for verification ${mobileNumber}: ${detectedType}`
+      );
 
       let requestData = `{\"Types\":\"${detectedType}\",\"Values\":\"${mobileNumber}\",\"OTP\":\"${otp}\",\"Token\":\"${process.env.PM_KISSAN_TOKEN}\"}`;
       console.log("Request data: ", requestData);
@@ -1039,7 +1044,8 @@ export class AppService {
         try {
           const parsedDecryptedData = JSON.parse(decryptedData);
           response.d.output = parsedDecryptedData;
-          response["status"] = parsedDecryptedData.Rsponce === "True" ? "OK" : "NOT_OK";
+          response["status"] =
+            parsedDecryptedData.Rsponce === "True" ? "OK" : "NOT_OK";
         } catch (e) {
           console.error("Error parsing decrypted data:", e);
           response["status"] = "NOT_OK";
@@ -1076,7 +1082,11 @@ export class AppService {
       const orderId = body.message?.order_id;
 
       if (!orderId) {
-        return this.createStatusErrorResponse(body.context, "missing_order_id", "Please provide a valid order ID");
+        return this.createStatusErrorResponse(
+          body.context,
+          "missing_order_id",
+          "Please provide a valid order ID"
+        );
       }
 
       // Check if this is an OTP validation request
@@ -1086,13 +1096,502 @@ export class AppService {
       }
 
       // Handle other status requests if needed
-      return this.createStatusErrorResponse(body.context, "invalid_request", "Invalid status request");
-
+      return this.createStatusErrorResponse(
+        body.context,
+        "invalid_request",
+        "Invalid status request"
+      );
     } catch (err) {
       console.error("❌ Error in handleStatus:", err);
       console.error("❌ Error message:", err.message);
       console.error("❌ Error stack:", err.stack);
       throw new InternalServerErrorException(err.message, { cause: err });
+    }
+  }
+
+  async handleStatusForSHC(input: any, body: any): Promise<any> {
+    // Log input for debugging (replace with proper logger in production)
+
+    // Validate input and context parameters
+    if (
+      !input ||
+      !input.data ||
+      !Array.isArray(input.data.getTestForAuthUser) ||
+      input.data.getTestForAuthUser.length === 0
+    ) {
+      throw new HttpException(
+        "Invalid input: data.getTestForAuthUser must be a non-empty array",
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    // Parameter mapping for standardized codes
+    const parameterMapping: { [key: string]: string } = {
+      pH: "ph",
+      OC: "organic_carbon",
+      OM: "organic_matter",
+      p: "phosphorus",
+      k: "potassium",
+      S: "sulphur",
+      Cu: "copper",
+      Fe: "iron",
+      Mn: "manganese",
+      Zn: "zinc",
+      EC: "soil_salinity",
+      B: "boron",
+    };
+
+    // Conversion factor for bags to kilograms
+    const BAG_TO_KG = 50;
+
+    const items = input.data.getTestForAuthUser
+      .map((data: any, index: number) => {
+        // Validate data object
+        if (!data) {
+          console.warn(
+            `Skipping invalid item at index ${index}: data is null or undefined`
+          );
+          return null;
+        }
+
+        // Validate required fields
+        const requiredFields = [
+          { key: "id", message: "Missing id or computedID" },
+          { key: "reportData", message: "Missing reportData" },
+          { key: "rdfValues", message: "Missing rdfValues" },
+          {
+            key: "reportData.parameterInfos",
+            message: "Missing reportData.parameterInfos",
+          },
+          {
+            key: "rdfValues.fertilizerRecommendation_details",
+            message: "Missing rdfValues.fertilizerRecommendation_details",
+          },
+          {
+            key: "rdfValues.deficiency",
+            message: "Missing rdfValues.deficiency",
+          },
+        ];
+
+        for (const field of requiredFields) {
+          const keys = field.key.split(".");
+          let current = data;
+          for (const key of keys) {
+            if (
+              !current ||
+              current[key] === undefined ||
+              current[key] === null
+            ) {
+              console.warn(
+                `${field.message} for item ${
+                  data.id || data.computedID || "unknown"
+                } at index ${index}`
+              );
+              return null;
+            }
+            current = current[key];
+          }
+        }
+
+        // Process crops with null check
+        let crops: string[] = [];
+        if (typeof data.crop === "string" && data.crop.trim()) {
+          crops = data.crop
+            .split(",")
+            .map((crop: string) => crop.trim())
+            .filter((crop: string) => crop);
+        }
+        const recommendedCrops =
+          crops.length > 0 ? crops.join(", ") : "Unknown";
+
+        // Map test parameters to tags, handling missing boron
+        const parameterTags = data.reportData.parameterInfos
+          .map((param: any) => {
+            if (!param || !param.key || param.value === undefined) {
+              console.warn(
+                `Invalid parameter for item ${
+                  data.id || data.computedID || "unknown"
+                }: missing key or value`
+              );
+              return null;
+            }
+            const value =
+              param.value === "NA"
+                ? "Not available"
+                : `${param.value} ${param.unit || ""} (${
+                    param.rating || "Unknown"
+                  })`;
+            return {
+              code: parameterMapping[param.key] || param.key.toLowerCase(),
+              value,
+            };
+          })
+          .filter((tag: any) => tag !== null);
+
+        // Add boron if in testparameters but missing in parameterInfos
+        if (
+          Array.isArray(data.testparameters) &&
+          data.testparameters.includes("B") &&
+          !data.reportData.parameterInfos.some((p: any) => p.key === "B")
+        ) {
+          parameterTags.push({
+            code: "boron",
+            value: "Not available",
+          });
+        }
+
+        // Convert HTML to Base64 with null check
+        const htmlContent = typeof data.html === "string" ? data.html : "";
+        const base64Html = Buffer.from(htmlContent).toString("base64");
+
+        // Map fertilizer recommendations with validation
+        const fertilizerTags = (
+          data.rdfValues.fertilizerRecommendation_details || []
+        )
+          .map((rec: any, recIndex: number) => {
+            if (!rec || !rec.crop) {
+              console.warn(
+                `Skipping invalid fertilizer recommendation at index ${recIndex} for item ${
+                  data.id || data.computedID || "unknown"
+                }: missing or invalid crop`
+              );
+              return null;
+            }
+
+            const mapFertilizers = (fertilizers: any[]) =>
+              (fertilizers || [])
+                .map((fert: any, fertIndex: number) => {
+                  if (
+                    !fert ||
+                    !fert.fertilizer ||
+                    !fert.fertilizer.name ||
+                    !fert.bags
+                  ) {
+                    console.warn(
+                      `Skipping invalid fertilizer at index ${fertIndex} for crop ${
+                        rec.crop
+                      } in item ${data.id || data.computedID || "unknown"}`
+                    );
+                    return null;
+                  }
+                  const bags = parseFloat(fert.bags) || 0;
+                  const quantityKg = (bags * BAG_TO_KG).toFixed(2);
+                  return {
+                    fertilizer: fert.fertilizer.name,
+                    quantity: `${quantityKg} Kg per Acre`,
+                    nutrients: {
+                      n: (
+                        (fert.fertilizer?.composition?.n || 0) *
+                        parseFloat(quantityKg)
+                      ).toFixed(2),
+                      p: (
+                        (fert.fertilizer?.composition?.p || 0) *
+                        parseFloat(quantityKg)
+                      ).toFixed(2),
+                      k: (
+                        (fert.fertilizer?.composition?.k || 0) *
+                        parseFloat(quantityKg)
+                      ).toFixed(2),
+                    },
+                  };
+                })
+                .filter((fert: any) => fert !== null);
+
+            return {
+              code: `fertilizer_recommendation_${rec.crop
+                .replace(/[^a-zA-Z0-9]/g, "_")
+                .toLowerCase()}`,
+              value: JSON.stringify({
+                crop: rec.crop,
+                combOne: mapFertilizers(rec.combOne || []),
+                combTwo: mapFertilizers(rec.combTwo || []),
+                fym:
+                  rec.fym && rec.Fymunit
+                    ? `${rec.fym} ${rec.Fymunit}`
+                    : "Not available",
+              }),
+            };
+          })
+          .filter((tag: any) => tag !== null);
+
+        // Map deficiency data with validation
+        const deficiencyTags = (data.rdfValues.deficiency || [])
+          .map((def: any, index: number) => {
+            if (!def) {
+              console.warn(
+                `Skipping invalid deficiency at index ${index} for item ${
+                  data.id || data.computedID || "unknown"
+                }`
+              );
+              return null;
+            }
+            return {
+              code: `deficiency_${index + 1}`,
+              value: JSON.stringify({
+                nutrients: {
+                  n: `${def.n || 0} Kg per Acre`,
+                  p: `${def.p || 0} Kg per Acre`,
+                  k: `${def.k || 0} Kg per Acre`,
+                  fym: `${def.fym || 0} Tonne per Acre`,
+                },
+                micronutrients: def.range
+                  ? JSON.stringify(def.range)
+                  : "Unknown",
+                details: def.details || "No details provided",
+              }),
+            };
+          })
+          .filter((tag: any) => tag !== null);
+
+        // Additional fulfillment tags with null checks
+        const additionalFulfillmentTags = [
+          { code: "report_format", value: "PDF, JSON" },
+          { code: "language", value: "English, Hindi" },
+          { code: "farmer_name", value: data.farmer?.name || "Unknown" },
+          { code: "farmer_address", value: data.farmer?.address || "Unknown" },
+          { code: "farmer_phone", value: data.farmer?.phone || "Unknown" },
+          { code: "plot_area", value: `${data.plot?.area || 0} hectares` },
+          { code: "plot_survey_no", value: data.plot?.surveyNo || "Unknown" },
+          { code: "scheme_id", value: data.scheme?._id || "Unknown" },
+          { code: "scheme_name", value: data.scheme?.name || "Unknown" },
+          { code: "scheme_type", value: data.scheme?.type || "Unknown" },
+          {
+            code: "scheme_department",
+            value: data.scheme?.department || "Unknown",
+          },
+          {
+            code: "scheme_created_at",
+            value: data.scheme?.createdAt || "Unknown",
+          },
+          { code: "district_id", value: data.district?._id || "Unknown" },
+          { code: "district_name", value: data.district?.name || "Unknown" },
+          { code: "block_id", value: data.block?._id || "Unknown" },
+          { code: "block_name", value: data.block?.name || "Unknown" },
+          { code: "village_id", value: data.village?._id || "Unknown" },
+          { code: "village_name", value: data.village?.name || "Unknown" },
+          { code: "village_status", value: data.village?.status || "Unknown" },
+          { code: "sample_date", value: data.sampleDate || "Unknown" },
+          {
+            code: "test_completed_at",
+            value: data.testCompletedAt || "Unknown",
+          },
+          {
+            code: "location_coordinates",
+            value: data.location?.coordinates?.join(", ") || "Unknown",
+          },
+          { code: "status", value: data.status || "Unknown" },
+          {
+            code: "test_parameters",
+            value: (data.testparameters || []).join(", ") || "Unknown",
+          },
+          {
+            code: "fym_list",
+            value:
+              (data.rdfValues.fymlist || [])
+                .map((fym: any) => fym ?? 0)
+                .join(", ") || "Unknown",
+          },
+          {
+            code: "gypsum_list",
+            value:
+              (data.rdfValues.gypsumlist || [])
+                .map((g: any) => g ?? 0)
+                .join(", ") || "Unknown",
+          },
+          ...fertilizerTags,
+          ...deficiencyTags,
+        ];
+
+        // Create a short description based on key nutrient ratings
+        const nutrientRatings =
+          data.reportData.parameterInfos
+            .filter((param: any) =>
+              ["pH", "EC", "OC", "p", "k"].includes(param.key)
+            )
+            .map(
+              (param: any) =>
+                `${param.name || param.key}: ${param.rating || "Unknown"}`
+            )
+            .join(", ") || "No nutrient ratings available";
+
+        return {
+          id: data.computedID || data.id || "unknown",
+          descriptor: {
+            name: `Soil Health Card for Farmer ${
+              data.farmer?.name || "Unknown"
+            }`,
+            short_desc: `${nutrientRatings}, crop recommendation: ${recommendedCrops}`,
+            long_desc: `Soil Health Card for ${
+              data.farmer?.name || "Unknown"
+            } in ${data.village?.name || "Unknown"}, ${
+              data.district?.name || "Unknown"
+            }. Nutrient Ratings: ${nutrientRatings}. Recommended crops: ${recommendedCrops}.`,
+          },
+          media: [
+            {
+              mimetype: "text/html",
+              url: base64Html,
+            },
+          ],
+          tags: [{ list: parameterTags }],
+          fulfillments: [
+            {
+              id: data.computedID || data.id || "unknown",
+              type: "digital",
+              start: {
+                time: {
+                  timestamp: data.sampleDate || new Date().toISOString(),
+                },
+              },
+              end: {
+                time: {
+                  timestamp: data.testCompletedAt || new Date().toISOString(),
+                },
+              },
+              tags: additionalFulfillmentTags,
+            },
+          ],
+        };
+      })
+      .filter((item: any) => item !== null);
+
+    return {
+      context: {
+        domain: body?.context?.domain,
+        location: { country: { name: "IND" } },
+        action: "on_init",
+        version: "1.1.0",
+        bap_id: body?.context?.bap_id,
+        bap_uri: body?.context?.bap_uri,
+        transaction_id: body?.context?.transaction_id,
+        message_id: body?.context?.message_id,
+        timestamp: body?.context?.timestamp,
+        ttl: "PT10M",
+      },
+      message: {
+        order: {
+          provider: {
+            id: "471",
+            descriptor: {
+              name:
+                input.data.getTestForAuthUser[0]?.scheme?.name ||
+                "Soil Health Card Service",
+              images: [
+                { url: "https://soilhealth.dac.gov.in/files/report/shc.png" },
+              ],
+            },
+          },
+          providers: [
+            {
+              id:
+                input.data.getTestForAuthUser[0]?.scheme?._id ||
+                "unknown_provider",
+              descriptor: {
+                name:
+                  input.data.getTestForAuthUser[0]?.scheme?.department ||
+                  "Unknown Department",
+                short_desc: "Govt Soil Testing Lab - Maharashtra, India",
+                images: [
+                  { url: "https://soilhealth.dac.gov.in/files/report/lab.png" },
+                ],
+              },
+              items,
+            },
+          ],
+        },
+      },
+    };
+  }
+
+  async fetchAndMapSoilHealthCard(body): Promise<any> {
+    const baseUrl = process.env.SOIL_HEALTH_BASE_URL;
+
+    // Step 1: Get access token
+    const tokenPayload = {
+      query:
+        "query Query($refreshToken: String!) { generateAccessToken(refreshToken: $refreshToken) }",
+      variables: {
+        refreshToken:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblR5cGUiOiJSZWZyZXNoVG9rZW4iLCJhdXRob3JpdHkiOiIiLCJwYXJlbnQiOiIiLCJ0eXBlIjoiRXh0ZXJuYWxVc2VyIiwic3ViIjoiNjc3NzgwZWYzNzkyZjZmOWQxMzExOWJkIiwidXNlcnN0YXR1cyI6IkFDVElWRSIsImlhdCI6MTczNTg4NTAzOSwiZXhwIjoxNzM2NDg5ODM5LCJhdWQiOiJzb2lsaGVhbHRoLmRhYy5nb3YuaW4iLCJpc3MiOiJzb2lsaGVhbHRoLmRhYy5nb3YuaW4iLCJqdGkiOiI0NzEzNjg3ZS1hM2NmLTRiYTUtYjk0MC0wZjFlZDliZjE4YmEifQ.rOl0BztuPnmJh53hnzr9sv3Nfj4n1qTnABpOU-1N1KA",
+      },
+    };
+
+    let accessToken: string;
+    try {
+      const tokenResponse = await axios.post(baseUrl, tokenPayload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      accessToken = tokenResponse.data?.data?.generateAccessToken?.token;
+      console.log("accessToken--->>", accessToken);
+      if (!accessToken) {
+        throw new Error("Failed to retrieve access token");
+      }
+    } catch (error) {
+      throw new HttpException(
+        `Token retrieval failed: ${error.message}`,
+        HttpStatus.UNAUTHORIZED
+      );
+    }
+
+    // Helper function to extract tag value by code
+    const getTagValue = (tags, code) => {
+      const tag = tags?.find((t) => t.descriptor?.code === code);
+      return tag?.value;
+    };
+
+    // Extract values from body
+    const tags =
+      body?.message?.order?.fulfillments?.[0]?.customer?.person?.tags;
+    const phone =
+      body?.message?.order?.fulfillments?.[0]?.customer?.contact?.phone;
+
+    // Step 2: Call soil health API with the access token
+    const soilHealthPayload = {
+      query:
+        "query GetTestForAuthUser($computedId: String, $phone: PhoneNumber, $state: String, $district: String, $name: String, $farmer: String, $from: Datetime, $to: Datetime, $cycle: String, $locale: String, $scheme: String, $limit: Int, $skip: Int) { getTestForAuthUser(computedID: $computedId, phone: $phone, state: $state, district: $district, name: $name, farmer: $farmer, from: $from, to: $to, cycle: $cycle, scheme: $scheme, limit: $limit, skip: $skip) { id computedID cycle scheme plot { address area surveyNo } farmer { address name phone } crop location testparameters rdfValues status testCompletedAt sampleDate reportData district block village results fertilizer html(locale: $locale) uniqueID } }",
+      variables: {
+        state: getTagValue(tags, "state"),
+        district: getTagValue(tags, "district"),
+        cycle: getTagValue(tags, "cycle"),
+        scheme: getTagValue(tags, "scheme"),
+        phone: phone,
+        limit: 10,
+        skip: 0,
+        locale: "en", // Add locale if required by the API; adjust as needed
+      },
+    };
+
+    console.log(
+      "soilHealthPayload-->>",
+      JSON.stringify(soilHealthPayload, null, 2)
+    );
+
+    try {
+      const soilHealthResponse = await axios.post(baseUrl, soilHealthPayload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const soilHealthData = soilHealthResponse.data;
+      if (!soilHealthData?.data?.getTestForAuthUser) {
+        throw new Error("No soil health data found");
+      }
+
+      return soilHealthData;
+    } catch (error) {
+      console.error(
+        "Soil health API error:",
+        error.response?.data || error.message
+      );
+      throw new HttpException(
+        `Soil health API call failed: ${error.message}`,
+        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
@@ -1109,7 +1608,10 @@ export class AppService {
       }
 
       // Verify OTP
-      const verifyResponse = await this.verifyOTP(storedData.mobileNumber, orderId);
+      const verifyResponse = await this.verifyOTP(
+        storedData.mobileNumber,
+        orderId
+      );
 
       if (verifyResponse.status !== "OK") {
         return this.createStatusErrorResponse(
@@ -1129,17 +1631,25 @@ export class AppService {
         const context = {
           userAadhaarNumber: storedData.identifier || storedData.mobileNumber,
           lastAadhaarDigits: "",
-          queryType: "status"
+          queryType: "status",
         };
 
         const userDataResponse = await this.fetchUserData(context, {});
-        return this.createSuccessResponse(body.context, orderId, storedData.mobileNumber, userDataResponse);
-
+        return this.createSuccessResponse(
+          body.context,
+          orderId,
+          storedData.mobileNumber,
+          userDataResponse
+        );
       } catch (fetchError) {
         console.error("❌ Error in fetchUserData:", fetchError);
-        return this.createFetchErrorResponse(body.context, orderId, storedData.mobileNumber, fetchError);
+        return this.createFetchErrorResponse(
+          body.context,
+          orderId,
+          storedData.mobileNumber,
+          fetchError
+        );
       }
-
     } catch (error) {
       console.error("❌ Error in OTP validation:", error);
       return this.createStatusErrorResponse(
@@ -1159,20 +1669,31 @@ export class AppService {
     };
   }
 
-  private createStatusErrorResponse(context: any, code: string, message: string) {
+  private createStatusErrorResponse(
+    context: any,
+    code: string,
+    message: string
+  ) {
     return {
-      context: { ...context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
+      context: {
+        ...context,
+        action: "on_status",
+        timestamp: new Date().toISOString(),
+        ttl: "PT10M",
+      },
       message: {
         order: {
           id: "error",
-          tags: [{
-            display: true,
-            descriptor: {
-              name: "Error",
-              code: code,
-              short_desc: message,
+          tags: [
+            {
+              display: true,
+              descriptor: {
+                name: "Error",
+                code: code,
+                short_desc: message,
+              },
             },
-          }],
+          ],
         },
       },
     };
@@ -1180,7 +1701,9 @@ export class AppService {
 
   private extractBeneficiaryName(userDataResponse: string): string {
     // Extract beneficiary name from the response string
-    const beneficiaryNameMatch = userDataResponse.match(/Beneficiary Name - (.+)/);
+    const beneficiaryNameMatch = userDataResponse.match(
+      /Beneficiary Name - (.+)/
+    );
     if (beneficiaryNameMatch && beneficiaryNameMatch[1]) {
       return beneficiaryNameMatch[1].trim();
     }
@@ -1188,9 +1711,19 @@ export class AppService {
     return "Beneficiary";
   }
 
-  private createSuccessResponse(context: any, orderId: string, mobileNumber: string, userDataResponse: string) {
+  private createSuccessResponse(
+    context: any,
+    orderId: string,
+    mobileNumber: string,
+    userDataResponse: string
+  ) {
     return {
-      context: { ...context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
+      context: {
+        ...context,
+        action: "on_status",
+        timestamp: new Date().toISOString(),
+        ttl: "PT10M",
+      },
       message: {
         order: {
           id: orderId,
@@ -1202,36 +1735,50 @@ export class AppService {
               short_desc: "PM Kisan Beneficiary Status Service",
             },
           },
-          items: [{
-            id: "pm_kisan_status",
-            descriptor: {
-              name: "Beneficiary Status",
-              short_desc: "PM Kisan beneficiary details and payment status",
-            },
-          }],
-          fulfillments: [{
-            customer: {
-              person: { name: this.extractBeneficiaryName(userDataResponse) },
-              contact: { phone: mobileNumber || "XXXXXXXXXX" },
-            },
-            state: {
+          items: [
+            {
+              id: "pm_kisan_status",
               descriptor: {
-                name: "Status",
-                code: "completed",
-                short_desc: "OTP verified and user data retrieved",
-                long_desc: userDataResponse,
+                name: "Beneficiary Status",
+                short_desc: "PM Kisan beneficiary details and payment status",
               },
-              updated_at: new Date().toISOString(),
             },
-          }],
+          ],
+          fulfillments: [
+            {
+              customer: {
+                person: { name: this.extractBeneficiaryName(userDataResponse) },
+                contact: { phone: mobileNumber || "XXXXXXXXXX" },
+              },
+              state: {
+                descriptor: {
+                  name: "Status",
+                  code: "completed",
+                  short_desc: "OTP verified and user data retrieved",
+                  long_desc: userDataResponse,
+                },
+                updated_at: new Date().toISOString(),
+              },
+            },
+          ],
         },
       },
     };
   }
 
-  private createFetchErrorResponse(context: any, orderId: string, mobileNumber: string, fetchError: any) {
+  private createFetchErrorResponse(
+    context: any,
+    orderId: string,
+    mobileNumber: string,
+    fetchError: any
+  ) {
     return {
-      context: { ...context, action: "on_status", timestamp: new Date().toISOString(), ttl: "PT10M" },
+      context: {
+        ...context,
+        action: "on_status",
+        timestamp: new Date().toISOString(),
+        ttl: "PT10M",
+      },
       message: {
         order: {
           id: orderId,
@@ -1243,28 +1790,34 @@ export class AppService {
               short_desc: "PM Kisan Beneficiary Status Service",
             },
           },
-          items: [{
-            id: "pm_kisan_status",
-            descriptor: {
-              name: "Beneficiary Status",
-              short_desc: "Failed to retrieve beneficiary data",
-            },
-          }],
-          fulfillments: [{
-            customer: {
-              person: { name: "Beneficiary" },
-              contact: { phone: mobileNumber || "XXXXXXXXXX" },
-            },
-            state: {
+          items: [
+            {
+              id: "pm_kisan_status",
               descriptor: {
-                name: "Error",
-                code: "fetch_user_data_failed",
+                name: "Beneficiary Status",
                 short_desc: "Failed to retrieve beneficiary data",
-                long_desc: fetchError.message || "An error occurred while fetching user data",
               },
-              updated_at: new Date().toISOString(),
             },
-          }],
+          ],
+          fulfillments: [
+            {
+              customer: {
+                person: { name: "Beneficiary" },
+                contact: { phone: mobileNumber || "XXXXXXXXXX" },
+              },
+              state: {
+                descriptor: {
+                  name: "Error",
+                  code: "fetch_user_data_failed",
+                  short_desc: "Failed to retrieve beneficiary data",
+                  long_desc:
+                    fetchError.message ||
+                    "An error occurred while fetching user data",
+                },
+                updated_at: new Date().toISOString(),
+              },
+            },
+          ],
         },
       },
     };
@@ -1401,17 +1954,24 @@ export class AppService {
   }
   async handlePmkisanInit(body: any) {
     // Extract registration number from customer tags
-    const customerTags = body?.message?.order?.fulfillments?.[0]?.customer?.person?.tags;
+    const customerTags =
+      body?.message?.order?.fulfillments?.[0]?.customer?.person?.tags;
     let registrationNumber = this.extractRegistrationNumber(customerTags);
 
     // Validate registration number
     if (!registrationNumber) {
-      return this.createErrorResponse(body.context, "missing_registration", "Valid registration number is required for OTP generation");
+      return this.createErrorResponse(
+        body.context,
+        "missing_registration",
+        "Valid registration number is required for OTP generation"
+      );
     }
 
     // Sanitize and validate mobile number
-    const phone = body?.message?.order?.fulfillments?.[0]?.customer?.contact?.phone;
-    const isValidPhone = typeof phone === "string" && /^[6-9]\d{9}$/.test(phone);
+    const phone =
+      body?.message?.order?.fulfillments?.[0]?.customer?.contact?.phone;
+    const isValidPhone =
+      typeof phone === "string" && /^[6-9]\d{9}$/.test(phone);
 
     try {
       // Generate and store OTP using registration number
@@ -1431,35 +1991,48 @@ export class AppService {
         //   otpMessage += " However, the provided contact phone number is invalid and will not be used.";
         // }
         return {
-          context: { ...body.context, action: "on_init", timestamp: new Date().toISOString() },
+          context: {
+            ...body.context,
+            action: "on_init",
+            timestamp: new Date().toISOString(),
+          },
           message: {
             order: {
               provider: { id: "NA" },
-              items: [{
-                id: "NA",
-                tags: [{
-                  display: true,
-                  descriptor: {
-                    name: "Otp Status",
-                    code: "otp_status",
-                    short_desc: otpMessage
-                  }
-                }]
-              }],
-              type: "DEFAULT"
-            }
-          }
+              items: [
+                {
+                  id: "NA",
+                  tags: [
+                    {
+                      display: true,
+                      descriptor: {
+                        name: "Otp Status",
+                        code: "otp_status",
+                        short_desc: otpMessage,
+                      },
+                    },
+                  ],
+                },
+              ],
+              type: "DEFAULT",
+            },
+          },
         };
       } else {
         return this.createErrorResponse(
           body.context,
           "otp_error",
-          otpResponse.d?.output?.Message || "Failed to generate OTP. Please try again later."
+          otpResponse.d?.output?.Message ||
+            "Failed to generate OTP. Please try again later."
         );
       }
     } catch (error) {
       console.log("ORDER_STATUS", error);
-      return this.createErrorResponse(body.context, "processing_error", "Failed to process request. Please try again later.");
+      return this.createErrorResponse(
+        body.context,
+        "processing_error",
+        "Failed to process request. Please try again later."
+      );
     }
   }
 
@@ -1469,12 +2042,20 @@ export class AppService {
     }
 
     for (const tag of customerTags) {
-      if (tag.descriptor?.code === "reg-details" && tag.list && Array.isArray(tag.list)) {
+      if (
+        tag.descriptor?.code === "reg-details" &&
+        tag.list &&
+        Array.isArray(tag.list)
+      ) {
         for (const item of tag.list) {
           if (item.descriptor?.code === "reg-number") {
             const regNumber = String(item.value).trim();
             // Validate: should not be empty and should be alphanumeric
-            if (regNumber && regNumber.length > 0 && /^[A-Z0-9]+$/i.test(regNumber)) {
+            if (
+              regNumber &&
+              regNumber.length > 0 &&
+              /^[A-Z0-9]+$/i.test(regNumber)
+            ) {
               return regNumber;
             }
           }
@@ -1486,37 +2067,47 @@ export class AppService {
 
   private createErrorResponse(context: any, code: string, message: string) {
     return {
-      context: { ...context, action: "on_init", timestamp: new Date().toISOString() },
+      context: {
+        ...context,
+        action: "on_init",
+        timestamp: new Date().toISOString(),
+      },
       message: {
         order: {
           provider: { id: "NA" },
-          items: [{
-            id: "NA",
-            tags: [{
-              display: true,
-              descriptor: {
-                name: "Error",
-                code: code,
-                short_desc: message
-              }
-            }]
-          }],
-          type: "DEFAULT"
-        }
-      }
+          items: [
+            {
+              id: "NA",
+              tags: [
+                {
+                  display: true,
+                  descriptor: {
+                    name: "Error",
+                    code: code,
+                    short_desc: message,
+                  },
+                },
+              ],
+            },
+          ],
+          type: "DEFAULT",
+        },
+      },
     };
   }
 
   // Utility functions
   private titleCase(str: string): string {
-    if (!str) return '';
-    return str.toLowerCase().split(' ').map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    if (!str) return "";
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   }
 
   private addOrdinalSuffix(num: number): string {
-    if (num === 0) return 'No';
+    if (num === 0) return "No";
     const j = num % 10;
     const k = num % 100;
     if (j === 1 && k !== 11) {
@@ -1548,9 +2139,16 @@ export class AppService {
     return `Beneficiary Name - ${BeneficiaryName}
 Beneficiary Location - ${StateName}, ${DistrictName}, ${SubDistrictName}, ${VillageName}
 Registration Number - ${Reg_No}
-Registration Date - ${format(new Date(DateOfRegistration), 'M/d/yyyy h:mm:ss a')}
-Last Installment Status - ${LatestInstallmentPaid == 0 ? "No" : this.addOrdinalSuffix(LatestInstallmentPaid)} Installment payment done
-eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
+Registration Date - ${format(
+      new Date(DateOfRegistration),
+      "M/d/yyyy h:mm:ss a"
+    )}
+Last Installment Status - ${
+      LatestInstallmentPaid == 0
+        ? "No"
+        : this.addOrdinalSuffix(LatestInstallmentPaid)
+    } Installment payment done
+eKYC - ${eKYC_Status == "Y" ? "Done" : "Not Done"}`;
   }
 
   async getUserData(
@@ -1566,7 +2164,7 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
       console.log("encrypted text without @: ", encrypted_text);
 
       let data = {
-        "EncryptedRequest": `${encrypted_text}@${key}`,
+        EncryptedRequest: `${encrypted_text}@${key}`,
       };
 
       let config = {
@@ -1589,10 +2187,7 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
         console.log("getUserData raw response:", res);
 
         if (res.d && res.d.output) {
-          let decryptedData: any = await decryptRequest(
-            res.d.output,
-            key
-          );
+          let decryptedData: any = await decryptRequest(res.d.output, key);
           console.log("Response of getUserData", res);
           //console.log("decrypted data(from getUserData): ", decryptedData);
 
@@ -1603,7 +2198,7 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
             console.error("Error parsing decrypted data:", parseError);
             res.d.output = {
               Rsponce: "False",
-              Message: "Error parsing response"
+              Message: "Error parsing response",
             };
             res["status"] = "NOT_OK";
           }
@@ -1616,7 +2211,7 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
                 Message: "Invalid response structure",
               },
             },
-            status: "NOT_OK"
+            status: "NOT_OK",
           };
         }
       } else {
@@ -1628,7 +2223,7 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
               Message: "HTTP request failed",
             },
           },
-          status: "NOT_OK"
+          status: "NOT_OK",
         };
       }
     } catch (error) {
@@ -1640,7 +2235,7 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
             Message: "Unable to get user details",
           },
         },
-        status: "NOT_OK"
+        status: "NOT_OK",
       };
     }
     return res;
@@ -1710,7 +2305,7 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
 
       let encrypted_text = await encrypt(requestData, token);
       let data = {
-        "EncryptedRequest": `${encrypted_text}@${token}`
+        EncryptedRequest: `${encrypted_text}@${token}`,
       };
 
       let config = {
@@ -1728,10 +2323,7 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
       errors = await errors.data;
       this.logger.log("related issues", JSON.stringify(errors));
 
-      let decryptedData: any = await decryptRequest(
-        errors.d.output,
-        token
-      );
+      let decryptedData: any = await decryptRequest(errors.d.output, token);
 
       // Parse the decrypted data to get the actual API response
       try {
@@ -1741,26 +2333,25 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
         this.logger.error("Error parsing decrypted data:", parseError);
         // Fallback to original response if parsing fails
         errors = {
-          "Rsponce": "False",
-          "Message": "Error parsing API response"
+          Rsponce: "False",
+          Message: "Error parsing API response",
         };
       }
 
       this.logger.log("Response from FetchUserdata: ", JSON.stringify(errors));
 
       if (errors.Rsponce == "True") {
-        const queryType = typeof context.queryType === 'object'
-          ? context.queryType.class
-          : context.queryType;
+        const queryType =
+          typeof context.queryType === "object"
+            ? context.queryType.class
+            : context.queryType;
 
         Object.entries(errors).forEach(([key, value]) => {
           if (key != "Rsponce" && key != "Message") {
             if (
               value &&
               PMKissanProtalErrors[`${value}`] &&
-              PMKissanProtalErrors[`${value}`]["types"].indexOf(
-                queryType
-              ) != -1
+              PMKissanProtalErrors[`${value}`]["types"].indexOf(queryType) != -1
             ) {
               this.logger.log(`ERRORVALUE: ${key} ${value}`);
               userErrors.push(
@@ -1795,7 +2386,9 @@ eKYC - ${eKYC_Status == 'Y' ? 'Done' : 'Not Done'}`;
       this.logger.error("ChatbotBeneficiaryStatus error", error);
     }
 
-    return `=== PM KISAN BENEFICIARY STATUS ===\n\n${userDetails}\n\n=== PAYMENT STATUS & ISSUES ===\n\n${userErrors.join("\n")}`;
+    return `=== PM KISAN BENEFICIARY STATUS ===\n\n${userDetails}\n\n=== PAYMENT STATUS & ISSUES ===\n\n${userErrors.join(
+      "\n"
+    )}`;
   }
   public async handlePmfbyInit(body: any) {
     const inquiryType = body?.message?.order?.fulfillments?.[0]?.customer?.person?.tags
