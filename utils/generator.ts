@@ -1203,7 +1203,6 @@ export const PmKisanIcarGenerator = (apiData: any, query: string) => {
   return catalog;
 };
 export const pmfbyPolicyGenerator = (apiData: any, query: string) => {
-  console.log("apiData", apiData)
   const policies: any[] = apiData;
   const providerWise: Record<string, any[]> = {};
   const defaultProvider = 'SchemeFinder';
@@ -1212,104 +1211,146 @@ export const pmfbyPolicyGenerator = (apiData: any, query: string) => {
   providerWise[defaultProvider] = policies;
 
   const catalog: any = {
-    descriptor: query ? { name: `Details of ${query}` } : {},
-    providers: Object.keys(providerWise).map((provider: string) => {
-      return {
-        descriptor: {
-          name: 'SchemeFinder',
-          short_desc: `PMFBY ${query} Listing via SchemeFinder`,
-        },
-        items: providerWise[provider].map((policy: any, index: number) => {
-          return {
-            id: policy.policyID || `${index}`,
-            descriptor: {
-              name: `Policy ID: ${policy.policyID}`,
-              short_desc: `${policy.insuranceCompanyName}`,
-              long_desc: `Policy for ${policy.relativeName} (${policy.relation}) from ${policy.districtName}, ${policy.stateName}`,
-            },
-            tags: [
-              {
-                descriptor: {
-                  code: 'inquiry-type',
-                  name: 'Inquiry Type'
-                },
-                value: 'policy_status',
-                display: true
+    order: {
+      descriptor: query ? { name: `Details of ${query}` } : {},
+      providers: Object.keys(providerWise).map((provider: string) => {
+        return {
+          descriptor: {
+            name: 'SchemeFinder',
+            short_desc: `PMFBY ${query} Listing via SchemeFinder`,
+          },
+          items: providerWise[provider].map((policy: any, index: number) => {
+            return {
+              id: policy.policyID || `${index}`,
+              descriptor: {
+                name: `Policy ID: ${policy.policyID}`,
+                short_desc: `${policy.insuranceCompanyName}`,
+                long_desc: `Policy for ${policy.relativeName} (${policy.relation}) from ${policy.districtName}, ${policy.stateName}`,
               },
-              {
-                display: true,
-                descriptor: {
-                  code: 'policy-details',
-                  name: 'Policy Details',
+              tags: [
+                {
+                  descriptor: {
+                    code: 'inquiry-type',
+                    name: 'Inquiry Type'
+                  },
+                  value: 'policy_status',
+                  display: true
                 },
-                list: [
-                  {
-                    descriptor: { code: 'policy-id', name: 'Policy ID' },
-                    value: policy.policyID,
-                    display: true,
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'policy-details',
+                    name: 'Policy Details',
                   },
-                  {
-                    descriptor: { code: 'state-id', name: 'State ID' },
-                    value: policy.stateID,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'state-name', name: 'State Name' },
-                    value: policy.stateName,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'district-id', name: 'District ID' },
-                    value: policy.districtID,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'district-name', name: 'District Name' },
-                    value: policy.districtName,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'insurance-company-id', name: 'Insurance Company ID' },
-                    value: policy.insuranceCompanyID,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'insurance-company-name', name: 'Insurance Company Name' },
-                    value: policy.insuranceCompanyName,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'mobile', name: 'Mobile Number' },
-                    value: policy.mobile,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'relative-name', name: 'Relative Name' },
-                    value: policy.relativeName,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'relation', name: 'Relation' },
-                    value: policy.relation,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'application-count', name: 'Application Count' },
-                    value: Array.isArray(policy.applicationList) ? policy.applicationList.length : 0,
-                    display: true,
-                  },
-                  // {
-                  //   descriptor: { code: 'application-list', name: 'Applications' },
-                  //   value: JSON.stringify(policy.applicationList),
-                  //   display: false,
-                  // },
-                ],
-              },
-            ],
-          };
-        }),
-      };
-    }),
+                  list: [
+                    {
+                      descriptor: { code: 'policy-id', name: 'Policy ID' },
+                      value: policy.policyID,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'state-id', name: 'State ID' },
+                      value: policy.stateID,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'state-name', name: 'State Name' },
+                      value: policy.stateName,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'district-id', name: 'District ID' },
+                      value: policy.districtID,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'district-name', name: 'District Name' },
+                      value: policy.districtName,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'insurance-company-id', name: 'Insurance Company ID' },
+                      value: policy.insuranceCompanyID,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'insurance-company-name', name: 'Insurance Company Name' },
+                      value: policy.insuranceCompanyName,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'mobile', name: 'Mobile Number' },
+                      value: policy.mobile,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'relative-name', name: 'Relative Name' },
+                      value: policy.relativeName,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'relation', name: 'Relation' },
+                      value: policy.relation,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'application-count', name: 'Application Count' },
+                      value: Array.isArray(policy.applicationList) ? policy.applicationList.length : 0,
+                      display: true,
+                    },
+                    ...(Array.isArray(policy.applicationList) && policy.applicationList.length > 0
+                      ? policy.applicationList.map((app: any, idx: number) => ({
+                        display: true,
+                        descriptor: {
+                          code: `application-${idx + 1}`,
+                          name: `Application ${idx + 1}`,
+                        },
+                        list: [
+                          { descriptor: { code: 'application-no', name: 'Application No' }, value: app.applicationNo, display: true },
+                          { descriptor: { code: 'village-name', name: 'Village Name' }, value: app.villageName, display: true },
+                          { descriptor: { code: 'village-id', name: 'Village ID' }, value: app.villageID, display: true },
+                          { descriptor: { code: 'khata-no', name: 'Khata No' }, value: app.khataNo, display: true },
+                          { descriptor: { code: 'land-division-number', name: 'Land Division Number' }, value: app.landDivisionNumber, display: true },
+                          { descriptor: { code: 'land-survey-number', name: 'Land Survey Number' }, value: app.landSurveyNumber, display: true },
+                          { descriptor: { code: 'policy-area', name: 'Policy Area' }, value: app.policyArea, display: true },
+                          { descriptor: { code: 'ratio', name: 'Ratio' }, value: app.ratio, display: true },
+                          { descriptor: { code: 'crop-id', name: 'Crop ID' }, value: app.cropID, display: true },
+                          { descriptor: { code: 'crop-name', name: 'Crop Name' }, value: app.cropName, display: true },
+                          { descriptor: { code: 'crop-share', name: 'Crop Share' }, value: app.cropShare, display: true },
+                          { descriptor: { code: 'sum-insured', name: 'Sum Insured' }, value: app.sumInsured, display: true },
+                          { descriptor: { code: 'farmer-share', name: 'Farmer Share' }, value: app.farmerShare, display: true },
+                          { descriptor: { code: 'policy-status-code', name: 'Policy Status Code' }, value: app.policyStatusCode, display: true },
+                          { descriptor: { code: 'created-by', name: 'Created By' }, value: app.createdBy, display: true },
+                          { descriptor: { code: 'total-premium', name: 'Total Premium' }, value: app.totalPremium, display: true },
+                          { descriptor: { code: 'insurance-company-code', name: 'Insurance Company Code' }, value: app.insuranceCompanyCode, display: true },
+                          { descriptor: { code: 'created-at', name: 'Created At' }, value: app.createdAt, display: true },
+                          { descriptor: { code: 'sowing-date', name: 'Sowing Date' }, value: app.sowingDate, display: true },
+                          { descriptor: { code: 'insurance-company-name', name: 'Insurance Company Name' }, value: app.insuranceCompanyName, display: true },
+                          { descriptor: { code: 'source', name: 'Source' }, value: app.source, display: true },
+                          { descriptor: { code: 'application-source', name: 'Application Source' }, value: app.applicationSource, display: true },
+                          { descriptor: { code: 'claim-status', name: 'Claim Status' }, value: app.claimStatus, display: true },
+                          { descriptor: { code: 'claim-amount', name: 'Claim Amount' }, value: app.claimAmount, display: true },
+                          { descriptor: { code: 'account-number', name: 'Account Number' }, value: app.accountNumber, display: true },
+                          { descriptor: { code: 'claim-type', name: 'Claim Type' }, value: app.claimType, display: true },
+                          { descriptor: { code: 'retry-payment', name: 'Retry Payment' }, value: app.retryPayment ? 'Yes' : 'No', display: true },
+                          { descriptor: { code: 'is-mix', name: 'Is Mix' }, value: app.isMix ? 'Yes' : 'No', display: true },
+                          { descriptor: { code: 'policy-status', name: 'Policy Status' }, value: app.policyStatus, display: true },
+                          { descriptor: { code: 'cutoff-date', name: 'Cutoff Date' }, value: app.cutOfDate, display: true },
+                          { descriptor: { code: 'season-code', name: 'Season Code' }, value: app.seasonCode, display: true },
+                          { descriptor: { code: 'season-year', name: 'Season Year' }, value: app.seasonYear, display: true },
+                          { descriptor: { code: 'season-name', name: 'Season Name' }, value: app.seasonName, display: true },
+                          { descriptor: { code: 'scheme-name', name: 'Scheme Name' }, value: app.schemeName, display: true },
+                        ]
+                      }))
+                      : []),
+                  ],
+                },
+              ],
+            };
+          }),
+        };
+      }),
+    }
   };
   return catalog;
 };
@@ -1323,129 +1364,131 @@ export const pmfbyClaimStatusGenerator = (apiData: any, query: string) => {
   providerWise[defaultProvider] = claims;
 
   const catalog: any = {
-    descriptor: query ? { name: `Details of ${query}` } : {},
-    providers: Object.keys(providerWise).map((provider: string) => {
-      return {
-        descriptor: {
-          name: 'SchemeFinder',
-          short_desc: `PMFBY ${query} Listing via SchemeFinder`,
-        },
-        items: providerWise[provider].map((claim: any, index: number) => {
-          return {
-            id: claim.applicationNo || `${index}`,
-            descriptor: {
-              name: `Application No: ${claim.applicationNo}`,
-              short_desc: `Farmer: ${claim.FarmerName}`,
-              long_desc: `Claim Status: ${claim.ClaimStatus || claim.Status}`,
-            },
-            tags: [
-              {
-                descriptor: {
-                  code: 'inquiry-type',
-                  name: 'Inquiry Type',
-                },
-                value: 'claim_status',
-                display: true,
+    order: {
+      descriptor: query ? { name: `Details of ${query}` } : {},
+      providers: Object.keys(providerWise).map((provider: string) => {
+        return {
+          descriptor: {
+            name: 'SchemeFinder',
+            short_desc: `PMFBY ${query} Listing via SchemeFinder`,
+          },
+          items: providerWise[provider].map((claim: any, index: number) => {
+            return {
+              id: claim.applicationNo || `${index}`,
+              descriptor: {
+                name: `Application No: ${claim.applicationNo}`,
+                short_desc: `Farmer: ${claim.FarmerName}`,
+                long_desc: `Claim Status: ${claim.ClaimStatus || claim.Status}`,
               },
-              {
-                display: true,
-                descriptor: {
-                  code: 'claim-details',
-                  name: 'Claim Details',
+              tags: [
+                {
+                  descriptor: {
+                    code: 'inquiry-type',
+                    name: 'Inquiry Type',
+                  },
+                  value: 'claim_status',
+                  display: true,
                 },
-                list: [
-                  {
-                    descriptor: { code: 'application-no', name: 'Application No' },
-                    value: claim.applicationNo,
-                    display: true,
+                {
+                  display: true,
+                  descriptor: {
+                    code: 'claim-details',
+                    name: 'Claim Details',
                   },
-                  {
-                    descriptor: { code: 'farmer-name', name: 'Farmer Name' },
-                    value: claim.FarmerName,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'claim-status', name: 'Claim Status' },
-                    value: claim.ClaimStatus || claim.Status,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'status', name: 'Status' },
-                    value: claim.Status,
-                    display: true,
-                  },
-                  {
-                    descriptor: { code: 'claim-date', name: 'Claim Date' },
-                    value: claim.claimDate,
-                    display: !!claim.claimDate,
-                  },
-                  {
-                    descriptor: { code: 'amount', name: 'Amount' },
-                    value: claim.amount,
-                    display: claim.amount != null,
-                  },
-                  {
-                    descriptor: { code: 'utr-number', name: 'UTR Number' },
-                    value: claim.UtrNumber,
-                    display: !!claim.UtrNumber,
-                  },
-                  {
-                    descriptor: { code: 'claim-type', name: 'Claim Type' },
-                    value: claim.ClaimType,
-                    display: !!claim.ClaimType,
-                  },
-                  {
-                    descriptor: { code: 'account-number', name: 'Account Number' },
-                    value: claim.accountNumber,
-                    display: !!claim.accountNumber,
-                  },
-                  {
-                    descriptor: { code: 'ifsc', name: 'IFSC Code' },
-                    value: claim.ifsc,
-                    display: !!claim.ifsc,
-                  },
-                  {
-                    descriptor: { code: 'payment-mode', name: 'Payment Mode' },
-                    value: claim.paymentMode,
-                    display: !!claim.paymentMode,
-                  },
-                  {
-                    descriptor: { code: 'partial-claim', name: 'Partial Claim' },
-                    value: claim.partialClaim,
-                    display: claim.partialClaim !== undefined,
-                  },
-                  {
-                    descriptor: { code: 'total-payable', name: 'Total Payable' },
-                    value: claim.totalPayable,
-                    display: claim.totalPayable != null,
-                  },
-                  {
-                    descriptor: { code: 'aadharPaymentAccountNumber', name: 'Aadhar Payment Account Number' },
-                    value: claim.aadharPaymentAccountNumber,
-                    display: claim.aadharPaymentAccountNumber != null,
-                  },
-                  {
-                    descriptor: { code: 'aadharPaymentBankName', name: 'Aadhar Payment Bank Name' },
-                    value: claim.aadharPaymentBankName,
-                    display: claim.aadharPaymentBankName != null,
-                  },
-                  {
-                    descriptor: { code: 'aadharPaymentFarmerName', name: 'Aadhar Payment Farmer Name' },
-                    value: claim.aadharPaymentFarmerName,
-                    display: claim.aadharPaymentFarmerName != null,
-                  },
-                  {
-                    descriptor: { code: 'aadharPaymentAadharNumber', name: 'Aadhar Payment Aadhar Number' },
-                    value: claim.aadharPaymentAadharNumber,
-                    display: claim.aadharPaymentAadharNumber != null,
-                  },
-                ],
-              },
-            ],
-          };
-        }),
-      };
-    }),
+                  list: [
+                    {
+                      descriptor: { code: 'application-no', name: 'Application No' },
+                      value: claim.applicationNo,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'farmer-name', name: 'Farmer Name' },
+                      value: claim.FarmerName,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'claim-status', name: 'Claim Status' },
+                      value: claim.ClaimStatus || claim.Status,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'status', name: 'Status' },
+                      value: claim.Status,
+                      display: true,
+                    },
+                    {
+                      descriptor: { code: 'claim-date', name: 'Claim Date' },
+                      value: claim.claimDate,
+                      display: !!claim.claimDate,
+                    },
+                    {
+                      descriptor: { code: 'amount', name: 'Amount' },
+                      value: claim.amount,
+                      display: claim.amount != null,
+                    },
+                    {
+                      descriptor: { code: 'utr-number', name: 'UTR Number' },
+                      value: claim.UtrNumber,
+                      display: !!claim.UtrNumber,
+                    },
+                    {
+                      descriptor: { code: 'claim-type', name: 'Claim Type' },
+                      value: claim.ClaimType,
+                      display: !!claim.ClaimType,
+                    },
+                    {
+                      descriptor: { code: 'account-number', name: 'Account Number' },
+                      value: claim.accountNumber,
+                      display: !!claim.accountNumber,
+                    },
+                    {
+                      descriptor: { code: 'ifsc', name: 'IFSC Code' },
+                      value: claim.ifsc,
+                      display: !!claim.ifsc,
+                    },
+                    {
+                      descriptor: { code: 'payment-mode', name: 'Payment Mode' },
+                      value: claim.paymentMode,
+                      display: !!claim.paymentMode,
+                    },
+                    {
+                      descriptor: { code: 'partial-claim', name: 'Partial Claim' },
+                      value: claim.partialClaim,
+                      display: claim.partialClaim !== undefined,
+                    },
+                    {
+                      descriptor: { code: 'total-payable', name: 'Total Payable' },
+                      value: claim.totalPayable,
+                      display: claim.totalPayable != null,
+                    },
+                    {
+                      descriptor: { code: 'aadharPaymentAccountNumber', name: 'Aadhar Payment Account Number' },
+                      value: claim.aadharPaymentAccountNumber,
+                      display: claim.aadharPaymentAccountNumber != null,
+                    },
+                    {
+                      descriptor: { code: 'aadharPaymentBankName', name: 'Aadhar Payment Bank Name' },
+                      value: claim.aadharPaymentBankName,
+                      display: claim.aadharPaymentBankName != null,
+                    },
+                    {
+                      descriptor: { code: 'aadharPaymentFarmerName', name: 'Aadhar Payment Farmer Name' },
+                      value: claim.aadharPaymentFarmerName,
+                      display: claim.aadharPaymentFarmerName != null,
+                    },
+                    {
+                      descriptor: { code: 'aadharPaymentAadharNumber', name: 'Aadhar Payment Aadhar Number' },
+                      value: claim.aadharPaymentAadharNumber,
+                      display: claim.aadharPaymentAadharNumber != null,
+                    },
+                  ],
+                },
+              ],
+            };
+          }),
+        };
+      }),
+    }
   };
   return catalog;
 };
