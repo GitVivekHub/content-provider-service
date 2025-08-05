@@ -14,7 +14,8 @@ import {
   IcarCatalogGenerator,
   flnCatalogGenerator,
   PmKisanIcarGenerator,
-  pmfbyGenerator,
+  pmfbyPolicyGenerator,
+  pmfbyClaimStatusGenerator,
 } from "utils/generator";
 import { v4 as uuidv4 } from "uuid";
 import { ConfigService } from "@nestjs/config";
@@ -1183,8 +1184,7 @@ export class AppService {
               current[key] === null
             ) {
               console.warn(
-                `${field.message} for item ${
-                  data.id || data.computedID || "unknown"
+                `${field.message} for item ${data.id || data.computedID || "unknown"
                 } at index ${index}`
               );
               return null;
@@ -1209,8 +1209,7 @@ export class AppService {
           .map((param: any) => {
             if (!param || !param.key || param.value === undefined) {
               console.warn(
-                `Invalid parameter for item ${
-                  data.id || data.computedID || "unknown"
+                `Invalid parameter for item ${data.id || data.computedID || "unknown"
                 }: missing key or value`
               );
               return null;
@@ -1218,9 +1217,8 @@ export class AppService {
             const value =
               param.value === "NA"
                 ? "Not available"
-                : `${param.value} ${param.unit || ""} (${
-                    param.rating || "Unknown"
-                  })`;
+                : `${param.value} ${param.unit || ""} (${param.rating || "Unknown"
+                })`;
             return {
               code: parameterMapping[param.key] || param.key.toLowerCase(),
               value,
@@ -1251,8 +1249,7 @@ export class AppService {
           .map((rec: any, recIndex: number) => {
             if (!rec || !rec.crop) {
               console.warn(
-                `Skipping invalid fertilizer recommendation at index ${recIndex} for item ${
-                  data.id || data.computedID || "unknown"
+                `Skipping invalid fertilizer recommendation at index ${recIndex} for item ${data.id || data.computedID || "unknown"
                 }: missing or invalid crop`
               );
               return null;
@@ -1268,8 +1265,7 @@ export class AppService {
                     !fert.bags
                   ) {
                     console.warn(
-                      `Skipping invalid fertilizer at index ${fertIndex} for crop ${
-                        rec.crop
+                      `Skipping invalid fertilizer at index ${fertIndex} for crop ${rec.crop
                       } in item ${data.id || data.computedID || "unknown"}`
                     );
                     return null;
@@ -1319,8 +1315,7 @@ export class AppService {
           .map((def: any, index: number) => {
             if (!def) {
               console.warn(
-                `Skipping invalid deficiency at index ${index} for item ${
-                  data.id || data.computedID || "unknown"
+                `Skipping invalid deficiency at index ${index} for item ${data.id || data.computedID || "unknown"
                 }`
               );
               return null;
@@ -1417,15 +1412,12 @@ export class AppService {
         return {
           id: data.computedID || data.id || "unknown",
           descriptor: {
-            name: `Soil Health Card for Farmer ${
-              data.farmer?.name || "Unknown"
-            }`,
+            name: `Soil Health Card for Farmer ${data.farmer?.name || "Unknown"
+              }`,
             short_desc: `${nutrientRatings}, crop recommendation: ${recommendedCrops}`,
-            long_desc: `Soil Health Card for ${
-              data.farmer?.name || "Unknown"
-            } in ${data.village?.name || "Unknown"}, ${
-              data.district?.name || "Unknown"
-            }. Nutrient Ratings: ${nutrientRatings}. Recommended crops: ${recommendedCrops}.`,
+            long_desc: `Soil Health Card for ${data.farmer?.name || "Unknown"
+              } in ${data.village?.name || "Unknown"}, ${data.district?.name || "Unknown"
+              }. Nutrient Ratings: ${nutrientRatings}. Recommended crops: ${recommendedCrops}.`,
           },
           media: [
             {
@@ -2023,7 +2015,7 @@ export class AppService {
           body.context,
           "otp_error",
           otpResponse.d?.output?.Message ||
-            "Failed to generate OTP. Please try again later."
+          "Failed to generate OTP. Please try again later."
         );
       }
     } catch (error) {
@@ -2143,11 +2135,10 @@ Registration Date - ${format(
       new Date(DateOfRegistration),
       "M/d/yyyy h:mm:ss a"
     )}
-Last Installment Status - ${
-      LatestInstallmentPaid == 0
+Last Installment Status - ${LatestInstallmentPaid == 0
         ? "No"
         : this.addOrdinalSuffix(LatestInstallmentPaid)
-    } Installment payment done
+      } Installment payment done
 eKYC - ${eKYC_Status == "Y" ? "Done" : "Not Done"}`;
   }
 
@@ -2415,7 +2406,7 @@ eKYC - ${eKYC_Status == "Y" ? "Done" : "Not Done"}`;
             },
             items: [
               {
-                id: body?.message?.order?.items?.[0]?.id || "NA", 
+                id: body?.message?.order?.items?.[0]?.id || "NA",
                 tags: [
                   {
                     display: true,
@@ -2437,7 +2428,7 @@ eKYC - ${eKYC_Status == "Y" ? "Done" : "Not Done"}`;
     const farmerId = await this.pmfbyService.getFarmerId(mobileNumber);
     console.log("Farmer ID:", farmerId);
 
-    if(!farmerId){
+    if (!farmerId) {
       return {
         context: { ...body.context, action: "on_init", timestamp: new Date().toISOString() },
         message: {
@@ -2447,16 +2438,16 @@ eKYC - ${eKYC_Status == "Y" ? "Done" : "Not Done"}`;
             },
             items: [
               {
-              id: body?.message?.order?.items?.[0]?.id || "NA", 
-              tags: [{
-                display: true,
-                descriptor: {
-                  name: "Error",
-                  code: "farmer_id_not_found",
-                  short_desc: "Farmer ID not found for the provided mobile number"
-                }
-              }]
-            }],
+                id: body?.message?.order?.items?.[0]?.id || "NA",
+                tags: [{
+                  display: true,
+                  descriptor: {
+                    name: "Error",
+                    code: "farmer_id_not_found",
+                    short_desc: "Farmer ID not found for the provided mobile number"
+                  }
+                }]
+              }],
             type: "DEFAULT"
           }
         }
@@ -2464,39 +2455,41 @@ eKYC - ${eKYC_Status == "Y" ? "Done" : "Not Done"}`;
     }
 
     // Get PMFBY authentication token
-    const pmfbyToken = await this.pmfbyService.getPmfbyToken(mobileNumber);
-    let policyDetails;
-    if (inquiryType?.toLowerCase() === "policy_status") {
-      const seasonCode = season?.toLowerCase() === 'kharif'
+    const pmfbyToken = await this.pmfbyService.getPmfbyToken();
+    let response;
+    let mappedResponse;
+    const formattedYear = year.toString().slice(-2);
+    const seasonCode = season?.toLowerCase() === 'kharif'
         ? '1'
         : season?.toLowerCase() === 'rabi'
           ? '2'
           : season?.toLowerCase() === 'summer'
             ? '3'
             : '';
-      const formattedYear = year.toString().slice(-2);
-      policyDetails = await this.pmfbyService.getPolicyStatus(
+    if (inquiryType?.toLowerCase() === "policy_status") {
+      response = await this.pmfbyService.getPolicyStatus(
         farmerId,
         seasonCode,
         formattedYear,
         pmfbyToken
       );
-    }
-    /*
-     else if (inquiryType?.toLowerCase() === "claim_status") {
+      mappedResponse = await pmfbyPolicyGenerator(response.data, "Policies");
 
-      const claimDetails = await this.pmfbyService.getClaimStatus(
+    }
+    else if (inquiryType?.toLowerCase() === "claim_status") {
+
+      response = await this.pmfbyService.getClaimStatus(
         farmerId,
-        season,
+        '0'+seasonCode,
         year,
         pmfbyToken
       );
+      mappedResponse = await pmfbyClaimStatusGenerator(response.data, "Claims");
+
     }
-    */
-    const mappedResponse = await pmfbyGenerator(policyDetails.data,"Policies");
     return {
       context: { ...body.context, action: "on_init", timestamp: new Date().toISOString() },
-      message: mappedResponse.catalog
+      message: mappedResponse
     };
   }
 }

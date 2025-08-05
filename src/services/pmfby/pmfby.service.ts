@@ -11,7 +11,7 @@ export class PmfbyService {
   /**
    * Get PMFBY authentication token
    */
-  async getPmfbyToken(mobileNumber) {
+  async getPmfbyToken() {
     try {
       let config = {
         headers: {
@@ -21,7 +21,7 @@ export class PmfbyService {
         method: 'post',
         data: {
           "deviceType": "web",
-          "mobile": mobileNumber,
+          "mobile": process.env.PMFBY_MOBILE,
           "otp": 123456,
           "password": process.env.PMFBY_PASSWORD,
         }
@@ -37,7 +37,6 @@ export class PmfbyService {
 
 
       const token = response.data.data.token
-      console.log('Token:', token);
 
       if (!token) {
         this.logger.error('Token not found in API response', response.data);
@@ -75,7 +74,7 @@ export class PmfbyService {
       const response = await axios.request(config);
 
       // Fix: Correctly access farmerID from the nested structure
-      const farmerId = response?.data?.data?.result?.[0]?.farmerID;
+      const farmerId = response?.data?.data?.result?.farmerID;
 
       if (!farmerId) {
         this.logger.error('Farmer ID not found in API response', response.data);
@@ -83,7 +82,7 @@ export class PmfbyService {
       return farmerId;
     } catch (error) {
       this.logger.error(`Error fetching farmer ID: ${error.message}`);
-        }
+    }
   }
 
   /**
@@ -104,6 +103,7 @@ export class PmfbyService {
           'token': token
         }
       }
+
       const response = await axios.request(config);
 
       return response.data;
