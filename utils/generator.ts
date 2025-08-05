@@ -1202,7 +1202,7 @@ export const PmKisanIcarGenerator = (apiData: any, query: string) => {
 
   return catalog;
 };
-export const pmfbyGenerator = (apiData: any, query: string) => {
+export const pmfbyPolicyGenerator = (apiData: any, query: string) => {
   console.log("apiData", apiData)
   const policies: any[] = apiData;
   const providerWise: Record<string, any[]> = {};
@@ -1212,16 +1212,16 @@ export const pmfbyGenerator = (apiData: any, query: string) => {
   providerWise[defaultProvider] = policies;
 
   const catalog: any = {
-    descriptor: query ? { name: `Details of Schemes/${query}` } : {},
+    descriptor: query ? { name: `Details of ${query}` } : {},
     providers: Object.keys(providerWise).map((provider: string) => {
       return {
         descriptor: {
           name: 'SchemeFinder',
-          short_desc: 'PMFBY Policy Listing via SchemeFinder',
+          short_desc: `PMFBY ${query} Listing via SchemeFinder`,
         },
         items: providerWise[provider].map((policy: any, index: number) => {
           return {
-            id: policy.policyID || `policy-${index}`,
+            id: policy.policyID || `${index}`,
             descriptor: {
               name: `Policy ID: ${policy.policyID}`,
               short_desc: `${policy.insuranceCompanyName}`,
@@ -1311,9 +1311,145 @@ export const pmfbyGenerator = (apiData: any, query: string) => {
       };
     }),
   };
-
   return catalog;
 };
+export const pmfbyClaimStatusGenerator = (apiData: any, query: string) => {
+  console.log("apiData", apiData);
+  const claims: any[] = apiData;
+  const providerWise: Record<string, any[]> = {};
+  const defaultProvider = 'SchemeFinder';
+
+  // Group all claims under one provider
+  providerWise[defaultProvider] = claims;
+
+  const catalog: any = {
+    descriptor: query ? { name: `Details of ${query}` } : {},
+    providers: Object.keys(providerWise).map((provider: string) => {
+      return {
+        descriptor: {
+          name: 'SchemeFinder',
+          short_desc: `PMFBY ${query} Listing via SchemeFinder`,
+        },
+        items: providerWise[provider].map((claim: any, index: number) => {
+          return {
+            id: claim.applicationNo || `${index}`,
+            descriptor: {
+              name: `Application No: ${claim.applicationNo}`,
+              short_desc: `Farmer: ${claim.FarmerName}`,
+              long_desc: `Claim Status: ${claim.ClaimStatus || claim.Status}`,
+            },
+            tags: [
+              {
+                descriptor: {
+                  code: 'inquiry-type',
+                  name: 'Inquiry Type',
+                },
+                value: 'claim_status',
+                display: true,
+              },
+              {
+                display: true,
+                descriptor: {
+                  code: 'claim-details',
+                  name: 'Claim Details',
+                },
+                list: [
+                  {
+                    descriptor: { code: 'application-no', name: 'Application No' },
+                    value: claim.applicationNo,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'farmer-name', name: 'Farmer Name' },
+                    value: claim.FarmerName,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'claim-status', name: 'Claim Status' },
+                    value: claim.ClaimStatus || claim.Status,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'status', name: 'Status' },
+                    value: claim.Status,
+                    display: true,
+                  },
+                  {
+                    descriptor: { code: 'claim-date', name: 'Claim Date' },
+                    value: claim.claimDate,
+                    display: !!claim.claimDate,
+                  },
+                  {
+                    descriptor: { code: 'amount', name: 'Amount' },
+                    value: claim.amount,
+                    display: claim.amount != null,
+                  },
+                  {
+                    descriptor: { code: 'utr-number', name: 'UTR Number' },
+                    value: claim.UtrNumber,
+                    display: !!claim.UtrNumber,
+                  },
+                  {
+                    descriptor: { code: 'claim-type', name: 'Claim Type' },
+                    value: claim.ClaimType,
+                    display: !!claim.ClaimType,
+                  },
+                  {
+                    descriptor: { code: 'account-number', name: 'Account Number' },
+                    value: claim.accountNumber,
+                    display: !!claim.accountNumber,
+                  },
+                  {
+                    descriptor: { code: 'ifsc', name: 'IFSC Code' },
+                    value: claim.ifsc,
+                    display: !!claim.ifsc,
+                  },
+                  {
+                    descriptor: { code: 'payment-mode', name: 'Payment Mode' },
+                    value: claim.paymentMode,
+                    display: !!claim.paymentMode,
+                  },
+                  {
+                    descriptor: { code: 'partial-claim', name: 'Partial Claim' },
+                    value: claim.partialClaim,
+                    display: claim.partialClaim !== undefined,
+                  },
+                  {
+                    descriptor: { code: 'total-payable', name: 'Total Payable' },
+                    value: claim.totalPayable,
+                    display: claim.totalPayable != null,
+                  },
+                  {
+                    descriptor: { code: 'aadharPaymentAccountNumber', name: 'Aadhar Payment Account Number' },
+                    value: claim.aadharPaymentAccountNumber,
+                    display: claim.aadharPaymentAccountNumber != null,
+                  },
+                  {
+                    descriptor: { code: 'aadharPaymentBankName', name: 'Aadhar Payment Bank Name' },
+                    value: claim.aadharPaymentBankName,
+                    display: claim.aadharPaymentBankName != null,
+                  },
+                  {
+                    descriptor: { code: 'aadharPaymentFarmerName', name: 'Aadhar Payment Farmer Name' },
+                    value: claim.aadharPaymentFarmerName,
+                    display: claim.aadharPaymentFarmerName != null,
+                  },
+                  {
+                    descriptor: { code: 'aadharPaymentAadharNumber', name: 'Aadhar Payment Aadhar Number' },
+                    value: claim.aadharPaymentAadharNumber,
+                    display: claim.aadharPaymentAadharNumber != null,
+                  },
+                ],
+              },
+            ],
+          };
+        }),
+      };
+    }),
+  };
+  return catalog;
+};
+
 
 
 
